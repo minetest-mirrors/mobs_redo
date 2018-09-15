@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20180914",
+	version = "20180915",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -108,32 +108,37 @@ local do_attack = function(self, player)
 end
 
 
--- collision function borrowed amended from jordan4ibanez open_ai mod
+-- calculate distance
+local get_distance = function(a, b)
+
+	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
+
+	return square(x * x + y * y + z * z)
+end
+
+
+-- collision function based on similar from jordan4ibanez' open_ai mod
 local collision = function(self)
 
 	local pos = self.object:get_pos()
 	local vel = self.object:get_velocity()
-	local x = 0
-	local z = 0
+	local x, z = 0, 0
 	local width = -self.collisionbox[1] + self.collisionbox[4] + 0.5
 
-	for _,object in ipairs(minetest.env:get_objects_inside_radius(pos, width)) do
+	for _,object in ipairs(minetest.get_objects_inside_radius(pos, width)) do
 
 		if object:is_player()
 		or (object:get_luaentity()._cmi_is_mob == true and object ~= self.object) then
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
-			local force = (width + 0.5) - vector.distance(
-				{x = pos.x, y = 0, z = pos.z},
-				{x = pos2.x, y = 0, z = pos2.z})
 
-			x = x + (vec.x * force)
-			z = z + (vec.z * force)
+			x = x + vec.x
+			z = z + vec.z
 		end
 	end
 
-	return({x,z})
+	return({x, z})
 end
 
 
@@ -247,15 +252,6 @@ end
 -- above function exported for mount.lua
 function mobs:set_animation(self, anim)
 	set_animation(self, anim)
-end
-
-
--- calculate distance
-local get_distance = function(a, b)
-
-	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
-
-	return square(x * x + y * y + z * z)
 end
 
 
