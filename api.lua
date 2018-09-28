@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20180915",
+	version = "20180928",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -3258,7 +3258,9 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 
 			-- do we have enough height clearance to spawn mob?
 			local ent = minetest.registered_entities[name]
-			local height = max(0, math.ceil(ent.collisionbox[5] - ent.collisionbox[2]) - 1)
+			local height = max(1, math.ceil(
+				(ent.collisionbox[5] or 0.25) -
+				(ent.collisionbox[2] or -0.25) - 1))
 
 			for n = 0, height do
 
