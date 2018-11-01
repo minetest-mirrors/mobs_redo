@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20181005",
+	version = "20181101",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -255,8 +255,79 @@ function mobs:set_animation(self, anim)
 end
 
 
--- check line of sight (by BrunoMine, tweaked by Astrobe)
+-- check line of sight (BrunoMine)
 local line_of_sight = function(self, pos1, pos2, stepsize)
+
+	stepsize = stepsize or 1
+
+	local s, pos = minetest.line_of_sight(pos1, pos2, stepsize)
+
+	-- normal walking and flying mobs can see you through air
+	if s == true then
+		return true
+	end
+
+	-- New pos1 to be analyzed
+	local npos1 = {x = pos1.x, y = pos1.y, z = pos1.z}
+
+	local r, pos = minetest.line_of_sight(npos1, pos2, stepsize)
+
+	-- Checks the return
+	if r == true then return true end
+
+	-- Nodename found
+	local nn = minetest.get_node(pos).name
+
+	-- Target Distance (td) to travel
+	local td = get_distance(pos1, pos2)
+
+	-- Actual Distance (ad) traveled
+	local ad = 0
+
+	-- It continues to advance in the line of sight in search of a real
+	-- obstruction which counts as 'normal' nodebox.
+	while minetest.registered_nodes[nn]
+	and (minetest.registered_nodes[nn].walkable == false) do
+--	or minetest.registered_nodes[nn].drawtype == "nodebox") do
+
+		-- Check if you can still move forward
+		if td < ad + stepsize then
+			return true -- Reached the target
+		end
+
+		-- Moves the analyzed pos
+		local d = get_distance(pos1, pos2)
+
+		npos1.x = ((pos2.x - pos1.x) / d * stepsize) + pos1.x
+		npos1.y = ((pos2.y - pos1.y) / d * stepsize) + pos1.y
+		npos1.z = ((pos2.z - pos1.z) / d * stepsize) + pos1.z
+
+		-- NaN checks
+		if d == 0
+		or npos1.x ~= npos1.x
+		or npos1.y ~= npos1.y
+		or npos1.z ~= npos1.z then
+			return false
+		end
+
+		ad = ad + stepsize
+
+		-- scan again
+		r, pos = minetest.line_of_sight(npos1, pos2, stepsize)
+
+		if r == true then return true end
+
+		-- New Nodename found
+		nn = minetest.get_node(pos).name
+
+	end
+
+	return false
+end
+
+
+-- check line of sight (by BrunoMine, tweaked by Astrobe)
+local NEW_line_of_sight = function(self, pos1, pos2, stepsize)
 
 	if not pos1 or not pos2 then return end
 
@@ -792,6 +863,22 @@ local do_jump = function(self)
 			end
 		else
 			self.facing_fence = true
+		end
+
+		-- if we jumped against a block/wall 4 times then turn
+		if self.object:get_velocity().x ~= 0
+		and self.object:get_velocity().z ~= 0 then
+
+			self.jump_count = (self.jump_count or 0) + 1
+
+			if self.jump_count == 4 then
+
+				local yaw = self.object:get_yaw() or 0
+
+				yaw = set_yaw(self, yaw + 1.35, 8)
+
+				self.jump_count = 0
+			end
 		end
 
 		return true
