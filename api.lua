@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20181101",
+	version = "20181102",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -867,16 +867,16 @@ local do_jump = function(self)
 
 		-- if we jumped against a block/wall 4 times then turn
 		if self.object:get_velocity().x ~= 0
-		and self.object:get_velocity().z ~= 0 then
+		or self.object:get_velocity().z ~= 0 then
 
 			self.jump_count = (self.jump_count or 0) + 1
-
+--print ("----", self.jump_count)
 			if self.jump_count == 4 then
 
 				local yaw = self.object:get_yaw() or 0
 
 				yaw = set_yaw(self, yaw + 1.35, 8)
-
+--print ("---- turn")
 				self.jump_count = 0
 			end
 		end
