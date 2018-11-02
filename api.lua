@@ -2592,7 +2592,7 @@ local mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 		dir = dir or {x = 0, y = 0, z = 0}
 
 		-- use tool knockback value or default
-		kb = tool_capabilities.damage_groups["knockback"] or (kb * 1.5)
+		kb = tool_capabilities.damage_groups["knockback"] or kb -- (kb * 1.5)
 
 		self.object:set_velocity({
 			x = dir.x * kb,
