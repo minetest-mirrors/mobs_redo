@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20181102",
+	version = "20181126",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -1154,14 +1154,7 @@ local replace = function(self, pos)
 		end
 
 		if on_replace_return ~= false then
-
 			minetest.set_node(pos, {name = with})
-
-			-- when cow/sheep eats grass, replace wool and milk
-			if self.gotten == true then
-				self.gotten = false
-				self.object:set_properties(self)
-			end
 		end
 	end
 end
