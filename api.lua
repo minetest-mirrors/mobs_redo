@@ -2323,7 +2323,7 @@ end
 -- falling and fall damage
 local falling = function(self, pos)
 
-	if self.fly then
+	if self.fly or self.disable_falling then
 		return
 	end
 
