@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20181126",
+	version = "20181204",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -165,6 +165,11 @@ local set_velocity = function(self, v)
 		y = self.object:get_velocity().y,
 		z = (cos(yaw) * v) + c_y,
 	})
+end
+
+-- global version of above function
+function mobs:set_velocity(self, v)
+	set_velocity(self, v)
 end
 
 
