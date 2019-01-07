@@ -2921,7 +2921,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 
 	-- run after_activate
 	if def.after_activate then
-		def:after_activate(self, staticdata, def, dtime)
+		def.after_activate(self, staticdata, def, dtime)
 	end
 
 	if use_cmi then
