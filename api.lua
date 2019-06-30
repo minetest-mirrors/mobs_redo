@@ -3404,6 +3404,8 @@ function mobs:spawn_abm_check(pos, node, name)
 	-- return true to stop spawning mob
 end
 
+local mod_technic = minetest.get_modpath("technic") or
+		minetest.get_modpath("simple_anchor")
 
 function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 	interval, chance, aoc, min_height, max_height, day_toggle, on_spawn)
@@ -3507,6 +3509,15 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 --print ("--- light limits not met", name, light)
 				return
 			end
+
+-- do not spawn if world anchor block is nearby
+if mod_technic
+and #minetest.find_nodes_in_area(
+		{x = pos.x - 32, y = pos.y - 32, z = pos.z - 32},
+		{x = pos.x + 32, y = pos.y + 32, z = pos.z + 32},
+		{"technic:admin_anchor", "simple_anchor:loader_block"}) > 0 then
+	return
+end
 
 			-- only spawn away from player
 			local objs = minetest.get_objects_inside_radius(pos, 8)
