@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20190628",
+	version = "20190630",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 }
@@ -3509,7 +3509,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 			end
 
 			-- only spawn away from player
-			local objs = minetest.get_objects_inside_radius(pos, 10)
+			local objs = minetest.get_objects_inside_radius(pos, 8)
 
 			for n = 1, #objs do
 
