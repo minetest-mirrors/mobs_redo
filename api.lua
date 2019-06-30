@@ -3374,11 +3374,13 @@ end -- END mobs:register_mob function
 
 
 -- count how many mobs of one type are inside an area
+-- will also return true for second value if player is inside area
 local count_mobs = function(pos, type)
 
 	local total = 0
 	local objs = minetest.get_objects_inside_radius(pos, aoc_range * 2)
 	local ent
+	local players
 
 	for n = 1, #objs do
 
@@ -3390,10 +3392,12 @@ local count_mobs = function(pos, type)
 			if ent and ent.name and ent.name == type then
 				total = total + 1
 			end
+		else
+			players = true
 		end
 	end
 
-	return total
+	return total, players
 end
 
 
@@ -3404,8 +3408,6 @@ function mobs:spawn_abm_check(pos, node, name)
 	-- return true to stop spawning mob
 end
 
-local mod_technic = minetest.get_modpath("technic") or
-		minetest.get_modpath("simple_anchor")
 
 function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 	interval, chance, aoc, min_height, max_height, day_toggle, on_spawn)
@@ -3464,7 +3466,12 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 			end
 
 			-- get total number of this mob in area
-			local num_mob = count_mobs(pos, name)
+			local num_mob, is_pla = count_mobs(pos, name)
+
+			if not is_pla then
+--print ("--- no players within active area, will not spawn " .. name)
+				return
+			end
 
 			if num_mob >= aoc then
 --print ("--- too many " .. name .. " in area", num_mob .. "/" .. aoc)
@@ -3509,15 +3516,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 --print ("--- light limits not met", name, light)
 				return
 			end
-
--- do not spawn if world anchor block is nearby
-if mod_technic
-and #minetest.find_nodes_in_area(
-		{x = pos.x - 32, y = pos.y - 32, z = pos.z - 32},
-		{x = pos.x + 32, y = pos.y + 32, z = pos.z + 32},
-		{"technic:admin_anchor", "simple_anchor:loader_block"}) > 0 then
-	return
-end
 
 			-- only spawn away from player
 			local objs = minetest.get_objects_inside_radius(pos, 8)
