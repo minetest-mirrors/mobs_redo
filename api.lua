@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200207",
+	version = "20200226",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -229,6 +229,9 @@ function mob_class:set_velocity(v)
 	end
 
 	local yaw = (self.object:get_yaw() or 0) + self.rotate
+
+	-- nil check for velocity
+	v = v or 0
 
 	-- set velocity with hard limit of 10
 	self.object:set_velocity({
