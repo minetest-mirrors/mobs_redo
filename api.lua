@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200226",
+	version = "20200227",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -236,7 +236,7 @@ function mob_class:set_velocity(v)
 	-- set velocity with hard limit of 10
 	self.object:set_velocity({
 		x = max(-10, min((sin(yaw) * -v) + c_x, 10)),
-		y = max(-10, min(self.object:get_velocity().y, 10)),
+		y = max(-10, min((self.object:get_velocity().y or 0), 10)),
 		z = max(-10, min((cos(yaw) * v) + c_y, 10))
 	})
 end
