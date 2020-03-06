@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200227",
+	version = "20200306",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -735,7 +735,7 @@ function mob_class:check_for_death(cmi_cause)
 
 	-- has health actually changed?
 	if self.health == self.old_health and self.health > 0 then
-		return
+		return false
 	end
 
 	self.old_health = self.health
@@ -894,7 +894,7 @@ function mob_class:do_env_damage()
 	-- remove mob if standing inside ignore node
 	if self.standing_in == "ignore" then
 		self.object:remove()
-		return
+		return true
 	end
 
 	-- is mob light sensative, or scared of the dark :P
@@ -909,7 +909,7 @@ function mob_class:do_env_damage()
 
 			effect(pos, 5, "tnt_smoke.png")
 
-			if self:check_for_death({type = "light"}) then return end
+			if self:check_for_death({type = "light"}) then return true end
 		end
 	end
 
@@ -928,7 +928,7 @@ function mob_class:do_env_damage()
 			effect(pos, 5, "bubble.png", nil, nil, 1, nil)
 
 			if self:check_for_death({type = "environment",
-					pos = pos, node = self.standing_in}) then return end
+					pos = pos, node = self.standing_in}) then return true end
 		end
 
 	-- lava or fire or ignition source
@@ -944,8 +944,8 @@ function mob_class:do_env_damage()
 
 			effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
 
-			if self:check_for_death({type = "environment",
-					pos = pos, node = self.standing_in, hot = true}) then return end
+			if self:check_for_death({type = "environment", pos = pos,
+					node = self.standing_in, hot = true}) then return true end
 		end
 
 	-- damage_per_second node check
@@ -956,7 +956,7 @@ function mob_class:do_env_damage()
 		effect(pos, 5, "tnt_smoke.png")
 
 		if self:check_for_death({type = "environment",
-				pos = pos, node = self.standing_in}) then return end
+				pos = pos, node = self.standing_in}) then return true end
 	end
 --[[
 	--- suffocation inside solid node
@@ -968,7 +968,7 @@ function mob_class:do_env_damage()
 		self.health = self.health - self.suffocation
 
 		if self:check_for_death({type = "environment",
-				pos = pos, node = self.standing_in}) then return end
+				pos = pos, node = self.standing_in}) then return true end
 	end
 ]]
 	self:check_for_death({type = "unknown"})
@@ -3241,7 +3241,7 @@ function mob_class:on_step(dtime)
 		self.env_damage_timer = 0
 
 		-- check for environmental damage (water, fire, lava etc.)
-		self:do_env_damage()
+		if self:do_env_damage() then return end
 
 		-- node replace check (cow eats grass etc.)
 		self:replace(pos)
