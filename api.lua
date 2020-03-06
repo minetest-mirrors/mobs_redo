@@ -971,7 +971,7 @@ function mob_class:do_env_damage()
 				pos = pos, node = self.standing_in}) then return true end
 	end
 ]]
-	self:check_for_death({type = "unknown"})
+	return self:check_for_death({type = "unknown"})
 end
 
 
