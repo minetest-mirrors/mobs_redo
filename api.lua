@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200306",
+	version = "20200312",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -234,9 +234,11 @@ function mob_class:set_velocity(v)
 	v = v or 0
 
 	-- set velocity with hard limit of 10
+	local vel = self.object:get_velocity()
+
 	self.object:set_velocity({
 		x = max(-10, min((sin(yaw) * -v) + c_x, 10)),
-		y = max(-10, min((self.object:get_velocity().y or 0), 10)),
+		y = max(-10, min((vel and vel.y or 0), 10)),
 		z = max(-10, min((cos(yaw) * v) + c_y, 10))
 	})
 end
@@ -835,6 +837,11 @@ end
 function mob_class:is_at_cliff()
 
 	if self.fear_height == 0 then -- 0 for no falling protection!
+		return false
+	end
+
+	-- if object no longer exists then return
+	if not self.object:get_luaentity() then
 		return false
 	end
 
