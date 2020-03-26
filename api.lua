@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200312",
+	version = "20200326",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3164,7 +3164,7 @@ function mob_class:on_step(dtime)
 
 	if self.delay and self.delay > 0 then
 
-		local yaw = self.object:get_yaw()
+		local yaw = self.object:get_yaw() or 0
 
 		if self.delay == 1 then
 			yaw = self.target_yaw
