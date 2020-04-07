@@ -3846,6 +3846,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				local mob = minetest.add_entity(pos, mob, data)
 				local ent = mob:get_luaentity()
 
+				if not ent then return end -- sanity check
+
 				-- set owner if not a monster
 				if ent.type ~= "monster" then
 					ent.owner = placer:get_player_name()
@@ -3890,6 +3892,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 				local mob = minetest.add_entity(pos, mob)
 				local ent = mob:get_luaentity()
+
+				if not ent then return end -- sanity check
 
 				-- don't set owner if monster or sneak pressed
 				if ent.type ~= "monster"
