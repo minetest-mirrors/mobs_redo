@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200406",
+	version = "20200407",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2534,6 +2534,9 @@ function mob_class:falling(pos)
 
 	-- floating in water (or falling)
 	local v = self.object:get_velocity()
+
+	-- sanity check
+	if not v then return end
 
 	if v.y > 0 then
 
