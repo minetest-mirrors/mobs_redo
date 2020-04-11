@@ -2783,6 +2783,10 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir)
 	and tflp >= punch_interval then
 
 		local v = self.object:get_velocity()
+
+		-- sanity check
+		if not v then return end
+
 		local kb = damage or 1
 		local up = 2
 
