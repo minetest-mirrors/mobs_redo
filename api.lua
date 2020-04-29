@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200427",
+	version = "20200429",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -150,12 +150,21 @@ local mob_class_meta = {__index = mob_class}
 -- play sound
 function mob_class:mob_sound(sound)
 
+	local pitch = 1.0
+
+	-- higher pitch for a child
+	if self.child then pitch = pitch * 1.5 end
+
+	-- a little random pitch to be different
+	pitch = pitch + math.random(-10, 10) * 0.005
+
 	if sound then
 		minetest.sound_play(sound, {
 			object = self.object,
 			gain = 1.0,
-			max_hear_distance = self.sounds.distance
-		})
+			max_hear_distance = self.sounds.distance,
+			pitch = pitch
+		}, true)
 	end
 end
 
@@ -215,17 +224,17 @@ end
 -- move mob in facing direction
 function mob_class:set_velocity(v)
 
+	-- halt mob if it has been ordered to stay
+	if self.order == "stand" then
+		self.object:set_velocity({x = 0, y = 0, z = 0})
+		return
+	end
+
 	local c_x, c_y = 0, 0
 
 	-- can mob be pushed, if so calculate direction
 	if self.pushable then
 		c_x, c_y = unpack(self:collision())
-	end
-
-	-- halt mob if it has been ordered to stay
-	if self.order == "stand" then
-		self.object:set_velocity({x = 0, y = 0, z = 0})
-		return
 	end
 
 	local yaw = (self.object:get_yaw() or 0) + self.rotate
@@ -668,6 +677,12 @@ end
 -- drop items
 function mob_class:item_drop()
 
+	-- no drops if disabled by setting
+	if not mobs_drop_items then return end
+
+	-- no drops for child mobs
+	if self.child then return end
+
 	local pos = self.object:get_pos()
 
 	-- check for drops function
@@ -677,12 +692,6 @@ function mob_class:item_drop()
 	if not self.drops or #self.drops == 0 then
 		return
 	end
-
-	-- no drops if disabled by setting
-	if not mobs_drop_items then return end
-
-	-- no drops for child mobs
-	if self.child then return end
 
 	-- was mob killed by player?
 	local death_by_player = self.cause_of_death and self.cause_of_death.puncher
@@ -742,12 +751,17 @@ function mob_class:check_for_death(cmi_cause)
 		return false
 	end
 
+	local damaged = self.health < self.old_health
+
 	self.old_health = self.health
 
 	-- still got some health? play hurt sound
 	if self.health > 0 then
 
-		self:mob_sound(self.sounds.damage)
+		-- only play hurt sound if damaged
+		if damaged then
+			self:mob_sound(self.sounds.damage)
+		end
 
 		-- make sure health isn't higher than max
 		if self.health > self.hp_max then
@@ -1117,8 +1131,6 @@ function mob_class:do_jump()
 			end
 		else
 			self.facing_fence = true
-
-			return false
 		end
 
 		-- if we jumped against a block/wall 4 times then turn
@@ -1510,6 +1522,10 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		minetest.after(1, function(self)
 
+			if not self.object:get_luaentity() then
+				return
+			end
+
 			if self.object:get_luaentity() then
 
 				if has_lineofsight then
@@ -1560,7 +1576,15 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		local dropheight = 6
 		if self.fear_height ~= 0 then dropheight = self.fear_height end
 
-		self.path.way = minetest.find_path(s, p1, 16, self.stepheight, dropheight, "Dijkstra")
+		local jumpheight = 0
+		if self.jump and self.jump_height >= 4 then
+			jumpheight = min(math.ceil(self.jump_height / 4), 4)
+		elseif self.stepheight > 0.5 then
+			jumpheight = 1
+		end
+
+		self.path.way = minetest.find_path(s, p1, 16, jumpheight,
+				dropheight, "Dijkstra")
 
 --[[
 		-- show path using particles
@@ -1680,8 +1704,9 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			-- will try again in 2 second
 			self.path.stuck_timer = stuck_timeout - 2
 
-			-- frustration! cant find the damn path :(
-			--self:mob_sound(self.sounds.random)
+	elseif s.y < p1.y and (not self.fly) then
+			self:do_jump() --add jump to pathfinding
+			self.path.following = true
 		else
 			-- yay i found path
 			self:mob_sound(self.sounds.war_cry)
@@ -1901,8 +1926,7 @@ end
 function mob_class:follow_flop()
 
 	-- find player to follow
-	if (self.follow ~= ""
-	or self.order == "follow")
+	if (self.follow ~= "" or self.order == "follow")
 	and not self.following
 	and self.state ~= "attack"
 	and self.state ~= "runaway" then
@@ -2342,7 +2366,7 @@ function mob_class:do_states(dtime)
 						effect(pos, 32, "tnt_smoke.png", nil, nil, node_break_radius, 1, 0)
 					end
 
-					return
+					return true
 				end
 			end
 
@@ -2772,12 +2796,12 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir)
 			minetest.sound_play(weapon_def.sounds[s], {
 				object = self.object,
 				max_hear_distance = 8
-			})
+			}, true)
 		else
 			minetest.sound_play("default_punch", {
 				object = self.object,
 				max_hear_distance = 5
-			})
+			}, true)
 		end
 
 		-- blood_particles
@@ -3321,7 +3345,7 @@ function mob_class:on_step(dtime)
 
 	self:follow_flop()
 
-	self:do_states(dtime)
+	if self:do_states(dtime) then return end
 
 	self:do_jump()
 
@@ -3702,6 +3726,7 @@ function mobs:register_arrow(name, def)
 		hit_player = def.hit_player,
 		hit_node = def.hit_node,
 		hit_mob = def.hit_mob,
+		hit_object = def.hit_object,
 		drop = def.drop or false, -- drops arrow as registered item when true
 		collisionbox = def.collisionbox or {0, 0, 0, 0, 0, 0},
 		timer = 0,
@@ -3723,7 +3748,8 @@ function mobs:register_arrow(name, def)
 			local pos = self.object:get_pos()
 
 			if self.switch == 0
-			or self.timer > 150 then
+			or self.timer > 150
+			or within_limits(pos, 0) then
 
 				self.object:remove() ; -- print ("removed arrow")
 
@@ -3796,6 +3822,19 @@ function mobs:register_arrow(name, def)
 
 						return
 					end
+
+					if entity
+					and self.hit_object
+					and (not entity._cmi_is_mob)
+					and tostring(player) ~= self.owner_id
+					and entity.name ~= self.object:get_luaentity().name then
+
+						self:hit_object(player)
+
+						self.object:remove();  -- print ("hit object")
+
+						return
+					end
 				end
 			end
 
@@ -3821,7 +3860,7 @@ function mobs:safe_boom(self, pos, radius)
 		pos = pos,
 		gain = 1.0,
 		max_hear_distance = self.sounds and self.sounds.distance or 32
-	})
+	}, true)
 
 	entity_physics(pos, radius)
 
