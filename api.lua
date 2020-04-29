@@ -508,9 +508,9 @@ function mobs:line_of_sight(entity, pos1, pos2, stepsize)
 end
 
 
-function mob_class:attempt_flight_correction()
+function mob_class:attempt_flight_correction(override)
 
-	if self:flight_check() then return true end
+	if self:flight_check() and override ~= true then return true end
 
 	-- We are not flying in what we are supposed to.
 	-- See if we can find intended flight medium and return to it
@@ -534,7 +534,7 @@ function mob_class:attempt_flight_correction()
 	local escape_direction = vector.direction(pos, escape_target)
 
 	self.object:set_velocity(
-		vector.multiply(escape_direction, self.run_velocity))
+		vector.multiply(escape_direction, 1)) --self.run_velocity))
 
 	return true
 end
@@ -2191,6 +2191,12 @@ function mob_class:do_states(dtime)
 			yaw = yaw + random(-0.5, 0.5)
 
 			yaw = self:set_yaw(yaw, 8)
+
+			-- for flying/swimming mobs randomly move up and down also
+			if self.fly_in
+			and not self.following then
+				self:attempt_flight_correction(true)
+			end
 		end
 
 		-- stand for great fall in front
@@ -2198,9 +2204,14 @@ function mob_class:do_states(dtime)
 		or self.at_cliff
 		or random(1, 100) <= self.stand_chance then
 
-			self:set_velocity(0)
-			self.state = "stand"
-			self:set_animation("stand", true)
+			-- don't stand if mob flies and keep_flying set
+			if (self.fly and not self.keep_flying)
+			or not self.fly then
+
+				self:set_velocity(0)
+				self.state = "stand"
+				self:set_animation("stand", true)
+			end
 		else
 			self:set_velocity(self.walk_velocity)
 
@@ -3385,6 +3396,7 @@ minetest.register_entity(name, setmetatable({
 	attack_type = def.attack_type,
 	fly = def.fly,
 	fly_in = def.fly_in,
+	keep_flying = def.keep_flying,
 	owner = def.owner,
 	order = def.order,
 	on_die = def.on_die,
