@@ -1086,13 +1086,15 @@ function mob_class:do_jump()
 		z = pos.z + dir_z
 	})
 
+	local blocked = minetest.registered_nodes[nodt.name].walkable
+
 --print ("in front:", nod.name, pos.y + 0.5)
 --print ("in front above:", nodt.name, pos.y + 1.5)
 
 	-- jump if standing on solid node (not snow) and not blocked above
 	if (self.walk_chance == 0
 	or minetest.registered_items[nod.name].walkable)
-	and minetest.registered_nodes[nodt.name].walkable ~= true
+	and not blocked
 	and nod.name ~= node_snow then
 
 		if not nod.name:find("fence")
@@ -1132,8 +1134,7 @@ function mob_class:do_jump()
 
 	-- if blocked against a block/wall for 5 counts then turn
 	if not self.following
-	and (self.object:get_velocity().x == 0
-	or self.object:get_velocity().z == 0) then
+	and (self.facing_fence or blocked) then
 
 		self.jump_count = (self.jump_count or 0) + 1
 --print ("----", self.jump_count)
