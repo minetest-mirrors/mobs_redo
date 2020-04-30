@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200429",
+	version = "20200430",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1086,20 +1086,14 @@ function mob_class:do_jump()
 		z = pos.z + dir_z
 	})
 
-	-- is there space to jump up?
-	if minetest.registered_nodes[nodt.name].walkable == true then
-		return false
-	end
-
-	-- thin blocks that do not need to be jumped
-	if nod.name == node_snow then
-		return false
-	end
-
 --print ("in front:", nod.name, pos.y + 0.5)
+--print ("in front above:", nodt.name, pos.y + 1.5)
 
-	if self.walk_chance == 0
-	or minetest.registered_items[nod.name].walkable then
+	-- jump if standing on solid node (not snow) and not blocked above
+	if (self.walk_chance == 0
+	or minetest.registered_items[nod.name].walkable)
+	and minetest.registered_nodes[nodt.name].walkable ~= true
+	and nod.name ~= node_snow then
 
 		if not nod.name:find("fence")
 		and not nod.name:find("gate")
@@ -1129,27 +1123,29 @@ function mob_class:do_jump()
 			if self:get_velocity() > 0 then
 				self:mob_sound(self.sounds.jump)
 			end
+
+			return true
 		else
 			self.facing_fence = true
 		end
+	end
 
-		-- if we jumped against a block/wall 4 times then turn
-		if self.object:get_velocity().x ~= 0
-		or self.object:get_velocity().z ~= 0 then
+	-- if blocked against a block/wall for 5 counts then turn
+	if not self.following
+	and (self.object:get_velocity().x == 0
+	or self.object:get_velocity().z == 0) then
 
-			self.jump_count = (self.jump_count or 0) + 1
+		self.jump_count = (self.jump_count or 0) + 1
 --print ("----", self.jump_count)
-			if self.jump_count == 4 then
+		if self.jump_count > 4 then
 
-				local yaw = self.object:get_yaw() or 0
+			local yaw = self.object:get_yaw() or 0
+			local turn = random(0, 2) + 1.35
 
-				yaw = self:set_yaw(yaw + 1.35, 8)
---print ("---- turn")
-				self.jump_count = 0
-			end
+			yaw = self:set_yaw(yaw + turn, 12)
+--print ("---- turn", turn)
+			self.jump_count = 0
 		end
-
-		return true
 	end
 
 	return false
