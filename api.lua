@@ -52,6 +52,7 @@ local remove_far = minetest.settings:get_bool("remove_far_mobs") ~= false
 local difficulty = tonumber(minetest.settings:get("mob_difficulty")) or 1.0
 local show_health = minetest.settings:get_bool("mob_show_health") ~= false
 local max_per_block = tonumber(minetest.settings:get("max_objects_per_block") or 99)
+local mob_nospawn_range = tonumber(minetest.settings:get("mob_nospawn_range") or 12)
 local mob_chance_multiplier = tonumber(minetest.settings:get("mob_chance_multiplier") or 1)
 
 -- Peaceful mode message so players will know there are no monsters
@@ -3654,8 +3655,9 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 				return
 			end
 
-			-- only spawn away from player
-			local objs = minetest.get_objects_inside_radius(pos, 12)
+			-- only spawn a set distance away from player
+			local objs = minetest.get_objects_inside_radius(
+					pos, mob_nospawn_range)
 
 			for n = 1, #objs do
 

@@ -632,6 +632,7 @@ External Settings for "minetest.conf"
    'mobs_griefing'          when false mobs cannot break blocks when using either
                             pathfinding level 2, replace functions or mobs:boom
                             function.
+   'mob_nospawn_range'      Minimum range a mob can spawn near player (def: 12)
 
 Players can override the spawn chance for each mob registered by adding a line
 to their minetest.conf file with a new value, the lower the value the more each
