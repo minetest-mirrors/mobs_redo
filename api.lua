@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200501",
+	version = "20200502",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1018,13 +1018,20 @@ function mob_class:do_env_damage()
 	end
 
 	--- suffocation inside solid node
-	if (self.suffocation ~= 0)
+	if (self.suffocation and self.suffocation ~= 0)
 	and (nodef.walkable == nil or nodef.walkable == true)
 	and (nodef.collision_box == nil or nodef.collision_box.type == "regular")
 	and (nodef.node_box == nil or nodef.node_box.type == "regular")
 	and (nodef.groups.disable_suffocation ~= 1) then
 
-		self.health = self.health - self.suffocation
+		local damage
+		if self.suffocation == true then
+			damage = 2
+		else
+			damage = (self.suffocation or 2)
+		end
+
+		self.health = self.health - damage
 
 		if self:check_for_death({type = "suffocation",
 				pos = pos, node = self.standing_in}) then return true end
