@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200504",
+	version = "20200505",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1423,7 +1423,7 @@ function mob_class:replace(pos)
 
 		if self.on_replace then
 
-			local oldnode = what
+			local oldnode = what or ""
 			local newnode = with
 
 			-- convert any group: replacements to actual node name
