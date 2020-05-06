@@ -299,8 +299,7 @@ end
 -- set defined animation
 function mob_class:set_animation(anim, force)
 
-	if not self.animation
-	or not anim then return end
+	if not self.animation or not anim then return end
 
 	self.animation.current = self.animation.current or ""
 
@@ -378,10 +377,9 @@ local line_of_sight = function(self, pos1, pos2, stepsize)
 	local ad = 0
 
 	-- It continues to advance in the line of sight in search of a real
-	-- obstruction which counts as 'normal' nodebox.
+	-- obstruction which counts as 'walkable' nodebox.
 	while minetest.registered_nodes[nn]
 	and (minetest.registered_nodes[nn].walkable == false) do
---	or minetest.registered_nodes[nn].drawtype == "nodebox") do
 
 		-- Check if you can still move forward
 		if td < ad + stepsize then
@@ -444,10 +442,9 @@ local new_line_of_sight = function(self, pos1, pos2, stepsize)
 	local nn = minetest.get_node(pos).name
 
 	-- It continues to advance in the line of sight in search of a real
-	-- obstruction which counts as 'normal' nodebox.
+	-- obstruction which counts as 'walkable' nodebox.
 	while minetest.registered_nodes[nn]
 	and (minetest.registered_nodes[nn].walkable == false) do
---	or minetest.registered_nodes[nn].drawtype == "nodebox") do
 
 		npos1 = vector.add(npos1, stepv)
 
@@ -679,11 +676,8 @@ end
 -- drop items
 function mob_class:item_drop()
 
-	-- no drops if disabled by setting
-	if not mobs_drop_items then return end
-
-	-- no drops for child mobs
-	if self.child then return end
+	-- no drops if disabled by setting or mob is child
+	if not mobs_drop_items or self.child then return end
 
 	local pos = self.object:get_pos()
 
@@ -719,7 +713,7 @@ function mob_class:item_drop()
 				end
 			end
 
-			-- only drop rare items (drops.min=0) if killed by player
+			-- only drop rare items (drops.min = 0) if killed by player
 			if death_by_player then
 				obj = minetest.add_item(pos, ItemStack(item .. " " .. num))
 
@@ -810,7 +804,7 @@ function mob_class:check_for_death(cmi_cause)
 		return true
 	end
 
-	-- default death function and die animation (if defined)
+	-- check for custom death function and die animation
 	if self.animation
 	and self.animation.die_start
 	and self.animation.die_end then
@@ -909,22 +903,21 @@ function mob_class:is_at_cliff()
 		{x = pos.x + dir_x, y = ypos, z = pos.z + dir_z},
 		{x = pos.x + dir_x, y = ypos - self.fear_height, z = pos.z + dir_z})
 
-	-- check for straight drop, drop onto danger or walkable node
+	-- check for straight drop
 	if free_fall then
 		return true
-	else
-		local bnode = node_ok(blocker)
-
-		if is_node_dangerous(self, bnode.name) then
-			return true
-		else
-			local def = minetest.registered_nodes[bnode.name]
-
-			return (not def and def.walkable)
-		end
 	end
 
-	return false
+	local bnode = node_ok(blocker)
+
+	-- will we drop onto dangerous node?
+	if is_node_dangerous(self, bnode.name) then
+		return true
+	end
+
+	local def = minetest.registered_nodes[bnode.name]
+
+	return (not def and def.walkable)
 end
 
 
@@ -951,7 +944,9 @@ function mob_class:do_env_damage()
 
 	-- remove mob if standing inside ignore node
 	if self.standing_in == "ignore" then
+
 		self.object:remove()
+
 		return true
 	end
 
@@ -976,8 +971,7 @@ function mob_class:do_env_damage()
 	pos.y = pos.y + 1 -- for particle effect position
 
 	-- water
-	if self.water_damage
-	and nodef.groups.water then
+	if self.water_damage and nodef.groups.water then
 
 		if self.water_damage ~= 0 then
 
@@ -989,12 +983,8 @@ function mob_class:do_env_damage()
 					pos = pos, node = self.standing_in}) then return true end
 		end
 
-	-- lava or fire or ignition source
-	elseif self.lava_damage
-	and nodef.groups.igniter then
---	and (nodef.groups.lava
---	or self.standing_in == node_fire
---	or self.standing_in == node_permanent_flame) then
+	-- ignition source (fire or lava)
+	elseif self.lava_damage and nodef.groups.igniter then
 
 		if self.lava_damage ~= 0 then
 
@@ -1025,6 +1015,7 @@ function mob_class:do_env_damage()
 	and (nodef.groups.disable_suffocation ~= 1) then
 
 		local damage
+
 		if self.suffocation == true then
 			damage = 2
 		else
@@ -1147,14 +1138,14 @@ function mob_class:do_jump()
 	and (self.facing_fence or blocked) then
 
 		self.jump_count = (self.jump_count or 0) + 1
---print ("----", self.jump_count)
+
 		if self.jump_count > 4 then
 
 			local yaw = self.object:get_yaw() or 0
 			local turn = random(0, 2) + 1.35
 
 			yaw = self:set_yaw(yaw + turn, 12)
---print ("---- turn", turn)
+
 			self.jump_count = 0
 		end
 	end
@@ -1460,11 +1451,11 @@ end
 local los_switcher = false
 local height_switcher = false
 
--- path finding and smart mob routine by rnd, line_of_sight and other edits by Elkien3
+-- path finding and smart mob routine by rnd,
+-- line_of_sight and other edits by Elkien3
 function mob_class:smart_mobs(s, p, dist, dtime)
 
 	local s1 = self.path.lastpos
-
 	local target_pos = self.attack:get_pos()
 
 	-- is it becoming stuck?
@@ -1563,7 +1554,6 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		-- round position to center of node to avoid stuck in walls
 		-- also adjust height for player models!
 		s.x = floor(s.x + 0.5)
---		s.y = floor(s.y + 0.5) - sheight
 		s.z = floor(s.z + 0.5)
 
 		local ssight, sground = minetest.line_of_sight(s, {
@@ -1581,9 +1571,11 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		p1.z = floor(p1.z + 0.5)
 
 		local dropheight = 6
+
 		if self.fear_height ~= 0 then dropheight = self.fear_height end
 
 		local jumpheight = 0
+
 		if self.jump and self.jump_height >= 4 then
 			jumpheight = min(math.ceil(self.jump_height / 4), 4)
 		elseif self.stepheight > 0.5 then
@@ -2040,6 +2032,7 @@ function mob_class:follow_flop()
 			self:set_animation("stand")
 
 			return
+
 		elseif self.state == "flop" then
 			self.state = "stand"
 		end
@@ -2153,10 +2146,19 @@ function mob_class:do_states(dtime)
 		if lp then
 
 			-- if mob in dangerous node then look for land
-			if is_node_dangerous(self, self.standing_in) then
+			if not is_node_dangerous(self, self.standing_in) then
 
-				lp = minetest.find_node_near(s, 5, {"group:soil", "group:stone",
-					"group:sand", node_ice, node_snowblock})
+--				lp = minetest.find_node_near(s, 5, {"group:soil", "group:stone",
+--					"group:sand", node_ice, node_snowblock})
+
+				lp = minetest.find_nodes_in_area_under_air(
+					{s.x - 5, s.y - 5, s.z - 5},
+					{s.x + 5, s.y + 5, s.z + 5},
+					{"group:soil", "group:stone", "group:sand",
+							node_ice, node_snowblock})
+
+				-- select position of random block to climb onto
+				lp = #lp > 0 and lp[random(#lp)]
 
 				-- did we find land?
 				if lp then
