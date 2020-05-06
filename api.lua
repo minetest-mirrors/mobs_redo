@@ -2973,7 +2973,7 @@ end
 
 
 -- get entity staticdata
-function mob_class:get_staticdata()
+function mob_class:mob_staticdata()
 
 	-- remove mob when out of range unless tamed
 	if remove_far
@@ -2983,11 +2983,12 @@ function mob_class:get_staticdata()
 	and not self.tamed
 	and self.lifetimer < 20000 then
 
-		--print ("REMOVED " .. self.name)
+--		print ("REMOVED " .. self.name)
 
 		self.object:remove()
 
-		return ""-- nil
+		--return "" -- nil
+		return minetest.serialize({remove_ok = true, static_save = true})
 	end
 
 	self.remove_ok = true
@@ -3002,7 +3003,8 @@ function mob_class:get_staticdata()
 	end
 
 	if use_cmi then
-		self.serialized_cmi_components = cmi.serialize_components(self._cmi_components)
+		self.serialized_cmi_components = cmi.serialize_components(
+				self._cmi_components)
 	end
 
 	local tmp = {}
@@ -3132,8 +3134,19 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.path.following = false -- currently following path?
 	self.path.stuck_timer = 0 -- if stuck for too long search for path
 
+	-- Armor groups
+	-- immortal=1 because we use custom health
+	-- handling (using "health" property)
+	local armor
+	if type(self.armor) == "table" then
+		armor = table.copy(self.armor)
+		armor.immortal = 1
+	else
+		armor = {immortal = 1, fleshy = self.armor}
+	end
+	self.object:set_armor_groups(armor)
+
 	-- mob defaults
-	self.object:set_armor_groups({immortal = 1, fleshy = self.armor})
 	self.old_y = self.object:get_pos().y
 	self.old_health = self.health
 	self.sounds.distance = self.sounds.distance or 10
@@ -3155,6 +3168,11 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self:update_tag()
 	self:set_animation("stand")
 
+	-- set 5.x flag to remove monsters when map area unloaded
+	if remove_far and self.type == "monster" then
+		self.static_save = false
+	end
+
 	-- run on_spawn function if found
 	if self.on_spawn and not self.on_spawn_run then
 		if self.on_spawn(self) then
@@ -3168,7 +3186,8 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	end
 
 	if use_cmi then
-		self._cmi_components = cmi.activate_components(self.serialized_cmi_components)
+		self._cmi_components = cmi.activate_components(
+				self.serialized_cmi_components)
 		cmi.notify_activate(self.object, dtime)
 	end
 end
@@ -3506,6 +3525,10 @@ minetest.register_entity(name, setmetatable({
 		return self:mob_activate(staticdata, def, dtime)
 	end,
 
+	get_staticdata = function(self)
+		return self:mob_staticdata(self)
+	end,
+
 }, mob_class_meta))
 
 end -- END mobs:register_mob function
@@ -3564,12 +3587,13 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 		aoc = tonumber(numbers[2]) or aoc
 
 		if chance == 0 then
-			minetest.log("warning", string.format("[mobs] %s has spawning disabled", name))
+			minetest.log("warning",
+					string.format("[mobs] %s has spawning disabled", name))
 			return
 		end
 
-		minetest.log("action",
-			string.format("[mobs] Chance setting for %s changed to %s (total: %s)",
+		minetest.log("action", string.format(
+				"[mobs] Chance setting for %s changed to %s (total: %s)",
 				name, chance, aoc))
 
 	end
@@ -3807,7 +3831,8 @@ function mobs:register_arrow(name, def)
 
 		on_activate = def.on_activate,
 
-		on_punch = def.on_punch or function(self, hitter, tflp, tool_capabilities, dir)
+		on_punch = def.on_punch or function(
+				self, hitter, tflp, tool_capabilities, dir)
 		end,
 
 		on_step = def.on_step or function(self, dtime)
@@ -3855,7 +3880,8 @@ function mobs:register_arrow(name, def)
 
 						self.lastpos = (self.lastpos or pos)
 
-						minetest.add_item(self.lastpos, self.object:get_luaentity().name)
+						minetest.add_item(self.lastpos,
+								self.object:get_luaentity().name)
 					end
 
 					self.object:remove() ; -- print ("hit node")
@@ -3992,7 +4018,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			local under = minetest.get_node(pointed_thing.under)
 			local def = minetest.registered_nodes[under.name]
 			if def and def.on_rightclick then
-				return def.on_rightclick(pointed_thing.under, under, placer, itemstack)
+				return def.on_rightclick(
+						pointed_thing.under, under, placer, itemstack)
 			end
 
 			if pos
@@ -4040,7 +4067,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			local under = minetest.get_node(pointed_thing.under)
 			local def = minetest.registered_nodes[under.name]
 			if def and def.on_rightclick then
-				return def.on_rightclick(pointed_thing.under, under, placer, itemstack)
+				return def.on_rightclick(
+						pointed_thing.under, under, placer, itemstack)
 			end
 
 			if pos
