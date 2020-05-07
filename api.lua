@@ -590,8 +590,8 @@ local yaw_to_pos = function(self, target, rot)
 	return yaw
 end
 
-function mobs:turn_to_pos(self, target, rot)
-	return turn_to_pos(self, target, rot)
+function mobs:yaw_to_pos(self, target, rot)
+	return yaw_to_pos(self, target, rot)
 end
 
 
