@@ -3972,7 +3972,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 				local data = itemstack:get_metadata()
 				local mob = minetest.add_entity(pos, mob, data)
-				local ent = mob:get_luaentity()
+				local ent = mob and mob:get_luaentity()
 
 				if not ent then return end -- sanity check
 
@@ -4020,7 +4020,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				pos.y = pos.y + 1
 
 				local mob = minetest.add_entity(pos, mob)
-				local ent = mob:get_luaentity()
+				local ent = mob and mob:get_luaentity()
 
 				if not ent then return end -- sanity check
 
