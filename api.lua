@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200508",
+	version = "20200513",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1430,8 +1430,9 @@ function mob_class:replace(pos)
 			local oldnode = what or ""
 			local newnode = with
 
-			-- convert any group: replacements to actual node name
-			if oldnode:find("group:") then
+			-- pass actual node name when using table or groups
+			if type(oldnode) == "table"
+			or oldnode:find("group:") then
 				oldnode = minetest.get_node(pos).name
 			end
 
@@ -2892,11 +2893,13 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir)
 
 			if obj and obj._cmi_is_mob then
 
-				-- only alert members of same mob
+				-- only alert members of same mob and assigned helper
 				if obj.group_attack == true
 				and obj.state ~= "attack"
 				and obj.owner ~= name
-				and obj.name == self.name then
+				and (obj.name == self.name
+						or obj.name == self.group_helper) then
+
 					obj:do_attack(hitter)
 				end
 
@@ -3440,6 +3443,7 @@ minetest.register_entity(name, setmetatable({
 	dogshoot_count_max = def.dogshoot_count_max,
 	dogshoot_count2_max = def.dogshoot_count2_max or def.dogshoot_count_max,
 	group_attack = def.group_attack,
+	group_helper = def.group_helper,
 	attack_monsters = def.attacks_monsters or def.attack_monsters,
 	attack_animals = def.attack_animals,
 	attack_players = def.attack_players,

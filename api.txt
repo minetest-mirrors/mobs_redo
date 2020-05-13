@@ -89,6 +89,9 @@ functions needed for the mob to work properly which contains the following:
                          punches when nearby.
    'group_attack'        when true has same mob type grouping together to attack
                          offender.
+   'group_helper'        string containing mob name that attacks alongside
+                         current mob when group attacking.
+                         mob is attacking in groups.
    'attack_type'         tells the api what a mob does when attacking the player
                          or another mob:
       'dogfight'         is a melee attack when player is within mob reach.
