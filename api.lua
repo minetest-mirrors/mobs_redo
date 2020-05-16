@@ -6,15 +6,10 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200515",
+	version = "20200516",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
-
--- mob table and limit (not active)
-local active_mobs = 0
-local active_limit = 99
-
 
 -- creative check
 local creative_cache = minetest.settings:get_bool("creative_mode")
@@ -59,7 +54,11 @@ local difficulty = tonumber(minetest.settings:get("mob_difficulty")) or 1.0
 local show_health = minetest.settings:get_bool("mob_show_health") ~= false
 local max_per_block = tonumber(minetest.settings:get("max_objects_per_block") or 99)
 local mob_nospawn_range = tonumber(minetest.settings:get("mob_nospawn_range") or 12)
-local mob_chance_multiplier = tonumber(minetest.settings:get("mob_chance_multiplier") or 1)
+local active_limit = tonumber(minetest.settings:get("mob_active_limit") or 0)
+local mob_chance_multiplier =
+		tonumber(minetest.settings:get("mob_chance_multiplier") or 1)
+local active_mobs = 0
+
 
 -- Peaceful mode message so players will know there are no monsters
 if peaceful_only then
@@ -763,9 +762,9 @@ local remove_mob = function(self, decrease)
 
 	self.object:remove()
 
-	if decrease then
+	if decrease and active_limit > 0 then
 
---		active_mobs = active_mobs - 1
+		active_mobs = active_mobs - 1
 
 		if active_mobs < 0 then
 			active_mobs = 0
@@ -1361,7 +1360,7 @@ function mob_class:breed()
 				ent.hornytimer = 41
 
 				-- have we reached active mob limit
-				if active_mobs >= active_limit then
+				if active_limit > 0 and active_mobs >= active_limit then
 					minetest.chat_send_player(self.owner,
 							S("Active Mob Limit Reached!")
 							.. "  (" .. active_mobs
@@ -1390,8 +1389,6 @@ function mob_class:breed()
 					local mob = minetest.add_entity(pos, self.name)
 					local ent2 = mob:get_luaentity()
 					local textures = self.base_texture
-
---					active_mobs = active_mobs + 1
 
 					-- using specific child texture (if found)
 					if self.child_texture then
@@ -2969,6 +2966,13 @@ end
 -- get entity staticdata
 function mob_class:mob_staticdata()
 
+	-- this handles mob count for mobs activated, unloaded, reloaded
+	if active_limit > 0 and self.active_toggle then
+		active_mobs = active_mobs + self.active_toggle
+		self.active_toggle = -self.active_toggle
+--print("-- staticdata", active_mobs, active_limit, self.active_toggle)
+	end
+
 	-- remove mob when out of range unless tamed
 	if remove_far
 	and self.remove_ok
@@ -3005,9 +3009,7 @@ function mob_class:mob_staticdata()
 
 		local t = type(stat)
 
-		if  t ~= "function"
-		and t ~= "nil"
-		and t ~= "userdata"
+		if  t ~= "function" and t ~= "nil" and t ~= "userdata"
 		and _ ~= "_cmi_components" then
 			tmp[_] = self[_]
 		end
@@ -3022,19 +3024,25 @@ end
 -- activate mob and reload settings
 function mob_class:mob_activate(staticdata, def, dtime)
 
+	-- if dtime == 0 then entity has just been created
+	-- anything higher means it is respawning (thanks SorceryKid)
+	if dtime == 0 and active_limit > 0 then
+		self.active_toggle = 1
+	end
+
+	-- remove mob if not tamed and mob total reached
+	if active_limit > 0 and active_mobs >= active_limit and not self.tamed then
+
+		remove_mob(self)
+--print("-- mob limit reached, removing " .. self.name)
+		return
+	end
+
 	-- remove monsters in peaceful mode
 	if self.type == "monster" and peaceful_only then
 
 		remove_mob(self, true)
 
-		return
-	end
-
-	-- remove mob if not tamed and mob total reached
-	if active_mobs >= active_limit and not self.tamed then
-
-		remove_mob(self)
---print("-- mob limit reached, removing " .. self.name)
 		return
 	end
 
@@ -3045,13 +3053,6 @@ function mob_class:mob_activate(staticdata, def, dtime)
 		for _,stat in pairs(tmp) do
 			self[_] = stat
 		end
-	end
-
-	-- add currently spawned mobs to total
-	-- this is buggy as it doubles count when mobs unloaded and reloaded
-	if self.standing_in then
---		active_mobs = active_mobs + 1
---print("-- active mobs: " .. active_mobs .. " / " .. active_limit)
 	end
 
 	-- force current model into mob
@@ -3101,10 +3102,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	-- set child objects to half size
 	if self.child == true then
 
-		vis_size = {
-			x = self.base_size.x * .5,
-			y = self.base_size.y * .5,
-		}
+		vis_size = {x = self.base_size.x * .5, y = self.base_size.y * .5}
 
 		if def.child_texture then
 			textures = def.child_texture[1]
@@ -3632,7 +3630,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 			end
 
 			-- are we over active mob limit
-			if active_mobs >= active_limit then
+			if active_limit > 0 and active_mobs >= active_limit then
 --print("--- active mob limit reached", active_mobs, active_limit)
 				return
 			end
@@ -3779,8 +3777,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 			end
 
 			local mob = minetest.add_entity(pos, name)
-
---			active_mobs = active_mobs + 1
 
 --			print("[mobs] Spawned " .. name .. " at "
 --			.. minetest.pos_to_string(pos) .. " on "
@@ -4056,8 +4052,6 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 				if not ent then return end -- sanity check
 
---				active_mobs = active_mobs + 1
-
 				-- set owner if not a monster
 				if ent.type ~= "monster" then
 					ent.owner = placer:get_player_name()
@@ -4102,7 +4096,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				end
 
 				-- have we reached active mob limit
-				if active_mobs >= active_limit then
+				if active_limit > 0 and active_mobs >= active_limit then
 					minetest.chat_send_player(placer:get_player_name(),
 							S("Active Mob Limit Reached!")
 							.. "  (" .. active_mobs
@@ -4116,8 +4110,6 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				local ent = mob and mob:get_luaentity()
 
 				if not ent then return end -- sanity check
-
---				active_mobs = active_mobs + 1
 
 				-- don't set owner if monster or sneak pressed
 				if ent.type ~= "monster"
