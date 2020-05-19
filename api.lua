@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200516",
+	version = "20200519",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -982,7 +982,7 @@ function mob_class:do_env_damage()
 	-- halt mob if standing inside ignore node
 	if self.standing_in == "ignore" then
 
-		self.object:set_velocity(0)
+		self.object:set_velocity({x  = 0, y = 0, z = 0})
 
 		return true
 	end
@@ -1438,11 +1438,14 @@ end
 -- find and replace what mob is looking for (grass, wheat etc.)
 function mob_class:replace(pos)
 
+	local vel = self.object:get_velocity()
+	if not vel then return end
+
 	if not mobs_griefing
 	or not self.replace_rate
 	or not self.replace_what
 	or self.child == true
-	or self.object:get_velocity().y ~= 0
+	or vel.y ~= 0
 	or random(1, self.replace_rate) > 1 then
 		return
 	end
