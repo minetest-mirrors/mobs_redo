@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200525",
+	version = "20200527",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -988,6 +988,9 @@ function mob_class:do_env_damage()
 		return true
 	end
 
+	-- particle appears at random mob height
+	pos.y = pos.y + random(self.collisionbox[2], self.collisionbox[5])
+
 	-- is mob light sensative, or scared of the dark :P
 	if self.light_damage ~= 0 then
 
@@ -1007,8 +1010,6 @@ function mob_class:do_env_damage()
 	end
 
 	local nodef = minetest.registered_nodes[self.standing_in]
-
-	pos.y = pos.y + 1 -- for particle effect position
 
 	-- water
 	if self.water_damage and nodef.groups.water then
@@ -1032,7 +1033,7 @@ function mob_class:do_env_damage()
 
 			self.health = self.health - self.lava_damage
 
-			effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
+			effect(pos, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
 
 			if self:check_for_death({type = "environment", pos = pos,
 					node = self.standing_in, hot = true}) then
