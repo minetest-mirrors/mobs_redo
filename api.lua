@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200528",
+	version = "20200609",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2938,7 +2938,8 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	and self.child == false
 	and self.attack_players == true
 	and hitter:get_player_name() ~= self.owner
-	and not mobs.invis[ name ] then
+	and not mobs.invis[ name ]
+	and self.object ~= hitter then
 
 		-- attack whoever punched mob
 		self.state = ""
