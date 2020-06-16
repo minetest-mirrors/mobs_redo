@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200609",
+	version = "20200616",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -590,7 +590,7 @@ local yaw_to_pos = function(self, target, rot)
 		yaw = yaw + pi
 	end
 
-	yaw = self:set_yaw(yaw, 6)
+	yaw = self:set_yaw(yaw, rot)
 
 	return yaw
 end
