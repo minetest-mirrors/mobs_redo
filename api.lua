@@ -1224,7 +1224,6 @@ local entity_physics = function(pos, radius)
 
 		-- punches work on entities AND players
 		objs[n]:punch(objs[n], 1.0, {
---		objs[n]:punch(nil, 1.0, {
 			full_punch_interval = 1.0,
 			damage_groups = {fleshy = damage},
 		}, pos)
@@ -2524,9 +2523,11 @@ function mob_class:do_states(dtime)
 
 				self:set_velocity(0)
 
-				if not self.custom_attack then
+				if self.timer > 1 then
 
-					if self.timer > 1 then
+					-- no custom attack or custom attack returns true to continue
+					if not self.custom_attack
+					or self:custom_attack(self, p) == true then
 
 						self.timer = 0
 						self:set_animation("punch")
@@ -2554,14 +2555,6 @@ function mob_class:do_states(dtime)
 								damage_groups = {fleshy = self.damage}
 							}, nil)
 						end
-					end
-				else	-- call custom attack every second
-					if self.custom_attack
-					and self.timer > 1 then
-
-						self.timer = 0
-
-						self:custom_attack(p)
 					end
 				end
 			end
