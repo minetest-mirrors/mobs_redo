@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200616",
+	version = "20200619",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3022,7 +3022,9 @@ function mob_class:mob_staticdata()
 
 		local t = type(stat)
 
-		if  t ~= "function" and t ~= "nil" and t ~= "userdata"
+		if  t ~= "function"
+		and t ~= "nil"
+		and t ~= "userdata"
 		and _ ~= "_cmi_components" then
 			tmp[_] = self[_]
 		end
@@ -3063,8 +3065,16 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	local tmp = minetest.deserialize(staticdata)
 
 	if tmp then
+
 		for _,stat in pairs(tmp) do
-			self[_] = stat
+
+			local t = type(stat)
+
+			if t ~= "function"
+			and t ~= "nil"
+			and t ~= "userdata" then
+				self[_] = stat
+			end
 		end
 	end
 
@@ -3945,7 +3955,7 @@ function mobs:register_arrow(name, def)
 
 						self:hit_mob(player)
 
-						self.object:remove() ;  --print("hit mob")
+						self.object:remove() ; --print("hit mob")
 
 						return
 					end
@@ -3958,7 +3968,7 @@ function mobs:register_arrow(name, def)
 
 						self:hit_object(player)
 
-						self.object:remove();  -- print("hit object")
+						self.object:remove() ; -- print("hit object")
 
 						return
 					end
@@ -4144,7 +4154,6 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			return itemstack
 		end,
 	})
-
 end
 
 
@@ -4160,7 +4169,9 @@ function mobs:force_capture(self, clicker)
 
 		local t = type(stat)
 
-		if  t ~= "function" and t ~= "nil" and t ~= "userdata" then
+		if  t ~= "function"
+		and t ~= "nil"
+		and t ~= "userdata" then
 			tmp[_] = self[_]
 		end
 	end
