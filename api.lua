@@ -3016,11 +3016,11 @@ function mob_class:mob_staticdata()
 				self._cmi_components)
 	end
 
-	local tmp = {}
+	local tmp, t = {}
 
 	for _,stat in pairs(self) do
 
-		local t = type(stat)
+		t = type(stat)
 
 		if  t ~= "function"
 		and t ~= "nil"
@@ -3066,9 +3066,11 @@ function mob_class:mob_activate(staticdata, def, dtime)
 
 	if tmp then
 
+		local t
+
 		for _,stat in pairs(tmp) do
 
-			local t = type(stat)
+			t = type(stat)
 
 			if t ~= "function"
 			and t ~= "nil"
@@ -4163,11 +4165,11 @@ function mobs:force_capture(self, clicker)
 	-- add special mob egg with all mob information
 	local new_stack = ItemStack(self.name .. "_set")
 
-	local tmp = {}
+	local tmp, t = {}
 
 	for _,stat in pairs(self) do
 
-		local t = type(stat)
+		t = type(stat)
 
 		if  t ~= "function"
 		and t ~= "nil"
@@ -4276,11 +4278,11 @@ function mobs:capture_mob(self, clicker, chance_hand, chance_net,
 
 				new_stack = ItemStack(mobname .. "_set")
 
-				local tmp = {}
+				local tmp, t = {}
 
 				for _,stat in pairs(self) do
 
-					local t = type(stat)
+					t = type(stat)
 
 					if  t ~= "function"
 					and t ~= "nil"
