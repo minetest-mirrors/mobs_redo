@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200619",
+	version = "20200620",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -645,7 +645,14 @@ local effect = function(pos, amount, texture, min_size, max_size,
 	max_size = max_size or 1
 	gravity = gravity or -10
 	glow = glow or 0
-	fall = fall and 0 or -radius
+
+	if fall == true then
+		fall = 0
+	elseif fall == false then
+		fall = radius
+	else
+		fall = -radius
+	end
 
 	minetest.add_particlespawner({
 		amount = amount,
@@ -663,6 +670,12 @@ local effect = function(pos, amount, texture, min_size, max_size,
 		texture = texture,
 		glow = glow
 	})
+end
+
+function mobs:effect(pos, amount, texture, min_size, max_size,
+		radius, gravity, glow, fall)
+
+	effect(pos, amount, texture, min_size, max_size, radius, gravity, glow, fall)
 end
 
 
@@ -3862,6 +3875,7 @@ function mobs:register_arrow(name, def)
 		drop = def.drop or false, -- drops arrow as registered item when true
 		collisionbox = def.collisionbox or {-.1, -.1, -.1, .1, .1, .1},
 		timer = 0,
+		lifetime = def.lifetime or 4.5,
 		switch = 0,
 		owner_id = def.owner_id,
 		rotate = def.rotate,
@@ -3876,11 +3890,11 @@ function mobs:register_arrow(name, def)
 
 		on_step = def.on_step or function(self, dtime)
 
-			self.timer = self.timer + 1
+			self.timer = self.timer + dtime
 
 			local pos = self.object:get_pos()
 
-			if self.switch == 0 or self.timer > 150 then
+			if self.switch == 0 or self.timer > self.lifetime then
 
 				self.object:remove() ; -- print("removed arrow")
 
