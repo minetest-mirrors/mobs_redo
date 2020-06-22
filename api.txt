@@ -328,6 +328,18 @@ for each mob.
    'self.nametag'       contains the name of the mob which it can show above
 
 
+Adding Mobs in World
+--------------------
+
+	mobs:add_mob(pos, {
+		name = "mobs_animal:chicken",
+		child = true,
+		owner = "singleplayer",
+		nametag = "Bessy",
+		ignore_count = true -- ignores mob count per map area
+	})
+
+
 Spawning Mobs in World
 ----------------------
 
