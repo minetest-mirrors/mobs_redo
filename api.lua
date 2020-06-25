@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200622",
+	version = "20200625",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3707,7 +3707,7 @@ function mobs:add_mob(pos, def)
 		ent:update_tag()
 	end
 
-	return true
+	return ent
 end
 
 
