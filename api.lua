@@ -265,7 +265,7 @@ function mob_class:set_velocity(v)
 
 	-- assume any mob not flying will slow down in water as mobs flying in air
 	-- wont be near water, and mobs flying in water will swim at full speed
-	if not self.flying_in and (visc and visc > 0) then
+	if not self.fly_in and (visc and visc > 0) then
 
 		new_vel.x = new_vel.x ~= 0 and new_vel.x / visc or 0
 		new_vel.y = new_vel.y ~= 0 and new_vel.y / visc or 0
