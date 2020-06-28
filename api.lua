@@ -228,6 +228,28 @@ function mob_class:collision()
 end
 
 
+-- check string against another string or table
+local check_for = function(look_for, look_inside)
+
+	if type(look_inside) == "string" and look_inside == look_for then
+
+		return true
+
+	elseif type(look_inside) == "table" then
+
+		for _, str in pairs(look_inside) do
+
+			if str == look_for then
+
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
 -- move mob in facing direction
 function mob_class:set_velocity(v)
 
@@ -263,9 +285,9 @@ function mob_class:set_velocity(v)
 	-- check if standing in water and use liquid viscocity to slow mob
 	local visc = minetest.registered_nodes[self.standing_in].liquid_viscosity
 
-	-- assume any mob not flying will slow down in water as mobs flying in air
-	-- wont be near water, and mobs flying in water will swim at full speed
-	if not self.fly_in and (visc and visc > 0) then
+	-- if mob standing inside fluid with viscocity which isn't in self.fly_in
+	-- then slow down mob accordingly
+	if visc and visc > 0 and not check_for(self.standing_in, self.fly_in)then
 
 		new_vel.x = new_vel.x ~= 0 and new_vel.x / visc or 0
 		new_vel.y = new_vel.y ~= 0 and new_vel.y / visc or 0
