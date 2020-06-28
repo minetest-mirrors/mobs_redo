@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200625",
+	version = "20200628",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -206,7 +206,6 @@ end
 function mob_class:collision()
 
 	local pos = self.object:get_pos()
-	local vel = self.object:get_velocity()
 	local x, z = 0, 0
 	local width = -self.collisionbox[1] + self.collisionbox[4] + 0.5
 
@@ -234,7 +233,9 @@ function mob_class:set_velocity(v)
 
 	-- halt mob if it has been ordered to stay
 	if self.order == "stand" then
+
 		self.object:set_velocity({x = 0, y = 0, z = 0})
+
 		return
 	end
 
@@ -253,11 +254,25 @@ function mob_class:set_velocity(v)
 	-- set velocity with hard limit of 10
 	local vel = self.object:get_velocity()
 
-	self.object:set_velocity({
-		x = max(-10, min((sin(yaw) * -v) + c_x, 10)),
-		y = max(-10, min((vel and vel.y or 0), 10)),
-		z = max(-10, min((cos(yaw) * v) + c_y, 10))
-	})
+	local new_vel = {
+		x = (sin(yaw) * -v) + c_x,
+		y = vel.y,
+		z = (cos(yaw) * v) + c_y
+	}
+
+	-- check if standing in water and use liquid viscocity to slow mob
+	local visc = minetest.registered_nodes[self.standing_in].liquid_viscosity
+
+	-- assume any mob not flying will slow down in water as mobs flying in air
+	-- wont be near water, and mobs flying in water will swim at full speed
+	if not self.flying_in and (visc and visc > 0) then
+
+		new_vel.x = new_vel.x ~= 0 and new_vel.x / visc or 0
+		new_vel.y = new_vel.y ~= 0 and new_vel.y / visc or 0
+		new_vel.z = new_vel.z ~= 0 and new_vel.z / visc or 0
+	end
+
+	self.object:set_velocity(new_vel)
 end
 
 -- global version of above function
