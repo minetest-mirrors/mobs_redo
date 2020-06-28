@@ -287,7 +287,7 @@ function mob_class:set_velocity(v)
 
 	-- if mob standing inside fluid with viscocity which isn't in self.fly_in
 	-- then slow down mob accordingly
-	if visc and visc > 0 and not check_for(self.standing_in, self.fly_in)then
+	if visc and visc > 0 and not check_for(self.standing_in, self.fly_in) then
 
 		new_vel.x = new_vel.x ~= 0 and new_vel.x / visc or 0
 		new_vel.y = new_vel.y ~= 0 and new_vel.y / visc or 0
@@ -587,20 +587,9 @@ function mob_class:flight_check()
 
 	if not def then return false end
 
-	if type(self.fly_in) == "string"
-	and self.standing_in == self.fly_in then
-
+	-- are we standing inside what we should be to fly/swim ?
+	if check_for(self.standing_in, self.fly_in) then
 		return true
-
-	elseif type(self.fly_in) == "table" then
-
-		for _,fly_in in pairs(self.fly_in) do
-
-			if self.standing_in == fly_in then
-
-				return true
-			end
-		end
 	end
 
 	-- stops mobs getting stuck inside stairs and plantlike nodes
@@ -1289,22 +1278,10 @@ function mob_class:follow_holding(clicker)
 	end
 
 	local item = clicker:get_wielded_item()
-	local t = type(self.follow)
 
-	-- single item
-	if t == "string"
-	and item:get_name() == self.follow then
+	-- are we holding an item mob can follow ?
+	if check_for(item:get_name(), self.follow) then
 		return true
-
-	-- multiple items
-	elseif t == "table" then
-
-		for no = 1, #self.follow do
-
-			if self.follow[no] == item:get_name() then
-				return true
-			end
-		end
 	end
 
 	return false
