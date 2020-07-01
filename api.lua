@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200629",
+	version = "20200701",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1963,8 +1963,8 @@ function mob_class:do_runaway_from()
 		if name ~= "" and name ~= self.name
 		and specific_runaway(self.runaway_from, name) then
 
-			p = player:get_pos()
 			sp = s
+			p = player and player:get_pos() or s
 
 			-- aim higher to make looking up hills more realistic
 			p.y = p.y + 1
