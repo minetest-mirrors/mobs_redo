@@ -1013,7 +1013,7 @@ function mob_class:do_env_damage()
 		self:update_tag()
 	end
 
-	local pos = self.object:get_pos()
+	local pos = self.object:get_pos() ; if not pos then return end
 
 	self.time_of_day = minetest.get_timeofday()
 
