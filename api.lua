@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200701",
+	version = "20200717",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2136,7 +2136,7 @@ function mob_class:do_states(dtime)
 
 	if self.state == "stand" then
 
-		if random(4) == 1 then
+		if self.randomly_turn and random(4) == 1 then
 
 			local lp
 			local s = self.object:get_pos()
@@ -2224,7 +2224,7 @@ function mob_class:do_states(dtime)
 			yaw = self:set_yaw(yaw, 8)
 
 		-- otherwise randomly turn
-		elseif random(100) <= 30 then
+		elseif self.randomly_turn and random(100) <= 30 then
 
 			yaw = yaw + random(-0.5, 0.5)
 
@@ -3564,6 +3564,7 @@ minetest.register_entity(name, setmetatable({
 	owner_loyal = def.owner_loyal,
 	pushable = def.pushable,
 	stay_near = def.stay_near,
+	randomly_turn = def.randomly_turn ~= false,
 
 	on_spawn = def.on_spawn,
 

@@ -38,6 +38,8 @@ functions needed for the mob to work properly which contains the following:
    'stand_chance'  has a 0-100 chance value your mob will stand from walking.
    'walk_chance'   has a 0-100 chance value your mob will walk from standing,
                    set to 0 for jumping mobs only.
+   'randomly_turn' if set to false then mob will not turn to face player or
+                   randomly turn while walking or standing.
    'jump'          when true allows your mob to jump updwards.
    'jump_height'   holds the height your mob can jump, 0 to disable jumping.
    'stepheight'    height of a block that your mob can easily walk up onto,
