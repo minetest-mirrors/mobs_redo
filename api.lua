@@ -1831,7 +1831,7 @@ function mob_class:general_attack()
 		return
 	end
 
-	local s = self.object:get_pos()
+	local s = self.object:get_pos() ; if not s then return end
 	local objs = minetest.get_objects_inside_radius(s, self.view_range)
 
 	-- remove entities we aren't interested in
