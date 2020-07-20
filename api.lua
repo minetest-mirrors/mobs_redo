@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200717",
+	version = "20200720",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2132,7 +2132,7 @@ end
 -- execute current state (stand, walk, run, attacks)
 function mob_class:do_states(dtime)
 
-	local yaw = self.object:get_yaw() or 0
+	local yaw = self.object:get_yaw() ; if not yaw then return end
 
 	if self.state == "stand" then
 
