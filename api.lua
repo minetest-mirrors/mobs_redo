@@ -2001,7 +2001,7 @@ function mob_class:follow_flop()
 	and self.state ~= "attack"
 	and self.state ~= "runaway" then
 
-		local s = self.object:get_pos()
+		local s = self.object:get_pos() ; if not s then return end
 		local players = minetest.get_connected_players()
 
 		for n = 1, #players do
