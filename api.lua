@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200720",
+	version = "20200723",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -195,7 +195,9 @@ end
 
 -- calculate distance
 local get_distance = function(a, b)
-if not a or not b then return 50 end -- nil check
+
+--	if not a or not b then return 50 end -- nil check
+
 	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
 
 	return square(x * x + y * y + z * z)
@@ -810,6 +812,11 @@ local remove_mob = function(self, decrease)
 		end
 	end
 --print("-- active mobs: " .. active_mobs .. " / " .. active_limit)
+end
+
+-- global function for removing mobs
+function mobs:remove(self, decrease)
+	remove_mob(self, decrease)
 end
 
 
@@ -1538,7 +1545,9 @@ local height_switcher = false
 function mob_class:smart_mobs(s, p, dist, dtime)
 
 	local s1 = self.path.lastpos
-	local target_pos = self.attack:get_pos()
+--	local target_pos = self.attack:get_pos()
+local target_pos = p
+
 
 	-- is it becoming stuck?
 	if abs(s1.x - s.x) + abs(s1.z - s.z) < .5 then
@@ -1601,10 +1610,6 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		self.path.stuck_timer = 0
 
 		minetest.after(1, function(self)
-
-			if not self.object:get_luaentity() then
-				return
-			end
 
 			if self.object:get_luaentity() then
 
@@ -1687,7 +1692,10 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 ]]
 
 		self.state = ""
+
+if self.attack then
 		self:do_attack(self.attack)
+end
 
 		-- no path found, try something else
 		if not self.path.way then
@@ -1785,12 +1793,16 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			-- will try again in 2 second
 			self.path.stuck_timer = stuck_timeout - 2
 
-	elseif s.y < p1.y and (not self.fly) then
+		elseif s.y < p1.y and (not self.fly) then
 			self:do_jump() --add jump to pathfinding
 			self.path.following = true
 		else
 			-- yay i found path
+if self.attack then
 			self:mob_sound(self.sounds.war_cry)
+else
+			self:mob_sound(self.sounds.random)
+end
 			self:set_velocity(self.walk_velocity)
 
 			-- follow path now that it has it
@@ -2284,12 +2296,12 @@ function mob_class:do_states(dtime)
 	-- attack routines (explode, dogfight, shoot, dogshoot)
 	elseif self.state == "attack" then
 
-		-- calculate distance from mob and enemy
+		-- get mob and enemy positions and distance between
 		local s = self.object:get_pos()
-		local p = self.attack:get_pos() or s
-		local dist = get_distance(p, s)
+		local p = self.attack:get_pos()
+		local dist = p and get_distance(p, s) or 500
 
-		-- stop attacking if player invisible or out of range
+		-- stop attacking if player out of range or invisible
 		if dist > self.view_range
 		or not self.attack
 		or not self.attack:get_pos()
@@ -2425,7 +2437,8 @@ function mob_class:do_states(dtime)
 
 		elseif self.attack_type == "dogfight"
 		or (self.attack_type == "dogshoot" and self:dogswitch(dtime) == 2)
-		or (self.attack_type == "dogshoot" and dist <= self.reach and self:dogswitch() == 0) then
+		or (self.attack_type == "dogshoot" and dist <= self.reach
+		and self:dogswitch() == 0) then
 
 			if self.fly
 			and dist > self.reach then
@@ -2472,7 +2485,6 @@ function mob_class:do_states(dtime)
 						})
 					end
 				end
-
 			end
 
 			-- rnd: new movement direction
