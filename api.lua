@@ -2257,7 +2257,7 @@ function mob_class:do_states(dtime)
 
 		-- get mob and enemy positions and distance between
 		local s = self.object:get_pos()
-		local p = self.attack:get_pos()
+		local p = self.attack and self.attack:get_pos()
 		local dist = p and get_distance(p, s) or 500
 
 		-- stop attacking if player out of range or invisible
