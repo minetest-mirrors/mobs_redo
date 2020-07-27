@@ -6,7 +6,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20200725",
+	version = "20200727",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2257,7 +2257,7 @@ function mob_class:do_states(dtime)
 
 		-- get mob and enemy positions and distance between
 		local s = self.object:get_pos()
-		local p = self.attack:get_pos()
+		local p = self.attack and self.attack:get_pos()
 		local dist = p and get_distance(p, s) or 500
 
 		-- stop attacking if player out of range or invisible
@@ -3701,6 +3701,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light,
 
 	-- Do mobs spawn at all?
 	if not mobs_spawn or not mobs.spawning_mobs[name] then
+--print ("--- spawning not registered for " .. name)
 		return
 	end
 
