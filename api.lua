@@ -196,7 +196,7 @@ end
 -- calculate distance
 local get_distance = function(a, b)
 
---	if not a or not b then return 50 end -- nil check
+	if not a or not b then return 50 end -- nil check
 
 	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
 
