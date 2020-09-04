@@ -3896,9 +3896,9 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 		local mob = minetest.add_entity(pos, name)
 
-		print("[mobs] Spawned " .. name .. " at "
-		.. minetest.pos_to_string(pos) .. " on "
-		.. node.name .. " near " .. neighbors[1])
+--		print("[mobs] Spawned " .. name .. " at "
+--		.. minetest.pos_to_string(pos) .. " on "
+--		.. node.name .. " near " .. neighbors[1])
 
 		if on_spawn then
 			on_spawn(mob:get_luaentity(), pos)
