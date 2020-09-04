@@ -383,6 +383,9 @@ default setting and can be omitted:
                           anytime
     'on_spawn'            is a custom function which runs after mob has spawned
                           and gives self and pos values.
+    'on_map_load'         when true mobs will have a chance of spawning only
+                          when new areas of map are loaded, interval will not be
+                          used.
 
 The older spawn functions are still active and working but have no defaults like
 the mobs:spawn, so it is recommended to use the above instead.
