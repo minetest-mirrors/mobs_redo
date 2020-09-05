@@ -3725,7 +3725,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		minetest.log("action", string.format(
 				"[mobs] Chance setting for %s changed to %s (total: %s)",
 				name, chance, aoc))
-
 	end
 
 	mobs.spawning_mobs[name].aoc = aoc
