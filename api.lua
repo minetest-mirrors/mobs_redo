@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20201029",
+	version = "20201115",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -877,7 +877,7 @@ function mob_class:check_for_death(cmi_cause)
 	local pos = self.object:get_pos()
 
 	-- execute custom death function
-	if self.on_die then
+	if pos and self.on_die then
 
 		self:on_die(pos)
 
@@ -897,7 +897,7 @@ function mob_class:check_for_death(cmi_cause)
 
 		local frames = self.animation.die_end - self.animation.die_start
 		local speed = self.animation.die_speed or 15
-		local length = max(frames / speed, 0)
+		local length = max((frames / speed), 0)
 
 		self.attack = nil
 		self.v_start = false
@@ -910,23 +910,28 @@ function mob_class:check_for_death(cmi_cause)
 
 		minetest.after(length, function(self)
 
-			if use_cmi and self.object:get_luaentity() then
-				cmi.notify_die(self.object, cmi_cause)
+			if self.object:get_luaentity() then
+
+				if use_cmi then
+					cmi.notify_die(self.object, cmi_cause)
+				end
+
+				remove_mob(self, true)
 			end
-
-			remove_mob(self, true)
-
 		end, self)
-	else
+
+		return true
+
+	elseif pos then -- otherwise remove mod and show particle effect
 
 		if use_cmi then
 			cmi.notify_die(self.object, cmi_cause)
 		end
 
 		remove_mob(self, true)
-	end
 
-	effect(pos, 20, "tnt_smoke.png")
+		effect(pos, 20, "tnt_smoke.png")
+	end
 
 	return true
 end
