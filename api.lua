@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20201130",
+	version = "20201205",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -829,6 +829,11 @@ end
 -- check if mob is dead or only hurt
 function mob_class:check_for_death(cmi_cause)
 
+	-- We dead already
+	if self.state == "die" then
+		return true
+	end
+
 	-- has health actually changed?
 	if self.health == self.old_health and self.health > 0 then
 		return false
@@ -906,6 +911,9 @@ function mob_class:check_for_death(cmi_cause)
 		self.blinktimer = 0
 		self.passive = true
 		self.state = "die"
+		self.object:set_properties({
+			pointable = false, collide_with_objects = false
+		})
 		self:set_velocity(0)
 		self:set_animation("die")
 
@@ -1296,16 +1304,20 @@ function mob_class:follow_holding(clicker)
 	return false
 end
 
+-- Thanks Wuzzy for the following editable settings
+local HORNY_TIME = 30
+local HORNY_AGAIN_TIME = 300
+local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 
 -- find two animals of same type and breed if nearby and horny
 function mob_class:breed()
 
-	-- child takes 240 seconds before growing into adult
+	-- child takes a long time before growing into adult
 	if self.child == true then
 
 		self.hornytimer = self.hornytimer + 1
 
-		if self.hornytimer > 240 then
+		if self.hornytimer > CHILD_GROW_TIME then
 
 			self.child = false
 			self.hornytimer = 0
@@ -1334,14 +1346,14 @@ function mob_class:breed()
 		return
 	end
 
-	-- horny animal can mate for 40 seconds,
-	-- afterwards horny animal cannot mate again for 200 seconds
+	-- horny animal can mate for HORNY_TIME seconds,
+	-- afterwards horny animal cannot mate again for HORNY_AGAIN_TIME seconds
 	if self.horny == true
-	and self.hornytimer < 240 then
+	and self.hornytimer < HORNY_TIME + HORNY_AGAIN_TIME then
 
 		self.hornytimer = self.hornytimer + 1
 
-		if self.hornytimer >= 240 then
+		if self.hornytimer >= HORNY_TIME + HORNY_AGAIN_TIME then
 			self.hornytimer = 0
 			self.horny = false
 		end
@@ -1349,7 +1361,7 @@ function mob_class:breed()
 
 	-- find another same animal who is also horny and mate if nearby
 	if self.horny == true
-	and self.hornytimer <= 40 then
+	and self.hornytimer <= HORNY_TIME then
 
 		local pos = self.object:get_pos()
 
@@ -1357,7 +1369,6 @@ function mob_class:breed()
 				"heart.png", 3, 4, 1, 0.1)
 
 		local objs = minetest.get_objects_inside_radius(pos, 3)
-		local num = 0
 		local ent
 
 		for n = 1, #objs do
@@ -1386,18 +1397,20 @@ function mob_class:breed()
 				end
 			end
 
-			if ent
+			-- found another similar horny animal that isn't self?
+			if ent and ent.object ~= self.object
 			and canmate == true
 			and ent.horny == true
-			and ent.hornytimer <= 40 then
-				num = num + 1
-			end
+			and ent.hornytimer <= HORNY_TIME then
 
-			-- found your mate? then have a baby
-			if num > 1 then
+				local pos2 = ent.object:get_pos()
 
-				self.hornytimer = 41
-				ent.hornytimer = 41
+				-- Have mobs face one another
+				yaw_to_pos(self, pos2)
+				yaw_to_pos(ent, self.object:get_pos())
+
+				self.hornytimer = HORNY_TIME + 1
+				ent.hornytimer = HORNY_TIME + 1
 
 				-- have we reached active mob limit
 				if active_limit > 0 and active_mobs >= active_limit then
@@ -1464,8 +1477,6 @@ function mob_class:breed()
 					ent2.tamed = true
 					ent2.owner = self.owner
 				end, self, ent)
-
-				num = 0
 
 				break
 			end
@@ -2011,10 +2022,11 @@ function mob_class:follow_flop()
 			self.following = nil
 		end
 	else
-		-- stop following player if not holding specific item
+		-- stop following player if not holding specific item or mob is horny
 		if self.following
 		and self.following:is_player()
-		and self:follow_holding(self.following) == false then
+		and (self:follow_holding(self.following) == false
+		or self.horny) then
 			self.following = nil
 		end
 
@@ -4572,8 +4584,11 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 		-- make children grow quicker
 		if self.child == true then
 
-			self.hornytimer = self.hornytimer + 20
-
+--			self.hornytimer = self.hornytimer + 20
+			-- deduct 10% of the time to adulthood
+			self.hornytimer = self.hornytimer + (
+					(CHILD_GROW_TIME - self.hornytimer) * 0.1)
+print ("====", self.hornytimer)
 			return true
 		end
 
