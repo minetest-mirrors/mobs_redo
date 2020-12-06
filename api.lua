@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20201205",
+	version = "20201206",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -112,6 +112,7 @@ local mob_class = {
 	light_damage_max = 15,
 	water_damage = 0,
 	lava_damage = 0,
+	air_damage = 0,
 	suffocation = 2,
 	fall_damage = 1,
 	fall_speed = -10, -- must be lower than -2 (default: -10)
@@ -1093,6 +1094,19 @@ function mob_class:do_env_damage()
 		self.health = self.health - nodef.damage_per_second
 
 		effect(pos, 5, "tnt_smoke.png")
+
+		if self:check_for_death({type = "environment",
+				pos = pos, node = self.standing_in}) then
+			return true
+		end
+	end
+
+	-- air damage
+	if self.air_damage ~= 0 and self.standing_in == "air" then
+
+		self.health = self.health - self.air_damage
+
+		effect(pos, 3, "bubble.png", 1, 1, 1, 0.2)
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then
@@ -2084,6 +2098,15 @@ function mob_class:follow_flop()
 		if not self:attempt_flight_correction() then
 
 			self.state = "flop"
+
+			-- do we have a custom on_flop function?
+			if self.on_flop then
+
+				if self:on_flop(self) then
+					return
+				end
+			end
+
 			self.object:set_velocity({x = 0, y = -5, z = 0})
 
 			self:set_animation("stand")
@@ -3482,6 +3505,7 @@ minetest.register_entity(name, setmetatable({
 	owner = def.owner,
 	order = def.order,
 	on_die = def.on_die,
+	on_flop = def.on_flop,
 	do_custom = def.do_custom,
 	jump_height = def.jump_height,
 	drawtype = def.drawtype, -- DEPRECATED, use rotate instead
@@ -3505,6 +3529,7 @@ minetest.register_entity(name, setmetatable({
 	light_damage_max = def.light_damage_max,
 	water_damage = def.water_damage,
 	lava_damage = def.lava_damage,
+	air_damage = def.air_damage,
 	suffocation = def.suffocation,
 	fall_damage = def.fall_damage,
 	fall_speed = def.fall_speed,
