@@ -226,6 +226,7 @@ functions needed for the mob to work properly which contains the following:
       'die_end'
       'die_speed'
       'die_loop'     when set to false stops the animation looping.
+      'die_rotate'   if true mob spins during death animation.
 
       Using '_loop = false' setting will stop any of the above animations from
       looping.

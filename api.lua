@@ -904,6 +904,7 @@ function mob_class:check_for_death(cmi_cause)
 		local frames = self.animation.die_end - self.animation.die_start
 		local speed = self.animation.die_speed or 15
 		local length = max((frames / speed), 0)
+		local rot = self.animation.die_rotate and 5
 
 		self.attack = nil
 		self.v_start = false
@@ -912,7 +913,8 @@ function mob_class:check_for_death(cmi_cause)
 		self.passive = true
 		self.state = "die"
 		self.object:set_properties({
-			pointable = false, collide_with_objects = false
+			pointable = false, collide_with_objects = false,
+			automatic_rotate = rot,
 		})
 		self:set_velocity(0)
 		self:set_animation("die")
