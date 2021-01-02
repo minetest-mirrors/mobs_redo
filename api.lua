@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20201206",
+	version = "20210102",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4503,9 +4503,9 @@ function mobs:capture_mob(self, clicker, chance_hand, chance_net,
 				minetest.add_item(clicker:get_pos(), new_stack)
 			end
 
-			remove_mob(self, true)
-
 			self:mob_sound("default_place_node_hard")
+
+			remove_mob(self, true)
 
 			return new_stack
 
