@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210104",
+	version = "20210107",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -572,7 +572,8 @@ function mob_class:attempt_flight_correction(override)
 
 	local flyable_nodes = minetest.find_nodes_in_area(
 		{x = pos.x - 1, y = pos.y - 1, z = pos.z - 1},
-		{x = pos.x + 1, y = pos.y + 1, z = pos.z + 1}, searchnodes)
+		{x = pos.x + 1, y = pos.y + 0, z = pos.z + 1}, searchnodes)
+		-- pos.y + 0 hopefully fixes floating swimmers
 
 	if #flyable_nodes < 1 then
 		return false
