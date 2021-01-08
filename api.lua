@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210107",
+	version = "20210108",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -910,6 +910,7 @@ function mob_class:check_for_death(cmi_cause)
 		local rot = self.animation.die_rotate and 5
 
 		self.attack = nil
+		self.following = nil
 		self.v_start = false
 		self.timer = 0
 		self.blinktimer = 0
@@ -917,7 +918,7 @@ function mob_class:check_for_death(cmi_cause)
 		self.state = "die"
 		self.object:set_properties({
 			pointable = false, collide_with_objects = false,
-			automatic_rotate = rot,
+			automatic_rotate = rot, static_save = false
 		})
 		self:set_velocity(0)
 		self:set_animation("die")
@@ -3074,6 +3075,7 @@ function mob_class:mob_staticdata()
 		if  t ~= "function"
 		and t ~= "nil"
 		and t ~= "userdata"
+		and _ ~= "object"
 		and _ ~= "_cmi_components" then
 			tmp[_] = self[_]
 		end
@@ -3325,6 +3327,8 @@ function mob_class:on_step(dtime, moveresult)
                 new_velocity = vector,
             }}
     }]]
+
+if self.state == "die" then return end ----------------
 
 	if use_cmi then
 		cmi.notify_step(self.object, dtime)
