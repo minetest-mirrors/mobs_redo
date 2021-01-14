@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210108",
+	version = "20210114",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3705,9 +3705,6 @@ local can_spawn = function(pos, name)
 	end
 	end
 
-	-- spawn mob 1/2 node above ground
-	pos.y = pos.y + 0.5
-
 	-- tweak X/Z spawn pos
 	if width_x % 2 == 0 then
 		pos.x = pos.x + 0.5
@@ -3972,15 +3969,15 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
+		local ent = minetest.registered_entities[name]
+
 		-- should we check mob area for obstructions ?
 		if mob_area_spawn ~= true then
 
 			-- do we have enough height clearance to spawn mob?
-			local ent = minetest.registered_entities[name]
-			local height = max(1, math.ceil(
-				(ent.collisionbox[5] or 0.25) - (ent.collisionbox[2] or -0.25) - 1))
+			local height = max(0, ent.collisionbox[5] - ent.collisionbox[2])
 
-			for n = 0, height do
+			for n = 0, floor(height) do
 
 				local pos2 = {x = pos.x, y = pos.y + n, z = pos.z}
 
@@ -3995,6 +3992,9 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		end
 
 		if pos then
+
+			-- adjust for mob collision box
+			pos.y = pos.y + (ent.collisionbox[2] * -1) - 0.4
 
 			local mob = minetest.add_entity(pos, name)
 
