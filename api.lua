@@ -563,7 +563,7 @@ function mob_class:attempt_flight_correction(override)
 
 	-- We are not flying in what we are supposed to.
 	-- See if we can find intended flight medium and return to it
-	local pos = self.object:get_pos()
+	local pos = self.object:get_pos() ; if not pos then return true end
 	local searchnodes = self.fly_in
 
 	if type(searchnodes) == "string" then
