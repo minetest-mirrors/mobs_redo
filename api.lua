@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210114",
+	version = "20210203",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1354,11 +1354,15 @@ function mob_class:breed()
 				self.on_grown(self)
 			else
 				-- jump when fully grown so as not to fall into ground
-				self.object:set_velocity({
-					x = 0,
-					y = self.jump_height,
-					z = 0
-				})
+--				self.object:set_velocity({
+--					x = 0,
+--					y = self.jump_height,
+--					z = 0
+--				})
+				local pos = self.object:get_pos() ; if not pos then return end
+				local ent = self.object:get_luaentity()
+				pos.y = pos.y + (ent.collisionbox[2] * -1) - 0.4
+				self.object:set_pos(pos)
 			end
 		end
 
@@ -1457,6 +1461,8 @@ function mob_class:breed()
 					else
 						effect(pos, 15, "tnt_smoke.png", 1, 2, 2, 15, 5)
 					end
+
+					pos.y = pos.y + 0.5 -- spawn child a little higher
 
 					local mob = minetest.add_entity(pos, self.name)
 					local ent2 = mob:get_luaentity()
