@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210206",
+	version = "20210310",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1304,10 +1304,19 @@ local entity_physics = function(pos, radius)
 end
 
 
+-- can mob see player
+local is_invisible = function(self, player_name)
+
+	if mobs.invis[player_name] and not self.ignore_invisibility then
+		return true
+	end
+end
+
+
 -- should mob follow what I'm holding ?
 function mob_class:follow_holding(clicker)
 
-	if mobs.invis[clicker:get_player_name()] then
+	if is_invisible(self, clicker:get_player_name()) then
 		return false
 	end
 
@@ -1898,7 +1907,7 @@ function mob_class:general_attack()
 			if not damage_enabled
 			or self.attack_players == false
 			or (self.owner and self.type ~= "monster")
-			or mobs.invis[objs[n]:get_player_name()]
+			or is_invisible(self, objs[n]:get_player_name())
 			or (self.specific_attack
 					and not check_for("player", self.specific_attack)) then
 				objs[n] = nil
@@ -1977,7 +1986,7 @@ function mob_class:do_runaway_from()
 
 			pname = objs[n]:get_player_name()
 
-			if mobs.invis[pname]
+			if is_invisible(self, pname)
 			or self.owner == pname then
 
 				name = ""
@@ -2042,7 +2051,7 @@ function mob_class:follow_flop()
 		for n = 1, #players do
 
 			if get_distance(players[n]:get_pos(), s) < self.view_range
-			and not mobs.invis[ players[n]:get_player_name() ] then
+			and not is_invisible(self, players[n]:get_player_name()) then
 
 				self.following = players[n]
 
@@ -2340,7 +2349,7 @@ function mob_class:do_states(dtime)
 		or not self.attack:get_pos()
 		or self.attack:get_hp() <= 0
 		or (self.attack:is_player()
-		and mobs.invis[ self.attack:get_player_name() ]) then
+		and is_invisible(self, self.attack:get_player_name())) then
 
 --print(" ** stop attacking **", dist, self.view_range)
 
@@ -2992,7 +3001,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	and self.child == false
 	and self.attack_players == true
 	and hitter:get_player_name() ~= self.owner
-	and not mobs.invis[ name ]
+	and not is_invisible(self, name)
 	and self.object ~= hitter then
 
 		-- attack whoever punched mob
@@ -3615,6 +3624,7 @@ minetest.register_entity(name, setmetatable({
 	pushable = def.pushable,
 	stay_near = def.stay_near,
 	randomly_turn = def.randomly_turn ~= false,
+	ignore_invisibility = def.ignore_invisibility,
 
 	on_spawn = def.on_spawn,
 
@@ -4643,7 +4653,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			-- deduct 10% of the time to adulthood
 			self.hornytimer = self.hornytimer + (
 					(CHILD_GROW_TIME - self.hornytimer) * 0.1)
-print ("====", self.hornytimer)
+--print ("====", self.hornytimer)
 			return true
 		end
 
