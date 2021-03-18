@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210310",
+	version = "20210318",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2697,34 +2697,17 @@ function mob_class:falling(pos)
 	-- sanity check
 	if not v then return end
 
-	local fall_speed = -10 -- gravity
-
-	-- don't exceed mob fall speed
-	if v.y < self.fall_speed then
-		fall_speed = self.fall_speed
-	end
+	local fall_speed = self.fall_speed
 
 	-- in water then use liquid viscosity for float/sink speed
-	if (self.standing_in
-	and minetest.registered_nodes[self.standing_in].groups.liquid)
-	or (self.standing_on
-	and minetest.registered_nodes[self.standing_in].groups.liquid) then
+	if self.floats == 1 and self.standing_in
+	and minetest.registered_nodes[self.standing_in].groups.liquid then
 
 		local visc = min(
-				minetest.registered_nodes[self.standing_in].liquid_viscosity, 7)
+				minetest.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
-		if self.floats == 1 then
-
-			-- floating up
-			if visc > 0 then
-				fall_speed = max(1, v.y) / (visc + 1)
-			end
-		else
-			-- sinking down
-			if visc > 0 then
-				fall_speed = -(max(1, v.y) / (visc + 1))
-			end
-		end
+		self.object:set_velocity({x = v.x, y = 0.6, z = v.z})
+		fall_speed = -1.2 / visc
 	else
 
 		-- fall damage onto solid ground
