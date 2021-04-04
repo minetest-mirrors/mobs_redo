@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210323",
+	version = "20210404",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -163,6 +163,7 @@ local mob_class = {
 }
 
 local mob_class_meta = {__index = mob_class}
+
 
 -- play sound
 function mob_class:mob_sound(sound)
@@ -2772,15 +2773,32 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		return true
 	end
 
-	-- is mob protected?
-	if self.protected and hitter:is_player()
-	and minetest.is_protected(self.object:get_pos(),
-			hitter:get_player_name()) then
+	-- is mob protected
+	if self.protected then
 
-		minetest.chat_send_player(hitter:get_player_name(),
-				S("Mob has been protected!"))
+		-- did player hit mob and if so is it in protected area
+		if hitter:is_player() and
+		minetest.is_protected(self.object:get_pos(), hitter:get_player_name() ) then
 
-		return true
+			minetest.chat_send_player(hitter:get_player_name(),
+					S("Mob has been protected!"))
+
+			return true
+
+		-- if protection is on level 2 then dont let arrows harm mobs
+		elseif self.protected == 2 then
+
+			local ent = hitter and hitter:get_luaentity()
+
+			if ent and ent._is_arrow then
+
+				return true -- arrow entity
+
+			elseif not ent then
+
+				return true -- non entity
+			end
+		end
 	end
 
 	local weapon = hitter:get_wielded_item()
@@ -4562,19 +4580,21 @@ function mobs:protect(self, clicker)
 
 	local name = clicker:get_player_name()
 	local tool = clicker:get_wielded_item()
+	local tool_name = tool:get_name()
 
-	if tool:get_name() ~= "mobs:protector" then
+	if tool_name ~= "mobs:protector"
+	and tool_name ~= "mobs:protector2" then
 		return false
 	end
 
-	if self.tamed == false then
+	if not self.tamed then
 		minetest.chat_send_player(name, S("Not tamed!"))
-		return true -- false
+		return true
 	end
 
-	if self.protected == true then
+	if self.protected then
 		minetest.chat_send_player(name, S("Already protected!"))
-		return true -- false
+		return true
 	end
 
 	if not mobs.is_creative(clicker:get_player_name()) then
@@ -4582,9 +4602,15 @@ function mobs:protect(self, clicker)
 		clicker:set_wielded_item(tool)
 	end
 
-	self.protected = true
+	-- set protection level
+	if tool_name == "mobs:protector" then
+		self.protected = true
+	else
+		self.protected = 2
+	end
 
 	local pos = self.object:get_pos()
+
 	pos.y = pos.y + self.collisionbox[2] + 0.5
 
 	effect(self.object:get_pos(), 25, "mobs_protect_particle.png",

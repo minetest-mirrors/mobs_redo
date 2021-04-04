@@ -115,6 +115,22 @@ minetest.register_craft({
 	}
 })
 
+-- level 2 protection rune
+minetest.register_craftitem("mobs:protector2", {
+	description = S("Mob Protection Rune (Level 2)"),
+	inventory_image = "mobs_protector2.png",
+	groups = {flammable = 2}
+})
+
+minetest.register_craft({
+	output = "mobs:protector2",
+	recipe = {
+		{"mobs:protector", "default:mese_crystal", "mobs:protector"},
+		{"default:mese_crystal", "default:diamondblock", "default:mese_crystal"},
+		{"mobs:protector", "default:mese_crystal", "mobs:protector"}
+	}
+})
+
 -- saddle
 minetest.register_craftitem("mobs:saddle", {
 	description = S("Saddle"),
