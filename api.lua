@@ -8,12 +8,12 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210404",
+	version = "20210405",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
 
--- localize math functions
+-- localize common functions
 local pi = math.pi
 local square = math.sqrt
 local sin = math.sin
@@ -112,7 +112,8 @@ local mob_class = {
 	light_damage_min = 14,
 	light_damage_max = 15,
 	water_damage = 0,
-	lava_damage = 0,
+	lava_damage = 4,
+	fire_damage = 4,
 	air_damage = 0,
 	suffocation = 2,
 	fall_damage = 1,
@@ -983,7 +984,12 @@ local is_node_dangerous = function(self, nodename)
 	end
 
 	if self.lava_damage > 0
-	and minetest.get_item_group(nodename, "igniter") ~= 0 then
+	and minetest.get_item_group(nodename, "lava") ~= 0 then
+		return true
+	end
+
+	if self.fire_damage > 0
+	and minetest.get_item_group(nodename, "fire") ~= 0 then
 		return true
 	end
 
@@ -1069,37 +1075,47 @@ function mob_class:do_env_damage()
 	local nodef = minetest.registered_nodes[self.standing_in]
 
 	-- water
-	if self.water_damage and nodef.groups.water then
+	if self.water_damage ~= 0
+	and nodef.groups.water then
 
-		if self.water_damage ~= 0 then
+		self.health = self.health - self.water_damage
 
-			self.health = self.health - self.water_damage
+		effect(pos, 5, "bubble.png", nil, nil, 1, nil)
 
-			effect(pos, 5, "bubble.png", nil, nil, 1, nil)
-
-			if self:check_for_death({type = "environment",
-					pos = pos, node = self.standing_in}) then
-				return true
-			end
+		if self:check_for_death({type = "environment",
+				pos = pos, node = self.standing_in}) then
+			return true
 		end
 
-	-- ignition source (fire or lava)
-	elseif self.lava_damage and nodef.groups.igniter then
+	-- lava damage
+	elseif self.lava_damage ~= 0
+	and nodef.groups.lava  then
 
-		if self.lava_damage ~= 0 then
+		self.health = self.health - self.lava_damage
 
-			self.health = self.health - self.lava_damage
+		effect(pos, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
 
-			effect(pos, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
-
-			if self:check_for_death({type = "environment", pos = pos,
-					node = self.standing_in, hot = true}) then
-				return true
-			end
+		if self:check_for_death({type = "environment", pos = pos,
+				node = self.standing_in, hot = true}) then
+			return true
 		end
 
-	-- damage_per_second node check
-	elseif nodef.damage_per_second ~= 0 then
+	-- fire damage
+	elseif self.fire_damage ~= 0
+	and nodef.groups.fire then
+
+		self.health = self.health - self.fire_damage
+
+		effect(pos, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
+
+		if self:check_for_death({type = "environment", pos = pos,
+				node = self.standing_in, hot = true}) then
+			return true
+		end
+
+	-- damage_per_second node check (not fire and lava)
+	elseif nodef.damage_per_second ~= 0
+	and nodef.groups.lava == 0 and nodef.groups.fire == 0 then
 
 		self.health = self.health - nodef.damage_per_second
 
@@ -2777,13 +2793,18 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if self.protected then
 
 		-- did player hit mob and if so is it in protected area
-		if hitter:is_player() and
-		minetest.is_protected(self.object:get_pos(), hitter:get_player_name() ) then
+		if hitter:is_player() then
 
-			minetest.chat_send_player(hitter:get_player_name(),
-					S("Mob has been protected!"))
+			local player_name = hitter:get_player_name()
 
-			return true
+			if player_name ~= self.owner
+			and minetest.is_protected(self.object:get_pos(), player_name) then
+
+				minetest.chat_send_player(hitter:get_player_name(),
+						S("Mob has been protected!"))
+
+				return true
+			end
 
 		-- if protection is on level 2 then dont let arrows harm mobs
 		elseif self.protected == 2 then
@@ -2830,7 +2851,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			end
 
 			damage = damage + (tool_capabilities.damage_groups[group] or 0)
-				* tmp * ((armor[group] or 0) / 100.0)
+					* tmp * ((armor[group] or 0) / 100.0)
 		end
 	end
 
@@ -3167,8 +3188,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 			def.textures = {def.textures}
 		end
 
-		self.base_texture = def.textures and
-				def.textures[random(#def.textures)]
+		self.base_texture = def.textures and def.textures[random(#def.textures)]
 		self.base_mesh = def.mesh
 		self.base_size = self.visual_size
 		self.base_colbox = self.collisionbox
@@ -3575,6 +3595,7 @@ minetest.register_entity(name, setmetatable({
 	light_damage_max = def.light_damage_max,
 	water_damage = def.water_damage,
 	lava_damage = def.lava_damage,
+	fire_damage = def.fire_damage,
 	air_damage = def.air_damage,
 	suffocation = def.suffocation,
 	fall_damage = def.fall_damage,
@@ -4606,7 +4627,7 @@ function mobs:protect(self, clicker)
 	if tool_name == "mobs:protector" then
 		self.protected = true
 	else
-		self.protected = 2
+		self.protected = 2 ; self.fire_damage = 0
 	end
 
 	local pos = self.object:get_pos()

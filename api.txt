@@ -66,7 +66,10 @@ functions needed for the mob to work properly which contains the following:
                    water.
    'air_damage'    holds damage per second inflicted to mob when standing in air.
    'lava_damage'   holds the damage per second inflicted to mobs when standing
-                   in lava or fire or an ignition source.
+                   in lava.
+   'fire_damage'   holds the damage per second inflicted to mobs when standing
+                   in fire.
+
    'light_damage'  holds the damage per second inflicted to mobs when light
                    level is between the min and max values below
    'light_damage_min' minimum light value when mob is affected (default: 14)
