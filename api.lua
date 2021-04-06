@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210405",
+	version = "20210406",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4499,8 +4499,9 @@ function mobs:capture_mob(self, clicker, chance_hand, chance_net,
 		return false
 	end
 
-	-- cannot pick up if not owner
-	if self.owner ~= name and force_take == false then
+	-- cannot pick up if not owner (unless player has protection_bypass priv)
+	if not minetest.check_player_privs(name, "protection_bypass")
+	and self.owner ~= name and force_take == false then
 
 		minetest.chat_send_player(name, S("@1 is owner!", self.owner))
 
