@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210406",
+	version = "20210407",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4730,12 +4730,12 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 	end
 
 	local item = clicker:get_wielded_item()
+	local name = clicker:get_player_name()
 
 	-- if mob has been tamed you can name it with a nametag
 	if item:get_name() == "mobs:nametag"
-	and clicker:get_player_name() == self.owner then
-
-		local name = clicker:get_player_name()
+	and (name == self.owner
+	or minetest.check_player_privs(name, "protection_bypass")) then
 
 		-- store mob and nametag stack in external variables
 		mob_obj[name] = self
