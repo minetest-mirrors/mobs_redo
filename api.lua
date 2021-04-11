@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210407",
+	version = "20210411",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1070,7 +1070,11 @@ function mob_class:do_env_damage()
 	end
 
 	-- particle appears at random mob height
-	pos.y = pos.y + random(self.collisionbox[2], self.collisionbox[5])
+	local py = {
+		x = pos.x,
+		y = pos.y + random(self.collisionbox[2], self.collisionbox[5]),
+		z = pos.z
+	}
 
 	local nodef = minetest.registered_nodes[self.standing_in]
 
@@ -1080,7 +1084,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.water_damage
 
-		effect(pos, 5, "bubble.png", nil, nil, 1, nil)
+		effect(py, 5, "bubble.png", nil, nil, 1, nil)
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then
@@ -1093,7 +1097,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.lava_damage
 
-		effect(pos, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
+		effect(py, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
 
 		if self:check_for_death({type = "environment", pos = pos,
 				node = self.standing_in, hot = true}) then
@@ -1106,7 +1110,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.fire_damage
 
-		effect(pos, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
+		effect(py, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
 
 		if self:check_for_death({type = "environment", pos = pos,
 				node = self.standing_in, hot = true}) then
@@ -1115,11 +1119,11 @@ function mob_class:do_env_damage()
 
 	-- damage_per_second node check (not fire and lava)
 	elseif nodef.damage_per_second ~= 0
-	and nodef.groups.lava == 0 and nodef.groups.fire == 0 then
+	and nodef.groups.lava == nil and nodef.groups.fire == nil then
 
 		self.health = self.health - nodef.damage_per_second
 
-		effect(pos, 5, "tnt_smoke.png")
+		effect(py, 5, "tnt_smoke.png")
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then
@@ -1132,7 +1136,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.air_damage
 
-		effect(pos, 3, "bubble.png", 1, 1, 1, 0.2)
+		effect(py, 3, "bubble.png", 1, 1, 1, 0.2)
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then
@@ -1150,7 +1154,7 @@ function mob_class:do_env_damage()
 
 			self.health = self.health - self.light_damage
 
-			effect(pos, 5, "tnt_smoke.png")
+			effect(py, 5, "tnt_smoke.png")
 
 			if self:check_for_death({type = "light"}) then
 				return true
