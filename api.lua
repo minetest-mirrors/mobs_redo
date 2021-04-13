@@ -4618,7 +4618,8 @@ function mobs:protect(self, clicker)
 		return true
 	end
 
-	if self.protected then
+	if (self.protected and tool_name == "mobs:protector")
+	or (self.protected == 2 and tool_name == "mobs:protector2") then
 		minetest.chat_send_player(name, S("Already protected!"))
 		return true
 	end
