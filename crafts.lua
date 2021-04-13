@@ -10,9 +10,9 @@ minetest.register_craftitem("mobs:nametag", {
 
 if minetest.get_modpath("dye") and minetest.get_modpath("farming") then
 	minetest.register_craft({
-		type = "shapeless",
+--		type = "shapeless",
 		output = "mobs:nametag",
-		recipe = {"default:paper", "dye:black", "farming:string"}
+		recipe = {{"default:paper", "dye:black", "farming:string"}}
 	})
 end
 
@@ -362,10 +362,10 @@ minetest.register_node("mobs:meatblock", {
 
 minetest.register_craft({
 	output = "mobs:meatblock",
-	type = "shapeless",
+--	type = "shapeless",
 	recipe = {
-		"group:food_meat", "group:food_meat", "group:food_meat",
-		"group:food_meat", "group:food_meat", "group:food_meat",
-		"group:food_meat", "group:food_meat", "group:food_meat"
+		{"group:food_meat", "group:food_meat", "group:food_meat"},
+		{"group:food_meat", "group:food_meat", "group:food_meat"},
+		{"group:food_meat", "group:food_meat", "group:food_meat"}
 	}
 })
