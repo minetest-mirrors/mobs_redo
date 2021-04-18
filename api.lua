@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210411",
+	version = "20210418",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -224,10 +224,10 @@ function mob_class:collision()
 
 	for _,object in ipairs(minetest.get_objects_inside_radius(pos, width)) do
 
-		if object:is_player()
-		or (object:get_luaentity()
-		and object:get_luaentity()._cmi_is_mob == true
-		and object ~= self.object) then
+		if object:is_player() then
+--		or (object:get_luaentity()
+--		and object:get_luaentity()._cmi_is_mob == true
+--		and object ~= self.object) then
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
