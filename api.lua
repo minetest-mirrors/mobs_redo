@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210418",
+	version = "20210504",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4127,7 +4127,10 @@ function mobs:register_arrow(name, def)
 
 	minetest.register_entity(name, {
 
-		physical = false,
+		physical = def.physical or false,
+		collide_with_objects = def.collide_with_objects or false,
+		static_save = false,
+
 		visual = def.visual,
 		visual_size = def.visual_size,
 		textures = def.textures,
