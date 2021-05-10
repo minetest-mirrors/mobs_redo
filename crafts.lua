@@ -299,12 +299,18 @@ minetest.register_tool(":mobs:mob_reset_stick", {
 
 			tex_obj = obj
 
+			-- get base texture
+			local bt = tex_obj:get_luaentity().base_texture[1]
+
+			if type(bt) ~= "string" then
+				bt = ""
+			end
+
 			local name = user:get_player_name()
-			local tex = ""
 
 			minetest.show_formspec(name, "mobs_texture", "size[8,4]"
 			.. "field[0.5,1;7.5,0;name;"
-			.. minetest.formspec_escape(S("Enter texture:")) .. ";" .. tex .. "]"
+			.. minetest.formspec_escape(S("Enter texture:")) .. ";" .. bt .. "]"
 			.. "button_exit[2.5,3.5;3,1;mob_texture_change;"
 			.. minetest.formspec_escape(S("Change")) .. "]")
 		end
