@@ -56,6 +56,8 @@ functions needed for the mob to work properly which contains the following:
    'view_range'    how many nodes in distance the mob can see a player.
    'damage'        how many health points the mob does to a player or another
                    mob when melee attacking.
+   'damage_group'  group in which damage is dealt, dedaults to "fleshy".
+   'damage_texture_modifier' applies texture modifier on hit e.g "^[brighten"
    'knock_back'    when true has mobs falling backwards when hit, the greater
                    the damage the more they move back.
    'fear_height'   is how high a cliff or edge has to be before the mob stops

@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210504",
+	version = "20210515",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2652,9 +2652,11 @@ function mob_class:do_states(dtime)
 								self.attack = attached
 							end
 
+							local dgroup = self.damage_group or "fleshy"
+
 							self.attack:punch(self.object, 1.0, {
 								full_punch_interval = 1.0,
-								damage_groups = {fleshy = self.damage}
+								damage_groups = {[dgroup] = self.damage}
 							}, nil)
 						end
 					end
@@ -2915,21 +2917,16 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	-- only play hit sound and show blood effects if damage is 1 or over
 	if damage >= 1 then
 
+		local snd
+
 		-- weapon sounds
 		if weapon_def.sounds then
-
-			local s = random(0, #weapon_def.sounds)
-
-			minetest.sound_play(weapon_def.sounds[s], {
-				object = self.object,
-				max_hear_distance = 8
-			}, true)
+			snd = weapon_def.sounds[random(#weapon_def.sounds)]
 		else
-			minetest.sound_play("default_punch", {
-				object = self.object,
-				max_hear_distance = 5
-			}, true)
+			snd = "default_punch"
 		end
+
+		minetest.sound_play(snd, {object = self.object, max_hear_distance = 8}, true)
 
 		-- blood_particles
 		if not disable_blood and self.blood_amount > 0 then
@@ -2938,8 +2935,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			local blood = self.blood_texture
 			local amount = self.blood_amount
 
-			pos.y = pos.y + (-self.collisionbox[2]
-					+ self.collisionbox[5]) * .5
+			pos.y = pos.y + (-self.collisionbox[2] + self.collisionbox[5]) * .5
 
 			-- lots of damage = more blood :)
 			if damage > 10 then
@@ -2952,7 +2948,6 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			end
 
 			effect(pos, amount, blood, 1, 2, 1.75, nil, nil, true)
-
 		end
 
 		-- do damage
@@ -2962,8 +2957,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		local hot = tool_capabilities and tool_capabilities.damage_groups
 				and tool_capabilities.damage_groups.fire
 
-		if self:check_for_death({type = "punch",
-				puncher = hitter, hot = hot}) then
+		if self:check_for_death({type = "punch", puncher = hitter, hot = hot}) then
 			return true
 		end
 
@@ -2983,8 +2977,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	end -- END if damage
 
 	-- knock back effect (only on full punch)
-	if self.knock_back
-	and tflp >= punch_interval then
+	if self.knock_back and tflp >= punch_interval then
 
 		local v = self.object:get_velocity()
 
@@ -3594,6 +3587,8 @@ minetest.register_entity(name, setmetatable({
 	walk_velocity = def.walk_velocity,
 	run_velocity = def.run_velocity,
 	damage = max(0, (def.damage or 0) * difficulty),
+	damage_group = def.damage_group,
+	damage_texture_modifier = def.damage_texture_modifier,
 	light_damage = def.light_damage,
 	light_damage_min = def.light_damage_min,
 	light_damage_max = def.light_damage_max,
@@ -4289,7 +4284,7 @@ function mobs:boom(self, pos, radius)
 			radius = radius,
 			damage_radius = radius,
 			sound = self.sounds and self.sounds.explode,
-			explode_center = true,
+			explode_center = true
 		})
 	else
 		mobs:safe_boom(self, pos, radius)
@@ -4828,14 +4823,13 @@ function mobs:alias_mob(old_name, new_name)
 	-- entity
 	minetest.register_entity(":" .. old_name, {
 
-		physical = false,
+		physical = false, static_save = false,
 
 		on_activate = function(self, staticdata)
 
 			if minetest.registered_entities[new_name] then
 
-				minetest.add_entity(self.object:get_pos(),
-					new_name, staticdata)
+				minetest.add_entity(self.object:get_pos(), new_name, staticdata)
 			end
 
 			remove_mob(self)
