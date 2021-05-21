@@ -387,6 +387,8 @@ function mobs.fly(entity, _, speed, shoots, arrow, moving_anim, stand_anim)
 	local dir = entity.driver:get_look_dir()
 	local yaw = entity.driver:get_look_horizontal() + 1.57 -- offset fix between old and new commands
 
+if not ctrl or not velo then return end
+
 	if ctrl.up then
 		entity.object:set_velocity({
 			x = dir.x * speed,
