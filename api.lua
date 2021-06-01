@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210527",
+	version = "20210601",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -66,8 +66,8 @@ local mob_nospawn_range = tonumber(settings:get("mob_nospawn_range") or 12)
 local active_limit = tonumber(settings:get("mob_active_limit") or 0)
 local mob_chance_multiplier = tonumber(settings:get("mob_chance_multiplier") or 1)
 local peaceful_player_enabled = settings:get_bool("enable_peaceful_player")
+local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
 local active_mobs = 0
-
 
 -- Peaceful mode message so players will know there are no monsters
 if peaceful_only then
@@ -339,10 +339,12 @@ function mob_class:set_yaw(yaw, delay)
 		yaw = 0
 	end
 
-	delay = delay or 0
+	delay = mob_smooth_rotate and (delay or 0) or 0
 
 	if delay == 0 then
+
 		self.object:set_yaw(yaw)
+
 		return yaw
 	end
 

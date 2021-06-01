@@ -722,6 +722,7 @@ External Settings for "minetest.conf"
    'mob_area_spawn'         When true will check surrounding area the size of the
                             mob for obstructions before spawning, otherwise it
                             defaults to checking the height of the mob only.
+   'mob_smooth_rotate'      Enables smooth rotation when mobs turn by default.
 
 Players can override the spawn chance for each mob registered by adding a line
 to their minetest.conf file with a new value, the lower the value the more each
