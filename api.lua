@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210601",
+	version = "20210610",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3553,6 +3553,13 @@ function mobs:register_mob(name, def)
 
 	mobs.spawning_mobs[name] = {}
 
+	local collisionbox = def.collisionbox or {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25}
+
+	-- quick fix to stop mobs glitching through nodes if too small
+	if -collisionbox[2] + collisionbox[5] < 1.01 then
+		collisionbox[5] = collisionbox[2] + 0.99
+	end
+
 minetest.register_entity(name, setmetatable({
 
 	stepheight = def.stepheight,
@@ -3574,8 +3581,8 @@ minetest.register_entity(name, setmetatable({
 	lifetimer = def.lifetimer,
 	hp_min = max(1, (def.hp_min or 5) * difficulty),
 	hp_max = max(1, (def.hp_max or 10) * difficulty),
-	collisionbox = def.collisionbox,
-	selectionbox = def.selectionbox or def.collisionbox,
+	collisionbox = collisionbox, --def.collisionbox,
+	selectionbox = def.selectionbox or collisionbox, --def.collisionbox,
 	visual = def.visual,
 	visual_size = def.visual_size,
 	mesh = def.mesh,
