@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210613",
+	version = "20210614",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1235,18 +1235,21 @@ function mob_class:do_jump()
 
 	local blocked = minetest.registered_nodes[nodt.name].walkable
 
---print("standing on:", self.standing_on, pos.y - 0.25)
---print("in front:", nod.name, pos.y + 0.5)
---print("in front above:", nodt.name, pos.y + 1.5)
-
 	-- are we facing a fence or wall
 	if nod.name:find("fence") or nod.name:find("gate") or nod.name:find("wall") then
 		self.facing_fence = true
 	end
-
-	-- jump if standing on solid node (not snow) and not blocked above
+--[[
+print("on: " .. self.standing_on
+	.. ", front: " .. nod.name
+	.. ", front above: " .. nodt.name
+	.. ", blocked: " .. (blocked and "yes" or "no")
+	.. ", fence: " .. (self.facing_fence and "yes" or "no")
+)
+]]
+	-- jump if standing on solid node (not snow) and not blocked
 	if (self.walk_chance == 0 or minetest.registered_items[nod.name].walkable)
-	and not blocked and nod.name ~= node_snow then
+	and not blocked and not self.facing_fence and nod.name ~= node_snow then
 
 		local v = self.object:get_velocity()
 
