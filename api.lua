@@ -273,7 +273,7 @@ function mob_class:set_velocity(v)
 	-- halt mob if it has been ordered to stay
 	if self.order == "stand" then
 
-		self.object:set_velocity({x = 0, y = 0, z = 0})
+		self.object:set_velocity({x = 0, y = self.fall_speed, z = 0})
 
 		return
 	end
