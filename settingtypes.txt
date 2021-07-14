@@ -13,6 +13,9 @@ mobs_griefing (Griefing Mobs) bool true
 #    If false then Mobs no longer spawn inside player protected areas
 mobs_spawn_protected (Spawn Mobs in protected areas) bool true
 
+#    If false then Monsters no longer spawn inside player protected areas
+mobs_spawn_monster_protected (Spawn Monsters in protected areas) bool true
+
 #    If true Mobs will be removed once a map chunk is out of view
 remove_far_mobs (Remove far Mobs) bool true
 

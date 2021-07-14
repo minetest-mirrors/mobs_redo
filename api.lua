@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210614",
+	version = "20210714",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -56,6 +56,7 @@ local disable_blood = settings:get_bool("mobs_disable_blood")
 local mobs_drop_items = settings:get_bool("mobs_drop_items") ~= false
 local mobs_griefing = settings:get_bool("mobs_griefing") ~= false
 local spawn_protected = settings:get_bool("mobs_spawn_protected") ~= false
+local spawn_monster_protected = settings:get_bool("mobs_spawn_monster_protected") ~= false
 local remove_far = settings:get_bool("remove_far_mobs") ~= false
 local mob_area_spawn = settings:get_bool("mob_area_spawn")
 local difficulty = tonumber(settings:get("mob_difficulty")) or 1.0
@@ -3956,8 +3957,10 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
-		-- mobs cannot spawn in protected areas when enabled
-		if not spawn_protected
+		-- check if mob can spawn inside protected areas
+		if (spawn_protected == false
+		or (spawn_monster_protected == false
+		and minetest.registered_entities[name].type == "monster"))
 		and minetest.is_protected(pos, "") then
 --print("--- inside protected area", name)
 			return
