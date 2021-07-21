@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210714",
+	version = "20210721",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -274,7 +274,9 @@ function mob_class:set_velocity(v)
 	-- halt mob if it has been ordered to stay
 	if self.order == "stand" then
 
-		self.object:set_velocity({x = 0, y = self.fall_speed, z = 0})
+		local vel = self.object:get_velocity() or {y = 0}
+
+		self.object:set_velocity({x = 0, y = vel.y, z = 0})
 
 		return
 	end
