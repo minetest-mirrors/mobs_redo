@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210721",
+	version = "20210722",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -83,7 +83,7 @@ local aoc_range = tonumber(settings:get("active_block_range")) * 16
 -- pathfinding settings
 local enable_pathfinding = true
 local stuck_timeout = 3 -- how long before stuck mod starts searching
-local stuck_path_timeout = 10 -- how long will mob follow path before giving up
+local stuck_path_timeout = 5 -- how long will mob follow path before giving up
 
 -- default nodes
 local node_fire = "fire:basic_flame"
@@ -1654,6 +1654,8 @@ local can_dig_drop = function(pos)
 	return false
 end
 
+
+local pathfinder_mod = minetest.get_modpath("pathfinder")
 -- path finding and smart mob routine by rnd,
 -- line_of_sight and other edits by Elkien3
 function mob_class:smart_mobs(s, p, dist, dtime)
@@ -1782,13 +1784,18 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			jumpheight = 1
 		end
 
-		self.path.way = minetest.find_path(s, p1, 16, jumpheight,
-				dropheight, "Dijkstra")
-
+		if pathfinder_mod then
+			self.path.way = pathfinder.find_path(s, p1, self, dtime)
+		else
+			self.path.way = minetest.find_path(s, p1, 16, jumpheight,
+					dropheight, "Dijkstra")
+		end
 --[[
 		-- show path using particles
 		if self.path.way and #self.path.way > 0 then
+
 			print("-- path length:" .. tonumber(#self.path.way))
+
 			for _,pos in pairs(self.path.way) do
 				minetest.add_particle({
 				pos = pos,

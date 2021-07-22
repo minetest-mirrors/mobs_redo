@@ -7,3 +7,4 @@ intllib?
 lucky_block?
 cmi?
 toolranks?
+pathfinder?
