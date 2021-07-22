@@ -10,7 +10,6 @@ minetest.register_craftitem("mobs:nametag", {
 
 if minetest.get_modpath("dye") and minetest.get_modpath("farming") then
 	minetest.register_craft({
---		type = "shapeless",
 		output = "mobs:nametag",
 		recipe = {{"default:paper", "dye:black", "farming:string"}}
 	})
@@ -149,7 +148,7 @@ minetest.register_craft({
 
 
 -- make sure we can register fences
-if default.register_fence then
+if minetest.get_modpath("default") and default.register_fence then
 
 -- mob fence (looks like normal fence but collision is 2 high)
 default.register_fence("mobs:fence_wood", {
@@ -165,6 +164,7 @@ default.register_fence("mobs:fence_wood", {
 		}
 	}
 })
+end
 
 -- mob fence top (has enlarged collisionbox to stop mobs getting over)
 minetest.register_node("mobs:fence_top", {
@@ -196,8 +196,6 @@ minetest.register_craft({
 		{"", "default:fence_wood", ""}
 	}
 })
-
-end
 
 
 -- items that can be used as fuel
@@ -361,9 +359,9 @@ minetest.register_node("mobs:meatblock", {
 	tiles = {"mobs_meat_top.png", "mobs_meat_bottom.png", "mobs_meat_side.png"},
 	paramtype2 = "facedir",
 	groups = {choppy = 1, oddly_breakable_by_hand = 1, flammable = 2},
-	sounds = default.node_sound_leaves_defaults(),
+	sounds = default and default.node_sound_leaves_defaults(),
 	on_place = minetest.rotate_node,
-	on_use = minetest.item_eat(20),
+	on_use = minetest.item_eat(20)
 })
 
 minetest.register_craft({
