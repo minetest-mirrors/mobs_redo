@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210722",
+	version = "20210731",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3263,7 +3263,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.object:set_texture_mod(self.texture_mods)
 
 	-- set 5.x flag to remove monsters when map area unloaded
-	if remove_far and self.type == "monster" then
+	if remove_far and self.type == "monster" and not self.tamed then
 		self.static_save = false
 	end
 
@@ -4693,6 +4693,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 				end
 
 				self.tamed = true
+				self.static_save = true
 
 				if not self.owner or self.owner == "" then
 					self.owner = clicker:get_player_name()
