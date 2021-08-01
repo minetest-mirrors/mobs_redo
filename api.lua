@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210731",
+	version = "20210801",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2703,6 +2703,12 @@ function mob_class:do_states(dtime)
 					local obj = minetest.add_entity(p, self.arrow)
 					local ent = obj:get_luaentity()
 					local amount = (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) ^ 0.5
+
+					-- check for custom override for arrow
+					if self.arrow_override then
+						self.arrow_override(ent)
+					end
+
 					local v = ent.velocity or 1 -- or set to default
 
 					ent.switch = 1
@@ -3573,6 +3579,7 @@ minetest.register_entity(name, setmetatable({
 	armor = def.armor,
 	on_rightclick = def.on_rightclick,
 	arrow = def.arrow,
+	arrow_override = def.arrow_override,
 	shoot_interval = def.shoot_interval,
 	sounds = def.sounds,
 	animation = def.animation,
