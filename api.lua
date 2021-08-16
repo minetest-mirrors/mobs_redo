@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210801",
+	version = "20210816",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -160,6 +160,7 @@ local mob_class = {
 	attack_players = true,
 	attack_npcs = true,
 	facing_fence = false,
+	_breed_countdown = nil,
 	_cmi_is_mob = true
 }
 
@@ -722,6 +723,13 @@ function mobs:effect(pos, amount, texture, min_size, max_size,
 end
 
 
+-- Thanks Wuzzy for the following editable settings
+
+local HORNY_TIME = 30
+local HORNY_AGAIN_TIME = 60 * 5 -- 5 minutes
+local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
+
+
 -- update nametag colour
 function mob_class:update_tag()
 
@@ -740,9 +748,25 @@ function mob_class:update_tag()
 		col = "#FF0000"
 	end
 
-	-- build infotext
+	local text = ""
+
+	if self.horny == true then
+
+		text = "\nLoving: " .. (self.hornytimer - (HORNY_TIME + HORNY_AGAIN_TIME))
+
+	elseif self.child == true then
+
+		text = "\nGrowing: " .. (self.hornytimer - CHILD_GROW_TIME)
+
+	elseif self._breed_countdown then
+
+		text = "\nBreeding: " .. self._breed_countdown
+
+	end
+
 	self.infotext = "Health: " .. self.health .. " / " .. self.hp_max
 		.. "\n" .. "Owner: " .. self.owner
+		.. text
 
 	-- set changes
 	self.object:set_properties({
@@ -1358,10 +1382,6 @@ function mob_class:follow_holding(clicker)
 	return false
 end
 
--- Thanks Wuzzy for the following editable settings
-local HORNY_TIME = 30
-local HORNY_AGAIN_TIME = 60 * 5 -- 5 minutes
-local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 
 -- find two animals of same type and breed if nearby and horny
 function mob_class:breed()
@@ -1414,6 +1434,8 @@ function mob_class:breed()
 			self.hornytimer = 0
 			self.horny = false
 		end
+
+		self:update_tag()
 	end
 
 	-- find another same animal who is also horny and mate if nearby
@@ -1468,6 +1490,8 @@ function mob_class:breed()
 
 				self.hornytimer = HORNY_TIME + 1
 				ent.hornytimer = HORNY_TIME + 1
+
+				self:update_tag()
 
 				-- have we reached active mob limit
 				if active_limit > 0 and active_mobs >= active_limit then
@@ -4667,25 +4691,25 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 		self.object:set_hp(self.health)
 
-		self:update_tag()
-
 		-- make children grow quicker
 		if self.child == true then
 
 --			self.hornytimer = self.hornytimer + 20
 			-- deduct 10% of the time to adulthood
-			self.hornytimer = self.hornytimer + (
-					(CHILD_GROW_TIME - self.hornytimer) * 0.1)
+			self.hornytimer = math.floor(self.hornytimer + (
+					(CHILD_GROW_TIME - self.hornytimer) * 0.1))
 --print ("====", self.hornytimer)
 			return true
 		end
 
 		-- feed and tame
 		self.food = (self.food or 0) + 1
+		self._breed_countdown = feed_count - self.food
 
 		if self.food >= feed_count then
 
 			self.food = 0
+			self._breed_countdown = nil
 
 			if breed and self.hornytimer == 0 then
 				self.horny = true
@@ -4710,6 +4734,8 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			-- make sound when fed so many times
 			self:mob_sound(self.sounds.random)
 		end
+
+		self:update_tag()
 
 		return true
 	end
@@ -4738,6 +4764,18 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			esc(S("Rename")) .. "]")
 
 		return true
+	end
+
+	-- if mob follows items and user right clicks while holding sneak it shows info
+	if self.follow then
+
+		if clicker:get_player_control().sneak then
+
+			minetest.chat_send_player(clicker:get_player_name(),
+					S("@1 follows:\n- @2",
+					self.name:split(":")[2],
+					table.concat(self.follow, "\n- ")))
+		end
 	end
 
 	return false
