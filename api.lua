@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210816",
+	version = "20210905",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4770,6 +4770,10 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 	if self.follow then
 
 		if clicker:get_player_control().sneak then
+
+			if type(self.follow) == "string" then
+				self.follow = {self.follow}
+			end
 
 			minetest.chat_send_player(clicker:get_player_name(),
 					S("@1 follows:\n- @2",
