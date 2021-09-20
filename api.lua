@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210905",
+	version = "20210920",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4474,7 +4474,7 @@ end
 function mobs:capture_mob(self, clicker, chance_hand, chance_net,
 		chance_lasso, force_take, replacewith)
 
-	if self.child
+	if not self --self.child
 	or not clicker:is_player()
 	or not clicker:get_inventory() then
 		return false
