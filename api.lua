@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20210920",
+	version = "20211114",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
