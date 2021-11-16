@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20211114",
+	version = "20211116",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4337,7 +4337,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			if def and def.on_rightclick then
 
 				return def.on_rightclick(
-						pointed_thing.under, under, placer, itemstack)
+						pointed_thing.under, under, placer, itemstack, pointed_thing)
 			end
 
 			if pos
@@ -4388,7 +4388,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			if def and def.on_rightclick then
 
 				return def.on_rightclick(
-						pointed_thing.under, under, placer, itemstack)
+						pointed_thing.under, under, placer, itemstack, pointed_thing)
 			end
 
 			if pos
