@@ -1,6 +1,6 @@
 -- Load support for intllib.
 local MP = minetest.get_modpath(minetest.get_current_modname())
-local S = minetest.get_translator and minetest.get_translator("mobs_redo") or
+local S = minetest.get_translator and minetest.get_translator("mobs") or
 		dofile(MP .. "/intllib.lua")
 
 -- CMI support check
@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20211116",
+	version = "20211212",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
