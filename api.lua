@@ -8,7 +8,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220115",
+	version = "20220116",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1002,19 +1002,19 @@ end
 
 
 -- Returns true is node can deal damage to self
-function mobs:is_node_dangerous(self, nodename)
+function mobs:is_node_dangerous(mob_obj, nodename)
 
-	if self.water_damage > 0
+	if mob_obj.water_damage > 0
 	and minetest.get_item_group(nodename, "water") ~= 0 then
 		return true
 	end
 
-	if self.lava_damage > 0
+	if mob_obj.lava_damage > 0
 	and minetest.get_item_group(nodename, "lava") ~= 0 then
 		return true
 	end
 
-	if self.fire_damage > 0
+	if mob_obj.fire_damage > 0
 	and minetest.get_item_group(nodename, "fire") ~= 0 then
 		return true
 	end
@@ -1026,8 +1026,8 @@ function mobs:is_node_dangerous(self, nodename)
 	return false
 end
 
-local function is_node_dangerous(self, nodename)
-	return mobs:is_node_dangerous(self, nodename)
+local function is_node_dangerous(mob_obj, nodename)
+	return mobs:is_node_dangerous(mob_obj, nodename)
 end
 
 
