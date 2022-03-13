@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220205",
+	version = "20220313",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -274,7 +274,7 @@ local check_for = function(look_for, look_inside)
 				return true
 			end
 
-			if str:find("group:") then
+			if str and str:find("group:") then
 
 				local group = str:split(":")[2]
 
