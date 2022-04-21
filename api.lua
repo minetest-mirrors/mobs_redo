@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220314",
+	version = "20220421",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1054,7 +1054,7 @@ end
 -- is mob facing a cliff
 function mob_class:is_at_cliff()
 
-	if self.fear_height == 0 then -- 0 for no falling protection!
+	if self.driver or self.fear_height == 0 then -- 0 for no falling protection!
 		return false
 	end
 
