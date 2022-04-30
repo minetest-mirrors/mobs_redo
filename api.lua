@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220421",
+	version = "20220430",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2393,7 +2393,17 @@ function mob_class:do_states(dtime)
 			and self.animation
 			and self.animation.fly_start
 			and self.animation.fly_end then
-				self:set_animation("fly")
+
+				local def = minetest.registered_nodes[self.standing_on] or {}
+
+				if def.walkable
+				and self.animation
+				and self.animation.hover_start
+				and self.animation.hover_end then
+					self:set_animation("hover")
+				else
+					self:set_animation("fly")
+				end
 			else
 				self:set_animation("walk")
 			end
