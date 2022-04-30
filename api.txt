@@ -237,8 +237,6 @@ functions needed for the mob to work properly which contains the following:
       'die_speed'
       'die_loop'     when set to false stops the animation looping.
       'die_rotate'   if true mob spins during death animation.
-      'hover_start"  hover animation when flying/swimming and solid node below
-      'hover_end"
 
       Using '_loop = false' setting will stop any of the above animations from
       looping.
