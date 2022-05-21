@@ -415,7 +415,7 @@ the mobs:spawn, so it is recommended to use the above instead.
 mobs:register_spawn(name, nodes, max_light, min_light, chance,
    active_object_count, max_height, day_toggle)
 
-mobs:spawn_specfic(name, nodes, neighbors, min_light, max_light, interval,
+mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, interval,
    chance, active_object_count, min_height, max_height, day_toggle, on_spawn)
 
 A simpler way to handle mob spawns has been added with the mobs:spawn(def)
