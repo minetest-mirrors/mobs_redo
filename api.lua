@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220514",
+	version = "20220628",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -421,8 +421,7 @@ function mob_class:set_animation(anim, force)
 	self.object:set_animation({
 		x = self.animation[anim .. "_start"],
 		y = self.animation[anim .. "_end"]},
-		self.animation[anim .. "_speed"] or
-				self.animation.speed_normal or 15,
+		self.animation[anim .. "_speed"] or self.animation.speed_normal or 15,
 		0, self.animation[anim .. "_loop"] ~= false)
 end
 
@@ -1451,8 +1450,7 @@ function mob_class:breed()
 
 		local pos = self.object:get_pos()
 
-		effect({x = pos.x, y = pos.y + 1, z = pos.z}, 8,
-				"heart.png", 3, 4, 1, 0.1)
+		effect({x = pos.x, y = pos.y + 1, z = pos.z}, 8, "heart.png", 3, 4, 1, 0.1)
 
 		local objs = minetest.get_objects_inside_radius(pos, 3)
 		local ent
@@ -1473,6 +1471,7 @@ function mob_class:breed()
 					local selfname = self.name:split(":")
 
 					if entname[1] == selfname[1] then
+
 						entname = entname[2]:split("_")
 						selfname = selfname[2]:split("_")
 
@@ -1560,7 +1559,7 @@ function mob_class:breed()
 							self.base_selbox[4] * .5,
 							self.base_selbox[5] * .5,
 							self.base_selbox[6] * .5
-						},
+						}
 					})
 					-- tamed and owned by parents' owner
 					ent2.child = true
@@ -1636,13 +1635,10 @@ end
 function mob_class:day_docile()
 
 	if self.docile_by_day == false then
-
 		return false
-
 	elseif self.docile_by_day == true
 	and self.time_of_day > 0.2
 	and self.time_of_day < 0.8 then
-
 		return true
 	end
 end
@@ -2637,7 +2633,7 @@ function mob_class:do_states(dtime)
 			yaw = yaw_to_pos(self, p)
 
 			-- move towards enemy if beyond mob reach
-			if dist > self.reach then
+			if dist > (self.reach + (self.reach_ext or 0)) then
 
 				-- path finding by rnd
 				if self.pathfinding -- only if mob has pathfinding enabled
@@ -2649,8 +2645,13 @@ function mob_class:do_states(dtime)
 				-- distance padding to stop spinning mob
 				local pad = abs(p.x - s.x) + abs(p.z - s.z)
 
+				self.reach_ext = 0 -- extended ready off by default
+
 				if self.at_cliff or pad < 0.2 then
 
+					-- when on top of player extend reach slightly so player can
+					-- still be attacked.
+					self.reach_ext = 0.8
 					self:set_velocity(0)
 					self:set_animation("stand")
 				else
@@ -3412,8 +3413,7 @@ function mob_class:on_step(dtime, moveresult)
 
 		-- if standing inside solid block then jump to escape
 		if minetest.registered_nodes[self.standing_in].walkable
-		and minetest.registered_nodes[self.standing_in].drawtype
-				== "normal" then
+		and minetest.registered_nodes[self.standing_in].drawtype == "normal" then
 
 				self.object:set_velocity({
 					x = 0,
@@ -3857,7 +3857,7 @@ function mobs:add_mob(pos, def)
 				ent.base_selbox[4] * .5,
 				ent.base_selbox[5] * .5,
 				ent.base_selbox[6] * .5
-			},
+			}
 		})
 
 		ent.child = true
@@ -4659,8 +4659,7 @@ function mobs:protect(self, clicker)
 
 	pos.y = pos.y + self.collisionbox[2] + 0.5
 
-	effect(self.object:get_pos(), 25, "mobs_protect_particle.png",
-			0.5, 4, 2, 15)
+	effect(self.object:get_pos(), 25, "mobs_protect_particle.png", 0.5, 4, 2, 15)
 
 	self:mob_sound("mobs_spell")
 
