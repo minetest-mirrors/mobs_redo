@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220628",
+	version = "20220704",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4838,7 +4838,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 end)
 
 
--- compatibility function for old entities to new modpack entities
+-- compatibility function for old mobs entities to new mobs_redo modpack
 function mobs:alias_mob(old_name, new_name)
 
 	-- check old_name entity doesnt already exist
@@ -4869,3 +4869,44 @@ function mobs:alias_mob(old_name, new_name)
 		end
 	})
 end
+
+
+-- admin command to remove all monsters around players
+minetest.register_chatcommand("clear_mobs", {
+	params = "<text>",
+	description = "Remove untamed mobs from around players.",
+	privs = {server = true},
+
+	func = function (name, param)
+
+		local count = 0
+
+		for _, player in pairs(minetest.get_connected_players()) do
+
+			if player then
+
+				local pos = player:get_pos()
+
+				local objs = minetest.get_objects_inside_radius(pos, 28)
+
+				for _, obj in pairs(objs) do
+
+					if obj then
+
+						local ent = obj:get_luaentity()
+
+						-- only remove mobs redo mobs that are not tamed
+						if ent and ent._cmi_is_mob and ent.tamed ~= true then
+
+							obj:remove()
+
+							count = count + 1
+						end
+					end
+				end
+			end
+		end
+
+		minetest.chat_send_player(name, S("@1 mobs removed.", count))
+	end
+})
