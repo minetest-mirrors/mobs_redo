@@ -4871,7 +4871,7 @@ function mobs:alias_mob(old_name, new_name)
 end
 
 
--- admin command to remove all monsters around players
+-- admin command to remove untamed mobs around players
 minetest.register_chatcommand("clear_mobs", {
 	params = "<text>",
 	description = "Remove untamed mobs from around players.",
@@ -4898,7 +4898,7 @@ minetest.register_chatcommand("clear_mobs", {
 						-- only remove mobs redo mobs that are not tamed
 						if ent and ent._cmi_is_mob and ent.tamed ~= true then
 
-							obj:remove()
+							remove_mob(ent, true)
 
 							count = count + 1
 						end
