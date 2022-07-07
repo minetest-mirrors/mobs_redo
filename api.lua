@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220704",
+	version = "20220707",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3280,7 +3280,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	if type(self.armor) == "table" then
 		armor = table_copy(self.armor)
 	else
-		armor = {fleshy = self.armor} -- immortal = 1
+		armor = {fleshy = self.armor, immortal = 1}
 	end
 	self.object:set_armor_groups(armor)
 
