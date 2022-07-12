@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220707",
+	version = "20220712",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1256,15 +1256,9 @@ function mob_class:do_jump()
 	-- set y_pos to base of mob
 	pos.y = pos.y + self.collisionbox[2]
 
-	-- what is in front of mob?
-	local nod = node_ok({
-		x = pos.x + dir_x, y = pos.y + 0.5, z = pos.z + dir_z
-	})
-
-	-- what is above and in front?
-	local nodt = node_ok({
-		x = pos.x + dir_x, y = pos.y + 1.5, z = pos.z + dir_z
-	})
+	-- what is in front of mob and above?
+	local nod = node_ok({x = pos.x + dir_x, y = pos.y + 0.5, z = pos.z + dir_z})
+	local nodt = node_ok({x = pos.x + dir_x, y = pos.y + 1.5, z = pos.z + dir_z})
 
 	local blocked = minetest.registered_nodes[nodt.name].walkable
 
@@ -1272,6 +1266,7 @@ function mob_class:do_jump()
 	if nod.name:find("fence") or nod.name:find("gate") or nod.name:find("wall") then
 		self.facing_fence = true
 	end
+
 --[[
 print("on: " .. self.standing_on
 	.. ", front: " .. nod.name
@@ -1280,6 +1275,13 @@ print("on: " .. self.standing_on
 	.. ", fence: " .. (self.facing_fence and "yes" or "no")
 )
 ]]
+
+	-- if mob can leap then remove blockages and let them try
+	if self.can_leap == true then
+		blocked = false
+		self.facing_fence = false
+	end
+
 	-- jump if standing on solid node (not snow) and not blocked
 	if (self.walk_chance == 0 or minetest.registered_items[nod.name].walkable)
 	and not blocked and not self.facing_fence and nod.name ~= node_snow then
@@ -3587,6 +3589,7 @@ minetest.register_entity(name, setmetatable({
 	on_flop = def.on_flop,
 	do_custom = def.do_custom,
 	jump_height = def.jump_height,
+	can_leap = def.can_leap,
 	drawtype = def.drawtype, -- DEPRECATED, use rotate instead
 	rotate = rad(def.rotate or 0), -- 0=front 90=side 180=back 270=side2
 	glow = def.glow,
