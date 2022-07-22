@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220712",
+	version = "20220722",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -106,8 +106,8 @@ local stuck_timeout = 3 -- how long before stuck mod starts searching
 local stuck_path_timeout = 5 -- how long will mob follow path before giving up
 
 -- default nodes
-local node_fire = "fire:basic_flame"
-local node_permanent_flame = "fire:permanent_flame"
+--local node_fire = "fire:basic_flame"
+--local node_permanent_flame = "fire:permanent_flame"
 local node_ice = "default:ice"
 local node_snowblock = "default:snowblock"
 local node_snow = "default:snow"
