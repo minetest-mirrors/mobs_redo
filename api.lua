@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220722",
+	version = "20220729",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -998,15 +998,13 @@ end
 -- get node but use fallback for nil or unknown
 local node_ok = function(pos, fallback)
 
-	fallback = fallback or mobs.fallback_node
-
 	local node = minetest.get_node_or_nil(pos)
 
 	if node and minetest.registered_nodes[node.name] then
 		return node
 	end
 
-	return minetest.registered_nodes[fallback]
+	return minetest.registered_nodes[(fallback or mobs.fallback_node)]
 end
 
 
@@ -1066,7 +1064,7 @@ function mob_class:is_at_cliff()
 		return true
 	end
 
-	local bnode = node_ok(blocker)
+	local bnode = node_ok(blocker, "air")
 
 	-- will we drop onto dangerous node?
 	if is_node_dangerous(self, bnode.name) then
