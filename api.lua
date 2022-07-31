@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220729",
+	version = "20220731",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -750,7 +750,7 @@ local HORNY_AGAIN_TIME = 60 * 5 -- 5 minutes
 local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 
 
--- update nametag colour
+-- update nametag and infotext
 function mob_class:update_tag()
 
 	local col = "#00FF00"
@@ -784,8 +784,16 @@ function mob_class:update_tag()
 
 	end
 
+	if self.protected then
+		if self.protected == 2 then
+			text = text .. "\nProtection: Level 2"
+		else
+			text = text .. "\nProtection: Level 1"
+		end
+	end
+
 	self.infotext = "Health: " .. self.health .. " / " .. self.hp_max
-		.. (self.owner == "" and "" or "\n" .. "Owner: " .. self.owner)
+		.. (self.owner == "" and "" or "\nOwner: " .. self.owner)
 		.. text
 
 	-- set changes
