@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220731",
+	version = "20220804",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3680,6 +3680,7 @@ minetest.register_entity(name, setmetatable({
 	stay_near = def.stay_near,
 	randomly_turn = def.randomly_turn ~= false,
 	ignore_invisibility = def.ignore_invisibility,
+	messages = def.messages,
 
 	on_spawn = def.on_spawn,
 
