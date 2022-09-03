@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220804",
+	version = "20220903",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1364,7 +1364,7 @@ local entity_physics = function(pos, radius)
 		-- punches work on entities AND players
 		objs[n]:punch(objs[n], 1.0, {
 			full_punch_interval = 1.0,
-			damage_groups = {fleshy = damage},
+			damage_groups = {fleshy = damage}
 		}, pos)
 	end
 end
@@ -3795,6 +3795,12 @@ end
 -- global functions
 
 function mobs:add_mob(pos, def)
+
+	-- nil check
+	if not pos or not def then
+--print("--- no position or definition given")
+		return
+	end
 
 	-- is mob actually registered?
 	if not mobs.spawning_mobs[def.name]
