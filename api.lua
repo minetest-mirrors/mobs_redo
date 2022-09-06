@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220903",
+	version = "20220906",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2120,8 +2120,9 @@ function mob_class:follow_flop()
 
 		for n = 1, #players do
 
-			if players[n] and get_distance(players[n]:get_pos(), s) < self.view_range
-			and not is_invisible(self, players[n]:get_player_name()) then
+			if players[n]
+			and not is_invisible(self, players[n]:get_player_name())
+			and get_distance(players[n]:get_pos(), s) < self.view_range then
 
 				self.following = players[n]
 
@@ -2178,10 +2179,11 @@ function mob_class:follow_flop()
 				yaw_to_pos(self, p)
 
 				-- anyone but standing npc's can move along
-				if dist > self.reach
+				if dist >= self.reach
 				and self.order ~= "stand" then
 
 					self:set_velocity(self.walk_velocity)
+					self.follow_stop = nil
 
 					if self.walk_chance ~= 0 then
 						self:set_animation("walk")
@@ -2189,6 +2191,7 @@ function mob_class:follow_flop()
 				else
 					self:set_velocity(0)
 					self:set_animation("stand")
+					self.follow_stop = true
 				end
 
 				return
@@ -2258,7 +2261,7 @@ function mob_class:do_states(dtime)
 
 	local yaw = self.object:get_yaw() ; if not yaw then return end
 
-	if self.state == "stand" then
+	if self.state == "stand" and not self.follow_stop then
 
 		if self.randomly_turn and random(4) == 1 then
 
