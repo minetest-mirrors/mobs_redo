@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220906",
+	version = "20220918",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1430,7 +1430,7 @@ function mob_class:breed()
 				self.object:set_pos(pos)
 
 				-- jump slightly when fully grown so as not to fall into ground
-				self.object:set_velocity({x = 0, y = 0.5, z = 0 })
+				self.object:set_velocity({x = 0, y = 2, z = 0 })
 			end
 		end
 
