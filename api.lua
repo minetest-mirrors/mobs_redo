@@ -28,7 +28,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220918",
+	version = "20220922",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2535,27 +2535,7 @@ function mob_class:do_states(dtime)
 
 					remove_mob(self, true)
 
-					if minetest.get_modpath("tnt") and tnt and tnt.boom
-					and not minetest.is_protected(pos, "") then
-
-						tnt.boom(pos, {
-							radius = node_break_radius,
-							damage_radius = entity_damage_radius,
-							sound = self.sounds.explode
-						})
-					else
-
-						minetest.sound_play(self.sounds.explode, {
-							pos = pos,
-							gain = 1.0,
-							max_hear_distance = self.sounds.distance or 32
-						})
-
-						entity_physics(pos, entity_damage_radius)
-
-						effect(pos, 32, "tnt_smoke.png", nil, nil,
-								node_break_radius, 1, 0)
-					end
+					mobs:boom(self, pos, entity_damage_radius, node_break_radius)
 
 					return true
 				end
@@ -4292,14 +4272,14 @@ function mobs:register_arrow(name, def)
 end
 
 
--- compatibility function
+-- compatibility function (deprecated)
 function mobs:explosion(pos, radius)
-	mobs:boom({sounds = {explode = "tnt_explode"}}, pos, radius)
+	mobs:boom({sounds = {explode = "tnt_explode"}}, pos, radius, radius, "tnt_smoke.png")
 end
 
 
 -- no damage to nodes explosion
-function mobs:safe_boom(self, pos, radius)
+function mobs:safe_boom(self, pos, radius, texture)
 
 	minetest.sound_play(self.sounds and self.sounds.explode or "tnt_explode", {
 		pos = pos,
@@ -4309,12 +4289,12 @@ function mobs:safe_boom(self, pos, radius)
 
 	entity_physics(pos, radius)
 
-	effect(pos, 32, "tnt_smoke.png", radius * 3, radius * 5, radius, 1, 0)
+	effect(pos, 32, texture, radius * 3, radius * 5, radius, 1, 0)
 end
 
 
 -- make explosion with protection and tnt mod check
-function mobs:boom(self, pos, radius)
+function mobs:boom(self, pos, radius, damage_radius, texture)
 
 	if mobs_griefing
 	and minetest.get_modpath("tnt") and tnt and tnt.boom
@@ -4322,12 +4302,13 @@ function mobs:boom(self, pos, radius)
 
 		tnt.boom(pos, {
 			radius = radius,
-			damage_radius = radius,
+			damage_radius = damage_radius,
 			sound = self.sounds and self.sounds.explode,
-			explode_center = true
+			explode_center = true,
+			tiles = {(texture or "tnt_smoke.png")}
 		})
 	else
-		mobs:safe_boom(self, pos, radius)
+		mobs:safe_boom(self, pos, radius, texture)
 	end
 end
 

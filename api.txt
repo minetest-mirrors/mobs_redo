@@ -526,10 +526,12 @@ Explosion Function
 
 mobs:explosion(pos, radius) -- DEPRECATED!!!  use mobs:boom() instead
 
-mobs:boom(self, pos, radius)
+mobs:boom(self, pos, radius, damage_radius, texture)
    'self' mob entity
    'pos' centre position of explosion
    'radius' radius of explosion (typically set to 3)
+   'damage_radius' radius of damage around explosion
+   'texture' particle texture during explosion, defaults to "tnt_smoke.png"
 
 This function generates an explosion which removes nodes in a specific radius
 and damages any entity caught inside the blast radius.  Protection will limit
