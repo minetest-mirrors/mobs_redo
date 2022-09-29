@@ -8,11 +8,10 @@ else
 	if minetest.get_modpath("intllib") then
 		dofile(minetest.get_modpath("intllib") .. "/init.lua")
 		if intllib.make_gettext_pair then
-			gettext, ngettext = intllib.make_gettext_pair() -- new gettext method
+			S = intllib.make_gettext_pair() -- new gettext method
 		else
-			gettext = intllib.Getter() -- old text file method
+			S = intllib.Getter() -- old text file method
 		end
-		S = gettext
 	else -- boilerplate function
 		S = function(str, ...)
 			local args = {...}
@@ -28,7 +27,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220922",
+	version = "20220929",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -111,6 +110,7 @@ local stuck_path_timeout = 5 -- how long will mob follow path before giving up
 local node_ice = "default:ice"
 local node_snowblock = "default:snowblock"
 local node_snow = "default:snow"
+
 mobs.fallback_node = minetest.registered_aliases["mapgen_dirt"] or "default:dirt"
 
 local mob_class = {
@@ -190,15 +190,14 @@ local mob_class_meta = {__index = mob_class}
 -- play sound
 function mob_class:mob_sound(sound)
 
-	local pitch = 1.0
-
-	-- higher pitch for a child
-	if self.child then pitch = pitch * 1.5 end
-
-	-- a little random pitch to be different
-	pitch = pitch + random(-10, 10) * 0.005
-
 	if sound then
+
+		-- higher pitch for a child
+		local pitch = self.child and 1.5 or 1.0
+
+		-- a little random pitch to be different
+		pitch = pitch + random(-10, 10) * 0.005
+
 		minetest.sound_play(sound, {
 			object = self.object,
 			gain = 1.0,
@@ -219,7 +218,7 @@ function mob_class:do_attack(player)
 	self.attack = player
 	self.state = "attack"
 
-	if random(0, 100) < 90 then
+	if random(100) < 90 then
 		self:mob_sound(self.sounds.war_cry)
 	end
 end
@@ -462,7 +461,7 @@ local line_of_sight = function(self, pos1, pos2, stepsize)
 	-- It continues to advance in the line of sight in search of a real
 	-- obstruction which counts as 'walkable' nodebox.
 	while minetest.registered_nodes[nn]
-	and (minetest.registered_nodes[nn].walkable == false) do
+	and minetest.registered_nodes[nn].walkable == false do
 
 		-- Check if you can still move forward
 		if td < ad + stepsize then
@@ -485,53 +484,6 @@ local line_of_sight = function(self, pos1, pos2, stepsize)
 		end
 
 		ad = ad + stepsize
-
-		-- scan again
-		r, pos = minetest.line_of_sight(npos1, pos2, stepsize)
-
-		if r == true then return true end
-
-		-- New Nodename found
-		nn = minetest.get_node(pos).name
-	end
-
-	return false
-end
-
-
--- check line of sight (by BrunoMine, tweaked by Astrobe)
-local new_line_of_sight = function(self, pos1, pos2, stepsize)
-
-	if not pos1 or not pos2 then return end
-
-	stepsize = stepsize or 1
-
-	local stepv = vmultiply(vdirection(pos1, pos2), stepsize)
-
-	local s, pos = minetest.line_of_sight(pos1, pos2, stepsize)
-
-	-- normal walking and flying mobs can see you through air
-	if s == true then return true end
-
-	-- New pos1 to be analyzed
-	local npos1 = {x = pos1.x, y = pos1.y, z = pos1.z}
-
-	local r, pos = minetest.line_of_sight(npos1, pos2, stepsize)
-
-	-- Checks the return
-	if r == true then return true end
-
-	-- Nodename found
-	local nn = minetest.get_node(pos).name
-
-	-- It continues to advance in the line of sight in search of a real
-	-- obstruction which counts as 'walkable' nodebox.
-	while minetest.registered_nodes[nn]
-	and (minetest.registered_nodes[nn].walkable == false) do
-
-		npos1 = vadd(npos1, stepv)
-
-		if get_distance(npos1, pos2) < stepsize then return true end
 
 		-- scan again
 		r, pos = minetest.line_of_sight(npos1, pos2, stepsize)
@@ -611,8 +563,7 @@ function mob_class:attempt_flight_correction(override)
 	local escape_target = flyable_nodes[random(#flyable_nodes)]
 	local escape_direction = vdirection(pos, escape_target)
 
-	self.object:set_velocity(
-		vmultiply(escape_direction, 1))
+	self.object:set_velocity(vmultiply(escape_direction, 1))
 
 	return true
 end
@@ -1087,11 +1038,6 @@ end
 
 -- environmental damage (water, lava, fire, light etc.)
 function mob_class:do_env_damage()
-
-	-- feed/tame text timer (so mob 'full' messages dont spam chat)
-	if self.htimer > 0 then
-		self.htimer = self.htimer - 1
-	end
 
 	self:update_tag()
 
@@ -1739,7 +1685,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		end -- can see target!
 	end
 
-	if (self.path.stuck_timer > stuck_timeout and not self.path.following) then
+	if self.path.stuck_timer > stuck_timeout and not self.path.following then
 
 		use_pathfind = true
 		self.path.stuck_timer = 0
@@ -1755,7 +1701,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		end, self)
 	end
 
-	if (self.path.stuck_timer > stuck_path_timeout and self.path.following) then
+	if self.path.stuck_timer > stuck_path_timeout and self.path.following then
 
 		use_pathfind = true
 		self.path.stuck_timer = 0
@@ -1771,7 +1717,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		end, self)
 	end
 
-	if abs(vsubtract(s,target_pos).y) > self.stepheight then
+	if abs(vsubtract(s, target_pos).y) > self.stepheight then
 
 		if height_switcher then
 			use_pathfind = true
@@ -1833,15 +1779,16 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			print("-- path length:" .. tonumber(#self.path.way))
 
 			for _,pos in pairs(self.path.way) do
+
 				minetest.add_particle({
-				pos = pos,
-				velocity = {x=0, y=0, z=0},
-				acceleration = {x=0, y=0, z=0},
-				expirationtime = 1,
-				size = 4,
-				collisiondetection = false,
-				vertical = false,
-				texture = "heart.png",
+					pos = pos,
+					velocity = {x=0, y=0, z=0},
+					acceleration = {x=0, y=0, z=0},
+					expirationtime = 1,
+					size = 4,
+					collisiondetection = false,
+					vertical = false,
+					texture = "heart.png",
 				})
 			end
 		end
@@ -2513,8 +2460,7 @@ function mob_class:do_states(dtime)
 						self.object:set_texture_mod(self.texture_mods)
 					else
 
-						self.object:set_texture_mod(self.texture_mods
-								.. "^[brighten")
+						self.object:set_texture_mod(self.texture_mods .. "^[brighten")
 					end
 
 					self.blinkstatus = not self.blinkstatus
@@ -3319,8 +3265,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	end
 
 	if use_cmi then
-		self._cmi_components = cmi.activate_components(
-				self.serialized_cmi_components)
+		self._cmi_components = cmi.activate_components(self.serialized_cmi_components)
 		cmi.notify_activate(self.object, dtime)
 	end
 end
@@ -3406,11 +3351,11 @@ function mob_class:on_step(dtime, moveresult)
 		if minetest.registered_nodes[self.standing_in].walkable
 		and minetest.registered_nodes[self.standing_in].drawtype == "normal" then
 
-				self.object:set_velocity({
-					x = 0,
-					y = self.jump_height,
-					z = 0
-				})
+			self.object:set_velocity({
+				x = 0,
+				y = self.jump_height,
+				z = 0
+			})
 		end
 
 		-- check and stop if standing at cliff and fear of heights
@@ -3440,8 +3385,8 @@ function mob_class:on_step(dtime, moveresult)
 			if yaw > self.target_yaw then
 
 				if dif > pi then
-					dif = 2 * pi - dif -- need to add
-					yaw = yaw + dif / self.delay
+					dif = 2 * pi - dif
+					yaw = yaw + dif / self.delay -- need to add
 				else
 					yaw = yaw - dif / self.delay -- need to subtract
 				end
@@ -4382,7 +4327,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			end
 
 			return itemstack
-		end,
+		end
 	})
 
 
@@ -4444,7 +4389,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			end
 
 			return itemstack
-		end,
+		end
 	})
 end
 
