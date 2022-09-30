@@ -27,7 +27,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220929",
+	version = "20220930",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1210,8 +1210,7 @@ function mob_class:do_jump()
 
 	-- what is in front of mob and above?
 	local nod = node_ok({x = pos.x + dir_x, y = pos.y + 0.5, z = pos.z + dir_z})
-	local nodt = node_ok({x = pos.x + dir_x, y = pos.y + 1.5, z = pos.z + dir_z})
-
+	local nodt = node_ok({x = pos.x + dir_x, y = pos.y + 1, z = pos.z + dir_z})
 	local blocked = minetest.registered_nodes[nodt.name].walkable
 
 	-- are we facing a fence or wall
