@@ -6,6 +6,17 @@ Welcome to the world of mobs in minetest and hopefully an easy guide to defining
 your own mobs and having them appear in your worlds.
 
 
+Quick Note
+----------
+
+Since the mobs redo api checks for nodes around the mob to function, it relies on a
+default node incase anything goes wrong, so in the default game this is default:dirt
+but for any custom game please make sure the following line is registered with your
+preferred dirt node of choice:
+
+minetest.register_alias("mapgen_dirt", "mymod:my_dirt_node")
+
+
 Registering Mobs
 ----------------
 
