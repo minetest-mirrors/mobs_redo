@@ -27,7 +27,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20220930",
+	version = "20221015",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -113,7 +113,7 @@ local node_snow = "default:snow"
 
 mobs.fallback_node = minetest.registered_aliases["mapgen_dirt"] or "default:dirt"
 
-local mob_class = {
+mobs.mob_class = {
 	stepheight = 1.1,
 	fly_in = "air",
 	owner = "",
@@ -184,6 +184,7 @@ local mob_class = {
 	_cmi_is_mob = true
 }
 
+local mob_class = mobs.mob_class -- Compatibility
 local mob_class_meta = {__index = mob_class}
 
 
