@@ -27,7 +27,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20221015",
+	version = "20221021",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -357,6 +357,16 @@ function mob_class:set_yaw(yaw, delay)
 
 	if not yaw or yaw ~= yaw then
 		yaw = 0
+	end
+
+	-- clamp our yaw to a 360 range
+	if math.deg(self.object:get_yaw()) > 360 then
+
+		yaw = rad(10) ; delay = 0
+
+	elseif math.deg(self.object:get_yaw()) < 0 then
+
+		yaw = rad(350) ; delay = 0
 	end
 
 	delay = mob_smooth_rotate and (delay or 0) or 0
