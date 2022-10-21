@@ -44,6 +44,7 @@ local random = math.random
 local floor = math.floor
 local ceil = math.ceil
 local rad = math.rad
+local deg = math.deg
 local atann = math.atan
 local atan = function(x)
 	if not x or x ~= x then
@@ -360,11 +361,11 @@ function mob_class:set_yaw(yaw, delay)
 	end
 
 	-- clamp our yaw to a 360 range
-	if math.deg(self.object:get_yaw()) > 360 then
+	if deg(self.object:get_yaw()) > 360 then
 
 		yaw = rad(10) ; delay = 0
 
-	elseif math.deg(self.object:get_yaw()) < 0 then
+	elseif deg(self.object:get_yaw()) < 0 then
 
 		yaw = rad(350) ; delay = 0
 	end
