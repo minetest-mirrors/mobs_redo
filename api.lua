@@ -27,7 +27,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20221021",
+	version = "20221027",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1895,14 +1895,17 @@ end
 -- peaceful player privilege support
 local function is_peaceful_player(player)
 
+	-- main setting enabled
 	if peaceful_player_enabled then
+		return true
+	end
 
-		local player_name = player:get_player_name()
+	local player_name = player:get_player_name()
 
-		if player_name
-		and minetest.check_player_privs(player_name, "peaceful_player") then
-			return true
-		end
+	-- player priv enabled
+	if player_name
+	and minetest.check_player_privs(player_name, "peaceful_player") then
+		return true
 	end
 
 	return false
