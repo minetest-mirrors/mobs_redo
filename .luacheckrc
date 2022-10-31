@@ -10,7 +10,8 @@ read_globals = {
     "cmi",
     "toolranks",
     "pathfinder",
-    "tnt"
+    "tnt",
+    "ItemStack"
 }
 
 globals = {
