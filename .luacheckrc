@@ -19,3 +19,8 @@ globals = {
     "player_api",
     "default"
 }
+
+ignore = {
+    "431", -- Shadowing an upvalue
+    "432", -- Shadowing an upvalue argument
+}
