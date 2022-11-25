@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20221115",
+	version = "20221125",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2936,7 +2936,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		-- select tool use sound if found, or fallback to default
 		local snd = weapon_def.sound and weapon_def.sound.use
-				or "default_punch"
+				or "mobs_punch"
 
 		minetest.sound_play(snd, {object = self.object, max_hear_distance = 8}, true)
 
