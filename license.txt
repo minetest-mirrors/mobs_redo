@@ -23,4 +23,5 @@ THE SOFTWARE.
 
 Textures under CC0 license by TenPlus1
 
-tnt_smoke.png under Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+ShadowNinja (CC BY-SA 3.0):
+  tnt_smoke.png
