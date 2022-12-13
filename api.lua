@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20221128",
+	version = "20221213",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4424,7 +4424,9 @@ function mobs:force_capture(self, clicker)
 
 		if  t ~= "function"
 		and t ~= "nil"
-		and t ~= "userdata" then
+		and t ~= "userdata"
+		and _ ~= "object"
+		and _ ~= "_cmi_components" then
 			tmp[_] = self[_]
 		end
 	end
@@ -4538,7 +4540,9 @@ function mobs:capture_mob(self, clicker, chance_hand, chance_net,
 
 					if  t ~= "function"
 					and t ~= "nil"
-					and t ~= "userdata" then
+					and t ~= "userdata"
+					and _ ~= "object"
+					and _ ~= "_cmi_components" then
 						tmp[_] = self[_]
 					end
 				end
