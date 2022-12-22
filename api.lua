@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20221213",
+	version = "20221222",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4830,7 +4830,23 @@ function mobs:alias_mob(old_name, new_name)
 		end,
 
 		get_staticdata = function(self)
-			return self
+
+			local tmp, t = {}
+
+			for _,stat in pairs(self) do
+
+				t = type(stat)
+
+				if  t ~= "function"
+				and t ~= "nil"
+				and t ~= "userdata"
+				and _ ~= "object"
+				and _ ~= "_cmi_components" then
+					tmp[_] = self[_]
+				end
+			end
+
+			return minetest.serialize(tmp)
 		end
 	})
 end
