@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20221222",
+	version = "20230119",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2997,7 +2997,8 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	and self.order ~= "stand" then
 
 		local lp = hitter:get_pos()
-		yaw = yaw_to_pos(self, lp, 3)
+
+		yaw_to_pos(self, lp, 3)
 
 		self.state = "runaway"
 		self.runaway_timer = 0
