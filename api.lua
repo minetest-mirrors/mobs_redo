@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230227",
+	version = "20230303",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -256,8 +256,9 @@ end
 -- collision function based on jordan4ibanez' open_ai mod
 function mob_class:collision()
 
-	local pos = self.object:get_pos()
+	local pos = self.object:get_pos() ; if not pos then return {0, 0} end
 	local x, z = 0, 0
+	local vel = self.object:get_velocity()
 	local width = -self.collisionbox[1] + self.collisionbox[4] + 0.5
 
 	for _,object in ipairs(minetest.get_objects_inside_radius(pos, width)) do
@@ -266,9 +267,12 @@ function mob_class:collision()
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
+			local force = (width + 0.5) - vector.distance(
+				{x = pos.x, y = 0, z = pos.z},
+				{x = pos2.x, y = 0, z = pos2.z})
 
-			x = x + vec.x
-			z = z + vec.z
+			x = x + (vec.x * force)
+			z = z + (vec.z * force)
 		end
 	end
 
@@ -2948,8 +2952,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if damage >= 1 then
 
 		-- select tool use sound if found, or fallback to default
-		local snd = weapon_def.sound and weapon_def.sound.use
-				or "mobs_punch"
+		local snd = weapon_def.sound and weapon_def.sound.use or "mobs_punch"
 
 		minetest.sound_play(snd, {object = self.object, max_hear_distance = 8}, true)
 
@@ -3012,6 +3015,15 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
 
+		-- turn mob on knockback and play run/walk animatoin
+		self:set_yaw((random(0, 360) - 180) / 180 * pi, 12)
+
+		if self.animation.run_end then
+			self:set_animation("run")
+		else
+			self:set_animation("walk")
+		end
+
 		self.pause_timer = 0.25
 	end
 
@@ -3044,8 +3056,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		self:do_attack(hitter)
 
 		-- alert others to the attack
-		local objs = minetest.get_objects_inside_radius(
-				hitter:get_pos(), self.view_range)
+		local objs = minetest.get_objects_inside_radius(hitter:get_pos(), self.view_range)
 		local obj
 
 		for n = 1, #objs do
@@ -3058,8 +3069,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 				if obj.group_attack == true
 				and obj.state ~= "attack"
 				and obj.owner ~= name
-				and (obj.name == self.name
-						or obj.name == self.group_helper) then
+				and (obj.name == self.name or obj.name == self.group_helper) then
 
 					obj:do_attack(hitter)
 				end
@@ -4151,8 +4161,7 @@ function mobs:register_arrow(name, def)
 
 		on_activate = def.on_activate,
 
-		on_punch = def.on_punch or function(
-				self, hitter, tflp, tool_capabilities, dir)
+		on_punch = def.on_punch or function(self, hitter, tflp, tool_capabilities, dir)
 		end,
 
 		on_step = def.on_step or function(self, dtime)
