@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230303",
+	version = "20230304",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3015,7 +3015,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
 
-		-- turn mob on knockback and play run/walk animatoin
+		-- turn mob on knockback and play run/walk animation
 		self:set_yaw((random(0, 360) - 180) / 180 * pi, 12)
 
 		if self.animation.run_end then
@@ -3081,6 +3081,8 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			end
 		end
 	end
+
+	return true
 end
 
 
