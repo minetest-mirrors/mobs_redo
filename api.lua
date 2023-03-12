@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230311",
+	version = "20230312",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -83,6 +83,7 @@ local active_limit = tonumber(settings:get("mob_active_limit") or 0)
 local mob_chance_multiplier = tonumber(settings:get("mob_chance_multiplier") or 1)
 local peaceful_player_enabled = settings:get_bool("enable_peaceful_player")
 local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
+local mob_height_fix = settings:get_bool("mob_height_fix") ~= false
 local active_mobs = 0
 
 -- pathfinding settings
@@ -3556,7 +3557,7 @@ function mobs:register_mob(name, def)
 	local collisionbox = def.collisionbox or {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25}
 
 	-- quick fix to stop mobs glitching through nodes if too small
-	if -collisionbox[2] + collisionbox[5] < 1.01 then
+	if mob_height_fix and -collisionbox[2] + collisionbox[5] < 1.01 then
 		collisionbox[5] = collisionbox[2] + 0.99
 	end
 
