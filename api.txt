@@ -71,6 +71,7 @@ functions needed for the mob to work properly which contains the following:
                    mob when melee attacking.
    'damage_group'  group in which damage is dealt, dedaults to "fleshy".
    'damage_texture_modifier' applies texture modifier on hit e.g "^[brighten"
+                   or default when enabled is "^[colorize:#c9900070".
    'knock_back'    when true has mobs falling backwards when hit, the greater
                    the damage the more they move back.
    'fear_height'   is how high a cliff or edge has to be before the mob stops
@@ -729,6 +730,8 @@ External Settings for "minetest.conf"
                             false)
    'mobs_disable_blood'     if false blood effects appear when mob is hit (default
                             is false)
+   'mob_hit_effect'         False by default, when True and mobs are hit then
+                            damage_texture_modifier is used to highlight mob.
    'mobs_spawn_protected'   if set to false then mobs will not spawn in protected
                             areas (default is true)
    'mobs_spawn_monster_protected'   if set to false then monsters will not spawn in

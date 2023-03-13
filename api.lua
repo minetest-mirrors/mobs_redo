@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230312",
+	version = "20230313",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -70,6 +70,7 @@ local damage_enabled = settings:get_bool("enable_damage")
 local mobs_spawn = settings:get_bool("mobs_spawn") ~= false
 local peaceful_only = settings:get_bool("only_peaceful_mobs")
 local disable_blood = settings:get_bool("mobs_disable_blood")
+local mob_hit_effect = settings:get_bool("mob_hit_effect")
 local mobs_drop_items = settings:get_bool("mobs_drop_items") ~= false
 local mobs_griefing = settings:get_bool("mobs_griefing") ~= false
 local spawn_protected = settings:get_bool("mobs_spawn_protected") ~= false
@@ -123,8 +124,6 @@ end
 local aoc_range = tonumber(settings:get("active_block_range")) * 16
 
 -- default nodes
---local node_fire = "fire:basic_flame"
---local node_permanent_flame = "fire:permanent_flame"
 local node_ice = "default:ice"
 local node_snowblock = "default:snowblock"
 local node_snow = "default:snow"
@@ -2979,6 +2978,24 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			effect(pos, amount, blood, 1, 2, 1.75, nil, nil, true)
 		end
 
+		-- add healthy afterglow when hit (can cause lag with larger textures)
+		if mob_hit_effect then
+
+			self.old_texture_mods = self.texture_mods
+
+			self.object:set_texture_mod(self.texture_mods .. self.damage_texture_modifier)
+
+			minetest.after(0.3, function()
+
+				if self and self.object and self.object:get_pos() then
+
+					self.texture_mods = self.old_texture_mods
+					self.old_texture_mods = nil
+					self.object:set_texture_mod(self.texture_mods)
+				end
+			end)
+		end
+
 		-- do damage
 		self.health = self.health - floor(damage)
 
@@ -3594,7 +3611,7 @@ minetest.register_entity(name, setmetatable({
 	run_velocity = def.run_velocity,
 	damage = max(0, (def.damage or 0) * difficulty),
 	damage_group = def.damage_group,
-	damage_texture_modifier = def.damage_texture_modifier,
+	damage_texture_modifier = def.damage_texture_modifier or "^[colorize:#c9900070",
 	light_damage = def.light_damage,
 	light_damage_min = def.light_damage_min,
 	light_damage_max = def.light_damage_max,

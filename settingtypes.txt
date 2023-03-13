@@ -7,6 +7,9 @@ only_peaceful_mobs (Only spawn peaceful Mobs) bool false
 #   If enabled then punching mobs no longer shows blood effects
 mobs_disable_blood (Disable Mob blood) bool false
 
+#   If enabled the mobs will be highlighted when hit
+mob_hit_effect (Highlight Mob when Hit) bool false
+
 #    If disabled then Mobs no longer destroy world blocks
 mobs_griefing (Griefing Mobs) bool true
 
