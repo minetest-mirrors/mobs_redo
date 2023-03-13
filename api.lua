@@ -3479,6 +3479,20 @@ function mob_class:on_step(dtime, moveresult)
 		self.object:set_yaw(yaw)
 	end
 
+	-- environmental damage timer (every 1 second)
+	self.env_damage_timer = self.env_damage_timer + dtime
+
+	if self.env_damage_timer > 1 then
+
+		self.env_damage_timer = 0
+
+		-- check for environmental damage (water, fire, lava etc.)
+		if self:do_env_damage() then return end
+
+		-- node replace check (cow eats grass etc.)
+		self:replace(pos)
+	end
+
 	-- knockback timer
 	if self.pause_timer > 0 then
 
@@ -3516,21 +3530,6 @@ function mob_class:on_step(dtime, moveresult)
 	-- mob plays random sound at times
 	if random(100) == 1 then
 		self:mob_sound(self.sounds.random)
-	end
-
-	-- environmental damage timer (every 1 second)
-	self.env_damage_timer = self.env_damage_timer + dtime
-
-	if (self.state == "attack" and self.env_damage_timer > 1)
-	or self.state ~= "attack" then
-
-		self.env_damage_timer = 0
-
-		-- check for environmental damage (water, fire, lava etc.)
-		if self:do_env_damage() then return end
-
-		-- node replace check (cow eats grass etc.)
-		self:replace(pos)
 	end
 
 	self:general_attack()
