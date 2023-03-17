@@ -1165,7 +1165,7 @@ function mob_class:do_env_damage()
 		end
 	end
 
-	-- is mob light sensative, or scared of the dark :P
+	-- is mob light sensitive, or scared of the dark :P
 	if self.light_damage ~= 0 then
 
 		local light = minetest.get_node_light(pos) or 0

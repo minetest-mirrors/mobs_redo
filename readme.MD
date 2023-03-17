@@ -1,14 +1,10 @@
-
-MOBS REDO for MINETEST
+# MOBS REDO for MINETEST
 
 Built from PilzAdam's original Simple Mobs with additional mobs by KrupnoPavel, Zeg9, ExeterDad and AspireMint.
 
-
 This mod contains the API only for adding your own mobs into the world, so please use the additional modpacks to add animals, monsters etc.
 
-
 https://forum.minetest.net/viewtopic.php?f=11&t=9917
-
 
 Crafts:
 
@@ -19,11 +15,10 @@ Crafts:
  - Protection Rune lets you protect tamed mobs from harm by other players
  - Mob Fence and Fence Top (to stop mobs escaping/glitching through fences)
 
-Lucky Blocks: 9
-
+Lucky Blocks: 12
 
 Changelog:
-- 1.56 - Added arrow_override function to mob definition to tweak arrow entity settings, tamed monsters no longer despawn when outside loaded map area, 'looting_level' can be read from tool definition or tool meta to add extra drops when mob killed.
+- 1.56 - Added arrow_override function to mob definition to tweak arrow entity settings, tamed monsters no longer despawn when outside loaded map area, 'looting_level' can be read from tool definition or tool meta to add extra drops when mob killed.  Added injured animation and mob hit effect.
 - 1.55 - Add 'peaceful_player' privelage and setting so mobs don't attack specific players (thanks sfence), add support for MarkBu's pathfinder mod, remove need for default mod
 - 1.54 - Simplified animal breeding function, added editable settings (thanks Wuzzy), Child mobs now take 20 mins to grow up, reverted to simple mob spawning with setting to use area checks, on_flop added, air_damage added.
 - 1.53 - Added 'on_map_load' settings to mobs:spawn so that mobs will only spawn when new areas of map are loaded.
