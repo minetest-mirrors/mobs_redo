@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230325",
+	version = "20230326",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -197,6 +197,7 @@ mobs.mob_class = {
 	attack_animals = false,
 	attack_players = true,
 	attack_npcs = true,
+	friendly_fire = true,
 	facing_fence = false,
 	_breed_countdown = nil,
 	_cmi_is_mob = true
@@ -2953,8 +2954,17 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			end)
 		end
 
-		-- do damage
-		self.health = self.health - floor(damage)
+		-- check for friendly fire (arrows from same mob)
+		if self.friendly_fire then
+			self.health = self.health - floor(damage) -- do damage regardless
+		else
+			local entity = hitter and hitter:get_luaentity()
+
+			-- check if arrow from same mob, if so then do no damage
+			if entity and entity.name ~= self.arrow then
+				self.health = self.health - floor(damage)
+			end
+		end
 
 		-- exit here if dead, check for tools with fire damage
 		local hot = tool_capabilities and tool_capabilities.damage_groups
@@ -3604,6 +3614,7 @@ minetest.register_entity(name, setmetatable({
 	attack_players = def.attack_players,
 	attack_npcs = def.attack_npcs,
 	specific_attack = def.specific_attack,
+	friendly_fire = def.friendly_fire,
 	runaway_from = def.runaway_from,
 	owner_loyal = def.owner_loyal,
 	pushable = def.pushable,
