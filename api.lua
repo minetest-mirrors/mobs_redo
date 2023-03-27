@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230326",
+	version = "20230327",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -2961,7 +2961,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			local entity = hitter and hitter:get_luaentity()
 
 			-- check if arrow from same mob, if so then do no damage
-			if entity and entity.name ~= self.arrow then
+			if (entity and entity.name ~= self.arrow) or hitter:is_player() then
 				self.health = self.health - floor(damage)
 			end
 		end
@@ -3451,7 +3451,7 @@ function mob_class:on_step(dtime, moveresult)
 	end
 
 	-- run custom function (defined in mob lua file) - when false skip going any further
-	if self.do_custom and self:do_custom(dtime) == false then
+	if self.do_custom and self:do_custom(dtime, moveresult) == false then
 		return
 	end
 
