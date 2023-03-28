@@ -574,8 +574,7 @@ function mob_class:attempt_flight_correction(override)
 
 	local flyable_nodes = minetest.find_nodes_in_area(
 		{x = pos.x - 1, y = pos.y - 1, z = pos.z - 1},
-		{x = pos.x + 1, y = pos.y + 0, z = pos.z + 1}, searchnodes)
-		-- pos.y + 0 hopefully fixes floating swimmers
+		{x = pos.x + 1, y = pos.y + 2, z = pos.z + 1}, searchnodes)
 
 	if #flyable_nodes < 1 then
 		return false
