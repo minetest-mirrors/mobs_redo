@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230327",
+	version = "20230328",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -4018,7 +4018,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 --		.. minetest.pos_to_string(pos) .. " on "
 --		.. node.name .. " near " .. neighbors[1])
 
-			if on_spawn then
+			if on_spawn and mob then
 				on_spawn(mob:get_luaentity(), pos)
 			end
 		else
