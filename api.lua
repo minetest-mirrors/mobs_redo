@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230328",
+	version = "20230331",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1505,12 +1505,16 @@ function mob_class:breed()
 						return
 					end
 
+					-- reset parent movement
+					self.follow_stop = false
+					ent.follow_stop = false
+
 					-- custom breed function
 					if self.on_breed then
 
 						-- when false skip going any further
 						if self:on_breed(ent) == false then
-								return
+							return
 						end
 					else
 						effect(pos, 15, "tnt_smoke.png", 1, 2, 2, 15, 5)
