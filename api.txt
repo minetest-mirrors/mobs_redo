@@ -351,6 +351,8 @@ for each mob.
    'self.child_texture' contains mob child texture when growing up
    'self.base_texture'  contains current skin texture which was randomly
                         selected from textures list
+   'self.texture_mods'  contains a list of textures to overlay above the mobs
+                        base texture (used for horse saddle)
    'self.gotten'        this is used for obtaining milk from cow and wool from
                         sheep
    'self.horny'         when animal fed enough it is set to true and animal can
@@ -364,6 +366,10 @@ for each mob.
    'self.order'         set to "follow" or "stand" so that npc will follow owner
                         or stand it's ground
    'self.nametag'       contains the name of the mob which it can show above
+   'self.pause_timer'   used to stop mob thinking when punched so that knockback
+                        can take effect.
+   'self.disable_falling' currently used on spider mob when climbing walls, stops
+                          the mob from experiencing gravity when true.
    'self.state'         Current mob state.
                         "stand": no movement (except turning around)
                         "walk": walk or move around aimlessly

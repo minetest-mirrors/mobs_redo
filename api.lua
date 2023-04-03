@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230331",
+	version = "20230403",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3072,6 +3072,28 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 end
 
 
+-- helper function to clean mob staticdata
+local function clean_staticdata(self)
+
+	local tmp, t = {}
+
+	for _,stat in pairs(self) do
+
+		t = type(stat)
+
+		if  t ~= "function"
+		and t ~= "nil"
+		and t ~= "userdata"
+		and _ ~= "object"
+		and _ ~= "_cmi_components" then
+			tmp[_] = self[_]
+		end
+	end
+
+	return tmp
+end
+
+
 -- get entity staticdata
 function mob_class:mob_staticdata()
 
@@ -3111,22 +3133,7 @@ function mob_class:mob_staticdata()
 		self.serialized_cmi_components = cmi.serialize_components(self._cmi_components)
 	end
 
-	local tmp, t = {}
-
-	for _,stat in pairs(self) do
-
-		t = type(stat)
-
-		if  t ~= "function"
-		and t ~= "nil"
-		and t ~= "userdata"
-		and _ ~= "object"
-		and _ ~= "_cmi_components" then
-			tmp[_] = self[_]
-		end
-	end
-
-	return minetest.serialize(tmp)
+	return minetest.serialize(clean_staticdata(self))
 end
 
 
@@ -3155,7 +3162,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 		return
 	end
 
-	-- load entity variables
+	-- load entity variables from staticdata into self.
 	local tmp = minetest.deserialize(staticdata)
 
 	if tmp then
@@ -4404,22 +4411,7 @@ function mobs:force_capture(self, clicker)
 	-- add special mob egg with all mob information
 	local new_stack = ItemStack(self.name .. "_set")
 
-	local tmp, t = {}
-
-	for _,stat in pairs(self) do
-
-		t = type(stat)
-
-		if  t ~= "function"
-		and t ~= "nil"
-		and t ~= "userdata"
-		and _ ~= "object"
-		and _ ~= "_cmi_components" then
-			tmp[_] = self[_]
-		end
-	end
-
-	local data_str = minetest.serialize(tmp)
+	local data_str = minetest.serialize(clean_staticdata(self))
 
 	new_stack:set_metadata(data_str)
 
@@ -4518,22 +4510,7 @@ function mobs:capture_mob(
 
 				new_stack = ItemStack(mobname .. "_set")
 
-				local tmp, t = {}
-
-				for _,stat in pairs(self) do
-
-					t = type(stat)
-
-					if  t ~= "function"
-					and t ~= "nil"
-					and t ~= "userdata"
-					and _ ~= "object"
-					and _ ~= "_cmi_components" then
-						tmp[_] = self[_]
-					end
-				end
-
-				local data_str = minetest.serialize(tmp)
+				local data_str = minetest.serialize(clean_staticdata(self))
 
 				new_stack:set_metadata(data_str)
 			end
@@ -4811,23 +4788,7 @@ function mobs:alias_mob(old_name, new_name)
 		end,
 
 		get_staticdata = function(self)
-
-			local tmp, t = {}
-
-			for _,stat in pairs(self) do
-
-				t = type(stat)
-
-				if  t ~= "function"
-				and t ~= "nil"
-				and t ~= "userdata"
-				and _ ~= "object"
-				and _ ~= "_cmi_components" then
-					tmp[_] = self[_]
-				end
-			end
-
-			return minetest.serialize(tmp)
+			return minetest.serialize(clean_staticdata(self))
 		end
 	})
 end
