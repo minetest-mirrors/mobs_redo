@@ -247,7 +247,7 @@ end
 -- calculate distance
 local get_distance = function(a, b)
 
-	if not a or not b then return 50 end -- nil check
+	if not a or not b then return 50 end -- nil check and default distance
 
 	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
 
@@ -672,8 +672,8 @@ end
 
 
 -- custom particle effects
-local effect = function(pos, amount, texture, min_size, max_size,
-		radius, gravity, glow, fall)
+local effect = function(
+		pos, amount, texture, min_size, max_size, radius, gravity, glow, fall)
 
 	radius = radius or 2
 	min_size = min_size or 0.5
@@ -742,17 +742,11 @@ function mob_class:update_tag()
 	local text = ""
 
 	if self.horny == true then
-
 		text = "\nLoving: " .. (self.hornytimer - (HORNY_TIME + HORNY_AGAIN_TIME))
-
 	elseif self.child == true then
-
 		text = "\nGrowing: " .. (self.hornytimer - CHILD_GROW_TIME)
-
 	elseif self._breed_countdown then
-
 		text = "\nBreeding: " .. self._breed_countdown
-
 	end
 
 	if self.protected then
@@ -769,10 +763,7 @@ function mob_class:update_tag()
 
 	-- set changes
 	self.object:set_properties({
-		nametag = self.nametag,
-		nametag_color = col,
-		infotext = self.infotext
-	})
+			nametag = self.nametag, nametag_color = col, infotext = self.infotext})
 end
 
 
@@ -865,12 +856,7 @@ local remove_mob = function(self, decrease)
 	self.object:remove()
 
 	if decrease and active_limit > 0 then
-
 		active_mobs = active_mobs - 1
-
-		if active_mobs < 0 then
-			active_mobs = 0
-		end
 	end
 --print("-- active mobs: " .. active_mobs .. " / " .. active_limit)
 end
@@ -1640,6 +1626,8 @@ end
 
 local los_switcher = false
 local height_switcher = false
+
+-- are we able to dig this node and add drops?
 local can_dig_drop = function(pos)
 
 	if minetest.is_protected(pos, "") then
@@ -1800,7 +1788,8 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		local jumpheight = 0
 
 		if self.jump and self.jump_height >= pathfinding_max_jump then
-			jumpheight = min(ceil(self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
+			jumpheight = min(ceil(
+					self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
 
 		elseif self.stepheight > 0.5 then
 			jumpheight = 1
@@ -2990,8 +2979,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		local up = 2
 
 		-- if already in air then dont go up anymore when hit
-		if v.y > 0
-		or self.fly then
+		if v.y > 0 or self.fly then
 			up = 0
 		end
 
@@ -3634,13 +3622,9 @@ minetest.register_entity(name, setmetatable({
 	messages = def.messages,
 
 	on_spawn = def.on_spawn,
-
 	on_blast = def.on_blast, -- class redifinition
-
 	do_punch = def.do_punch,
-
 	on_breed = def.on_breed,
-
 	on_grown = def.on_grown,
 
 	on_activate = function(self, staticdata, dtime)
@@ -4292,7 +4276,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			"^[mask:mobs_chicken_egg_overlay.png)"
 	end
 
-	-- register new spawn egg containing mob information
+	-- register new spawn egg containing mob information (cannot be stacked)
 	minetest.register_craftitem(mob .. "_set", {
 
 		description = S("@1 (Tamed)", desc),
