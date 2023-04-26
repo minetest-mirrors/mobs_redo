@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230425",
+	version = "20230426",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -283,7 +283,7 @@ end
 
 
 -- check if string exists in another string or table
-local check_for = function(look_for, look_inside)
+local function check_for(look_for, look_inside)
 
 	if type(look_inside) == "string" and look_inside == look_for then
 
@@ -439,7 +439,7 @@ function mob_class:set_animation(anim, force)
 		anim = anim .. (num ~= 0 and num or "")
 	end
 
-	if anim == self.animation.current
+	if (anim == self.animation.current and force ~= true)
 	or not self.animation[anim .. "_start"]
 	or not self.animation[anim .. "_end"] then
 		return
@@ -460,7 +460,7 @@ end
 
 
 -- check line of sight (BrunoMine)
-local line_of_sight = function(self, pos1, pos2, stepsize)
+local function line_of_sight(self, pos1, pos2, stepsize)
 
 	stepsize = stepsize or 1
 
@@ -527,7 +527,7 @@ end
 
 
 -- check line of sight using raycasting (thanks Astrobe)
-local ray_line_of_sight = function(self, pos1, pos2)
+local function ray_line_of_sight(self, pos1, pos2)
 
 	local ray = minetest.raycast(pos1, pos2, true, false)
 	local thing = ray:next()
@@ -620,7 +620,7 @@ end
 
 
 -- turn mob to face position
-local yaw_to_pos = function(self, target, rot)
+local function yaw_to_pos(self, target, rot)
 
 	rot = rot or 0
 
@@ -679,7 +679,7 @@ end
 
 
 -- custom particle effects
-local effect = function(
+local function effect(
 		pos, amount, texture, min_size, max_size, radius, gravity, glow, fall)
 
 	radius = radius or 2
@@ -858,7 +858,7 @@ end
 
 
 -- remove mob and descrease counter
-local remove_mob = function(self, decrease)
+local function remove_mob(self, decrease)
 
 	self.object:remove()
 
@@ -986,7 +986,7 @@ end
 
 
 -- get node but use fallback for nil or unknown
-local node_ok = function(pos, fallback)
+local function node_ok(pos, fallback)
 
 	local node = minetest.get_node_or_nil(pos)
 
@@ -1319,7 +1319,7 @@ end
 
 
 -- blast damage to entities nearby (modified from TNT mod)
-local entity_physics = function(pos, radius)
+local function entity_physics(pos, radius)
 
 	radius = radius * 2
 
@@ -1346,7 +1346,7 @@ end
 
 
 -- can mob see player
-local is_invisible = function(self, player_name)
+local function is_invisible(self, player_name)
 
 	if mobs.invis[player_name] and not self.ignore_invisibility then
 		return true
@@ -1635,7 +1635,7 @@ local los_switcher = false
 local height_switcher = false
 
 -- are we able to dig this node and add drops?
-local can_dig_drop = function(pos)
+local function can_dig_drop(pos)
 
 	if minetest.is_protected(pos, "") then
 		return false
@@ -2412,16 +2412,17 @@ function mob_class:do_states(dtime)
 		or (self.attack:is_player()
 		and is_invisible(self, self.attack:get_player_name())) then
 
---print(" ** stop attacking **", dist, self.view_range)
+--print(" ** stop attacking **", self.name, self.health, dist, self.view_range)
 
-			self.state = "stand"
-			self:set_velocity(0)
-			self:set_animation("stand")
 			self.attack = nil
+			self.following = nil
 			self.v_start = false
 			self.timer = 0
 			self.blinktimer = 0
 			self.path.way = nil
+			self:set_velocity(0)
+			self.state = "stand"
+			self:set_animation("stand", true)
 
 			return
 		end
@@ -3649,7 +3650,7 @@ end -- END mobs:register_mob function
 
 -- count how many mobs of one type are inside an area
 -- will also return true for second value if player is inside area
-local count_mobs = function(pos, type)
+local function count_mobs(pos, type)
 
 	local total = 0
 	local objs = minetest.get_objects_inside_radius(pos, aoc_range * 2)
@@ -3676,7 +3677,7 @@ end
 
 
 -- do we have enough space to spawn mob? (thanks wuzzy)
-local can_spawn = function(pos, name)
+local function can_spawn(pos, name)
 
 	local ent = minetest.registered_entities[name]
 	local width_x = max(1, ceil(ent.collisionbox[4] - ent.collisionbox[1]))
