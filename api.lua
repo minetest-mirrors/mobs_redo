@@ -3454,6 +3454,11 @@ function mob_class:on_step(dtime, moveresult)
 		self.pause_timer = self.pause_timer - dtime
 
 		return
+
+	elseif self.order == "stand" then
+
+		self:set_velocity(0)
+		self:set_animation("stand", true)
 	end
 
 	-- run custom function (defined in mob lua file) - when false skip going any further
