@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230426",
+	version = "20230427",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -3453,13 +3453,14 @@ function mob_class:on_step(dtime, moveresult)
 
 		self.pause_timer = self.pause_timer - dtime
 
+		if self.pause_timer <= 0 and self.order == "stand" then
+
+			self.pause_timer = 0
+			self:set_velocity(0)
+			self:set_animation("stand", true)
+		end
+
 		return
-
-	elseif self.pause_timer < 0 and self.order == "stand" then
-
-		self.pause_timer = 0
-		self:set_velocity(0)
-		self:set_animation("stand", true)
 	end
 
 	-- run custom function (defined in mob lua file) - when false skip going any further
