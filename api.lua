@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230427",
+	version = "20230502",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1159,7 +1159,14 @@ function mob_class:do_env_damage()
 	-- is mob light sensitive, or scared of the dark :P
 	if self.light_damage ~= 0 then
 
-		local light = minetest.get_node_light(pos) or 0
+		local light
+
+		-- if min and max light set to 15 then only kill with natural sunlight
+		if self.light_damage_min == 15 and self.light_damage_max == 15 then
+			light = minetest.get_natural_light(pos) or 0
+		else
+			light = minetest.get_node_light(pos) or 0
+		end
 
 		if light >= self.light_damage_min
 		and light <= self.light_damage_max then
