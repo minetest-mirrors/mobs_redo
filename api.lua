@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230502",
+	version = "20230514",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -381,7 +381,7 @@ function mob_class:set_yaw(yaw, delay)
 		yaw = 0
 	end
 
-	delay = mob_smooth_rotate and (delay or 0) or 0
+	delay = mob_smooth_rotate and delay or 0
 
 	-- simplified yaw clamp
 	if yaw > 6.283185 then
@@ -1161,8 +1161,8 @@ function mob_class:do_env_damage()
 
 		local light
 
-		-- if min and max light set to 15 then only kill with natural sunlight
-		if self.light_damage_min == 15 and self.light_damage_max == 15 then
+		-- if max set to 16 then only kill mob with natural sunlight
+		if self.light_damage_max == 16 then
 			light = minetest.get_natural_light(pos) or 0
 		else
 			light = minetest.get_node_light(pos) or 0
