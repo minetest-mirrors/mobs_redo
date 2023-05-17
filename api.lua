@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230514",
+	version = "20230517",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -911,9 +911,8 @@ function mob_class:check_for_death(cmi_cause)
 
 	self.cause_of_death = cmi_cause
 
-	-- drop items
+	-- drop items and play death sound
 	self:item_drop()
-
 	self:mob_sound(self.sounds.death)
 
 	local pos = self.object:get_pos()
@@ -932,6 +931,16 @@ function mob_class:check_for_death(cmi_cause)
 		return true
 	end
 
+	-- reset vars and set state
+	self.attack = nil
+	self.following = nil
+	self.v_start = false
+	self.timer = 0
+	self.blinktimer = 0
+	self.passive = true
+	self.state = "die"
+	self.fly = false
+
 	-- check for custom death function and die animation
 	if self.animation
 	and self.animation.die_start
@@ -942,13 +951,6 @@ function mob_class:check_for_death(cmi_cause)
 		local length = max((frames / speed), 0)
 		local rot = self.animation.die_rotate and 5
 
-		self.attack = nil
-		self.following = nil
-		self.v_start = false
-		self.timer = 0
-		self.blinktimer = 0
-		self.passive = true
-		self.state = "die"
 		self.object:set_properties({
 			pointable = false, collide_with_objects = false,
 			automatic_rotate = rot, static_save = false
@@ -970,7 +972,7 @@ function mob_class:check_for_death(cmi_cause)
 
 		return true
 
-	elseif pos then -- otherwise remove mod and show particle effect
+	elseif pos then -- otherwise remove mob and show particle effect
 
 		if use_cmi then
 			cmi.notify_die(self.object, cmi_cause)
@@ -3478,38 +3480,45 @@ function mob_class:on_step(dtime, moveresult)
 	-- attack timer
 	self.timer = self.timer + dtime
 
-	if self.state ~= "attack" then
-
-		if self.timer < 1 then
-			return
-		end
-
-		self.timer = 0
-	end
-
 	-- never go over 100
 	if self.timer > 100 then
 		self.timer = 1
 	end
 
-	-- mob plays random sound at times
-	if random(100) == 1 then
-		self:mob_sound(self.sounds.random)
+	-- when attacking call do_states live
+	if self.state == "attack" then
+		self:do_states(dtime)
 	end
 
-	self:general_attack()
+	-- one second timed calls
+	self.timer1 = (self.timer1 or 0) + dtime
 
-	self:breed()
+	if self.timer1 >= 1 then
 
-	self:follow_flop()
+		-- mob plays random sound at times
+		if random(100) == 1 then
+			self:mob_sound(self.sounds.random)
+		end
 
-	if self:do_states(dtime) then return end
+		self:general_attack()
 
-	self:do_jump()
+		self:breed()
 
-	self:do_runaway_from(self)
+		self:follow_flop()
 
-	self:do_stay_near()
+		-- when not attacking call do_states every second
+		if self.state ~= "attack" then
+			self:do_states(dtime)
+		end
+
+		self:do_jump()
+
+		self:do_runaway_from(self)
+
+		self:do_stay_near()
+
+		self.timer1 = 0
+	end
 end
 
 
