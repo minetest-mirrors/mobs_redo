@@ -1213,51 +1213,21 @@ end
 -- jump if facing a solid node (not fences or gates)
 function mob_class:do_jump()
 
-	self.facing_fence = false
+	local vel = self.object:get_velocity() ; if not vel then return false end
 
 	-- can't jump if already moving in air
 	if self.state ~= "stand"
-	and self:get_velocity() > 0.5
-	and self.object:get_velocity().y ~= 0 then
+	and vel.y ~= 0 and self:get_velocity() > 0.5 then
 		return false
 	end
-
-	local pos = self.object:get_pos()
-	local yaw = self.object:get_yaw()
-
-	-- sanity check
-	if not yaw then return false end
 
 	-- we can only jump if standing on solid node
 	if minetest.registered_nodes[self.standing_on].walkable == false then
 		return false
 	end
 
-	-- where is front
-	local dir_x = -sin(yaw) * (self.collisionbox[4] + 0.5)
-	local dir_z = cos(yaw) * (self.collisionbox[4] + 0.5)
-
-	-- set y_pos to base of mob
-	pos.y = pos.y + self.collisionbox[2]
-
-	-- what is in front of mob and above?
-	local nod = node_ok({x = pos.x + dir_x, y = pos.y + 0.5, z = pos.z + dir_z})
-	local nodt = node_ok({x = pos.x + dir_x, y = pos.y + 1.5, z = pos.z + dir_z})
-	local blocked = minetest.registered_nodes[nodt.name].walkable
-
-	-- are we facing a fence or wall
-	if nod.name:find("fence") or nod.name:find("gate") or nod.name:find("wall") then
-		self.facing_fence = true
-	end
-
---[[
-print("on: " .. self.standing_on
-	.. ", front: " .. nod.name
-	.. ", front above: " .. nodt.name
-	.. ", blocked: " .. (blocked and "yes" or "no")
-	.. ", fence: " .. (self.facing_fence and "yes" or "no")
-)
-]]
+	-- is there anything stopping us from jumping up onto a block?
+	local blocked = minetest.registered_nodes[self.looking_above].walkable
 
 	-- if mob can leap then remove blockages and let them try
 	if self.can_leap == true then
@@ -1268,16 +1238,16 @@ print("on: " .. self.standing_on
 	-- jump if possible
 	if self.jump and self.jump_height > 0 and not self.fly and not self.child
 	and self.order ~= "stand"
-	and (self.walk_chance == 0 or minetest.registered_items[nod.name].walkable)
+	and (self.walk_chance == 0 or minetest.registered_items[self.looking_at].walkable)
 	and not blocked
 	and not self.facing_fence
-	and nod.name ~= node_snow then
+	and self.looking_at ~= node_snow then
 
 		local v = self.object:get_velocity()
 
 		v.y = self.jump_height
 
-		self:set_animation("jump") -- only when defined
+		self:set_animation("jump") -- only if defined
 
 		self.object:set_velocity(v)
 
@@ -3349,6 +3319,50 @@ function mob_class:mob_expire(pos, dtime)
 end
 
 
+-- get nodes mob is standing on/in, facing/above
+function mob_class:get_nodes()
+
+	local pos = self.object:get_pos()
+	local yaw = self.object:get_yaw()
+
+	-- child mobs have a lower y_level
+	local y_level = self.child and self.collisionbox[2] * 0.5 or self.collisionbox[2]
+
+	self.standing_in = node_ok({
+		x = pos.x, y = pos.y + y_level + 0.25, z = pos.z}, "air").name
+
+	self.standing_on = node_ok({
+		x = pos.x, y = pos.y + y_level - 0.25, z = pos.z}, "air").name
+
+	-- find front position
+	local dir_x = -sin(yaw) * (self.collisionbox[4] + 0.5)
+	local dir_z = cos(yaw) * (self.collisionbox[4] + 0.5)
+
+	-- nodes in front of mob and front/above
+	self.looking_at = node_ok({
+		x = pos.x + dir_x, y = pos.y + y_level + 0.25, z = pos.z + dir_z}).name
+
+	self.looking_above = node_ok({
+		x = pos.x + dir_x, y = pos.y + y_level + 1.25, z = pos.z + dir_z}).name
+
+	-- are we facing a fence or wall
+	if self.looking_at:find("fence")
+	or self.looking_at:find("gate")
+	or self.looking_at:find("wall") then
+		self.facing_fence = true
+	else
+		self.facing_fence = nil
+	end
+--[[
+print("on: " .. self.standing_on
+	.. ", front: " .. self.looking_at
+	.. ", front above: " .. self.looking_above
+	.. ", fence: " .. (self.facing_fence and "yes" or "no")
+)
+]]
+end
+
+
 -- main mob function
 function mob_class:on_step(dtime, moveresult)
 
@@ -3366,21 +3380,13 @@ function mob_class:on_step(dtime, moveresult)
 
 	self.node_timer = (self.node_timer or 0) + dtime
 
-	-- get nodes above and below foot level every 1/4 second
+	-- get nodes every 1/4 second
 	if self.node_timer > 0.25 then
 
+		-- get nodes above, below, in front and front-above
+		self:get_nodes()
+
 		self.node_timer = 0
-
-		local y_level = self.child and self.collisionbox[2] * 0.5 or self.collisionbox[2]
-
-		-- what is mob standing in?
-		self.standing_in = node_ok({
-			x = pos.x, y = pos.y + y_level + 0.25, z = pos.z}, "air").name
-
-		self.standing_on = node_ok({
-			x = pos.x, y = pos.y + y_level - 0.25, z = pos.z}, "air").name
-
---print("standing in " .. self.standing_in)
 
 		-- if standing inside solid block then jump to escape
 		if minetest.registered_nodes[self.standing_in].walkable
@@ -3398,9 +3404,8 @@ function mob_class:on_step(dtime, moveresult)
 		-- has mob expired (0.25 instead of dtime since were in a timer)
 		self:mob_expire(pos, 0.25)
 
--- check if mob can jump or is blocked facing fence/gate etc.
-self:do_jump()
-
+		-- check if mob can jump or is blocked facing fence/gate etc.
+		self:do_jump()
 	end
 
 	-- check if falling, flying, floating and return if player died
@@ -3510,8 +3515,6 @@ self:do_jump()
 		if self.state ~= "attack" then
 			if self:do_states(dtime) then return end
 		end
-
---		self:do_jump()
 
 		self:do_runaway_from(self)
 

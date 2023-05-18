@@ -379,6 +379,12 @@ for each mob.
                         "flop": bounce around aimlessly
                                 (for swimming mobs that have stranded)
                         "die": during death
+    'self.standing_on'  Node name mob is standing on.
+    'self.standing_in'  Node name mob is standing inside.
+    'self.looking_at'   Node name in front of mob.
+    'self.looking_above'Node name in front/above mob.
+    'self.facing_fence' True if mob facing node containing "wall", "fence", "gate"
+                        in it's name.
 
 
 Adding Mobs in World
