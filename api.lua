@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230517",
+	version = "20230518",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1213,17 +1213,9 @@ end
 -- jump if facing a solid node (not fences or gates)
 function mob_class:do_jump()
 
-	if not self.jump
-	or self.jump_height == 0
-	or self.fly
-	or self.child
-	or self.order == "stand" then
-		return false
-	end
-
 	self.facing_fence = false
 
-	-- something stopping us while moving?
+	-- can't jump if already moving in air
 	if self.state ~= "stand"
 	and self:get_velocity() > 0.5
 	and self.object:get_velocity().y ~= 0 then
@@ -1273,9 +1265,13 @@ print("on: " .. self.standing_on
 		self.facing_fence = false
 	end
 
-	-- jump if standing on solid node (not snow) and not blocked
-	if (self.walk_chance == 0 or minetest.registered_items[nod.name].walkable)
-	and not blocked and not self.facing_fence and nod.name ~= node_snow then
+	-- jump if possible
+	if self.jump and self.jump_height > 0 and not self.fly and not self.child
+	and self.order ~= "stand"
+	and (self.walk_chance == 0 or minetest.registered_items[nod.name].walkable)
+	and not blocked
+	and not self.facing_fence
+	and nod.name ~= node_snow then
 
 		local v = self.object:get_velocity()
 
@@ -3401,6 +3397,10 @@ function mob_class:on_step(dtime, moveresult)
 
 		-- has mob expired (0.25 instead of dtime since were in a timer)
 		self:mob_expire(pos, 0.25)
+
+-- check if mob can jump or is blocked facing fence/gate etc.
+self:do_jump()
+
 	end
 
 	-- check if falling, flying, floating and return if player died
@@ -3485,9 +3485,9 @@ function mob_class:on_step(dtime, moveresult)
 		self.timer = 1
 	end
 
-	-- when attacking call do_states live
+	-- when attacking call do_states live (return if dead)
 	if self.state == "attack" then
-		self:do_states(dtime)
+		if self:do_states(dtime) then return end
 	end
 
 	-- one second timed calls
@@ -3506,12 +3506,12 @@ function mob_class:on_step(dtime, moveresult)
 
 		self:follow_flop()
 
-		-- when not attacking call do_states every second
+		-- when not attacking call do_states every second (return if dead)
 		if self.state ~= "attack" then
-			self:do_states(dtime)
+			if self:do_states(dtime) then return end
 		end
 
-		self:do_jump()
+--		self:do_jump()
 
 		self:do_runaway_from(self)
 
