@@ -1,3 +1,9 @@
+#    How often mobs get nodes around them (default is 0.25, 1/4 second)
+mob_node_timer_interval (Mob Node Timer Interval) float 0.25
+
+#    How often mobs run main functions (default is 1.00, 1 second)
+mob_main_timer_interval (Mob Node Timer Interval) float 1.00
+
 #    If false then mobs no longer spawn in world without spawner or spawn egg
 mobs_spawn (Spawn Mobs) bool true
 

@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230518",
+	version = "20230519",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -85,6 +85,10 @@ local peaceful_player_enabled = settings:get_bool("enable_peaceful_player")
 local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
 local mob_height_fix = settings:get_bool("mob_height_fix") ~= false
 local active_mobs = 0
+
+-- get loop timers for node and main functions
+local node_timer_interval = tonumber(settings:get("mob_node_timer_interval") or 0.25)
+local main_timer_interval = tonumber(settings:get("mob_main_timer_interval") or 1.0)
 
 -- pathfinding settings
 local pathfinding_enable = settings:get_bool("mob_pathfinding_enable") or true
@@ -3381,7 +3385,7 @@ function mob_class:on_step(dtime, moveresult)
 	self.node_timer = (self.node_timer or 0) + dtime
 
 	-- get nodes every 1/4 second
-	if self.node_timer > 0.25 then
+	if self.node_timer > node_timer_interval then
 
 		-- get nodes above, below, in front and front-above
 		self:get_nodes()
@@ -3402,7 +3406,7 @@ function mob_class:on_step(dtime, moveresult)
 		end
 
 		-- has mob expired (0.25 instead of dtime since were in a timer)
-		self:mob_expire(pos, 0.25)
+		self:mob_expire(pos, node_timer_interval)
 
 		-- check if mob can jump or is blocked facing fence/gate etc.
 		self:do_jump()
@@ -3498,7 +3502,7 @@ function mob_class:on_step(dtime, moveresult)
 	-- one second timed calls
 	self.timer1 = (self.timer1 or 0) + dtime
 
-	if self.timer1 >= 1 then
+	if self.timer1 >= main_timer_interval then
 
 		-- mob plays random sound at times
 		if random(100) == 1 then
@@ -3513,7 +3517,7 @@ function mob_class:on_step(dtime, moveresult)
 
 		-- when not attacking call do_states every second (return if dead)
 		if self.state ~= "attack" then
-			if self:do_states(dtime) then return end
+			if self:do_states(main_timer_interval) then return end
 		end
 
 		self:do_runaway_from(self)
