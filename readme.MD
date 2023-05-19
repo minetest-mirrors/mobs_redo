@@ -24,6 +24,15 @@ https://forum.minetest.net/viewtopic.php?f=11&t=9917
 
 ## Changelog
 
+### Version 1.57
+
+* Added 'injured' animation when mob hurt
+* Fixed yaw clamping to stop spinning mobs
+* Added 'mob_node_timer_interval' and 'mob_main_timer_interval' settings
+* Added ability for mobs to die only in natural daylight
+* Refactored do_jump and added get_nodes function
+* Many bug fixes and tweaks to improve performance
+
 ### Version 1.56
 
 * Added `arrow_override` function to mob definition to tweak arrow entity settings
