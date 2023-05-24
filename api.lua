@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230519",
+	version = "20230524",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1208,6 +1208,9 @@ function mob_class:do_env_damage()
 				pos = pos, node = self.standing_in}) then
 			return true
 		end
+
+		-- try to jump out of block
+		self.object:set_velocity({x = 0, y = self.jump_height, z = 0})
 	end
 
 	return self:check_for_death({type = "unknown"})
@@ -1219,9 +1222,8 @@ function mob_class:do_jump()
 
 	local vel = self.object:get_velocity() ; if not vel then return false end
 
-	-- can't jump if already moving in air
-	if self.state ~= "stand"
-	and vel.y ~= 0 and self:get_velocity() > 0.5 then
+	-- don't jump if ordered to stand or already in mid-air or moving forwards
+	if self.state == "stand" or vel.y ~= 0 or self:get_velocity() > 0.2 then
 		return false
 	end
 
@@ -3391,12 +3393,6 @@ function mob_class:on_step(dtime, moveresult)
 		self:get_nodes()
 
 		self.node_timer = 0
-
-		-- if standing inside solid block then jump to escape
-		if minetest.registered_nodes[self.standing_in].walkable
-		and minetest.registered_nodes[self.standing_in].drawtype == "normal" then
-			self.object:set_velocity({x = 0, y = self.jump_height, z = 0 })
-		end
 
 		-- check and stop if standing at cliff and fear of heights
 		self.at_cliff = self:is_at_cliff()
