@@ -129,7 +129,8 @@ end
 local aoc_range = tonumber(settings:get("active_block_range")) * 16
 
 -- can we attack Creatura mobs ?
-local creatura = settings:get_bool("mobs_attack_creatura") == true
+local creatura = minetest.get_modpath("creatura") and
+		settings:get_bool("mobs_attack_creatura") == true
 
 -- default nodes
 local node_ice = "default:ice"
