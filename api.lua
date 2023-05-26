@@ -1958,15 +1958,19 @@ function mob_class:general_attack()
 		elseif creatura and ent and ent._cmi_is_mob ~= true
 		and ent.hitbox and ent.stand_node then
 
-			if self.name == ent.name
-			or self.type ~= "monster"
-			or (self.specific_attack
-					and not check_for(ent.name, self.specific_attack)) then
-				objs[n] = nil
--- print("- creatura", n, self.name, ent.name)
-			end
+		-- monsters attack all creatura mobs, npc and animals will only attack
+		-- if the animal owner is currently being attacked by creatura mob
+		if self.name == ent.name
+		or (self.type ~= "monster"
+			and self.owner ~= (ent._target and ent._target:get_player_name() or "."))
+		or (self.specific_attack
+			and not check_for(ent.name, self.specific_attack)) then
 
-		-- or are we a mob? -- ent.hitbox is a creatura mob identifier
+			objs[n] = nil
+--print("-- creatura", ent.name)
+		end
+
+		-- or are we a mob?
 		elseif ent and ent._cmi_is_mob then
 
 			-- remove mobs not to attack
