@@ -1,3 +1,6 @@
+#    Enable setting so that Mobs Redo mobs can attack Creatura mobs
+mobs_attack_creatura (Attack Creatura Mobs) bool false
+
 #    How often mobs get nodes around them (default is 0.25, 1/4 second)
 mob_node_timer_interval (Mob Node Timer Interval) float 0.25
 

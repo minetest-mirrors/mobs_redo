@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230524",
+	version = "20230526",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -128,6 +128,9 @@ end
 -- calculate aoc range for mob count
 local aoc_range = tonumber(settings:get("active_block_range")) * 16
 
+-- can we attack Creatura mobs ?
+local creatura = settings:get_bool("mobs_attack_creatura") == true
+
 -- default nodes
 local node_ice = "default:ice"
 local node_snowblock = "default:snowblock"
@@ -175,7 +178,7 @@ mobs.mob_class = {
 	floats = 1, -- floats in water by default
 	replace_offset = 0,
 	timer = 0,
-	env_damage_timer = 0, -- only used when state = "attack"
+	env_damage_timer = 0,
 	tamed = false,
 	pause_timer = 0,
 	horny = false,
@@ -1951,7 +1954,19 @@ function mob_class:general_attack()
 --print("- pla", n)
 			end
 
-		-- or are we a mob?
+		-- are we a creatura mob?
+		elseif creatura and ent and ent._cmi_is_mob ~= true
+		and ent.hitbox and ent.stand_node then
+
+			if self.name == ent.name
+			or self.type ~= "monster"
+			or (self.specific_attack
+					and not check_for(ent.name, self.specific_attack)) then
+				objs[n] = nil
+-- print("- creatura", n, self.name, ent.name)
+			end
+
+		-- or are we a mob? -- ent.hitbox is a creatura mob identifier
 		elseif ent and ent._cmi_is_mob then
 
 			-- remove mobs not to attack

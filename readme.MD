@@ -32,6 +32,7 @@ https://forum.minetest.net/viewtopic.php?f=11&t=9917
 * Added ability for mobs to die only in natural daylight
 * Refactored do_jump and added get_nodes function
 * Many bug fixes and tweaks to improve performance
+* Added 'mobs_attack_creatura' setting so that monsters can attack Creatura mobs
 
 ### Version 1.56
 
