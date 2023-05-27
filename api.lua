@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230526",
+	version = "20230527",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1370,6 +1370,12 @@ function mob_class:breed()
 			self.child = false
 			self.hornytimer = 0
 
+			-- replace child texture with adult one
+			if self.mommy_tex then
+				self.base_texture = self.mommy_tex
+				self.mommy_tex = nil
+			end
+
 			self.object:set_properties({
 				textures = self.base_texture,
 				mesh = self.base_mesh,
@@ -1504,39 +1510,46 @@ function mob_class:breed()
 					local ent2 = mob:get_luaentity()
 					local textures = self.base_texture
 
-					-- using specific child texture (if found)
-					if self.child_texture then
-						textures = self.child_texture[1]
-					end
+					-- make sure baby is actually there
+					if ent2 then
 
-					-- and resize to half height
-					mob:set_properties({
-						textures = textures,
-						visual_size = {
-							x = self.base_size.x * .5,
-							y = self.base_size.y * .5
-						},
-						collisionbox = {
-							self.base_colbox[1] * .5,
-							self.base_colbox[2] * .5,
-							self.base_colbox[3] * .5,
-							self.base_colbox[4] * .5,
-							self.base_colbox[5] * .5,
-							self.base_colbox[6] * .5
-						},
-						selectionbox = {
-							self.base_selbox[1] * .5,
-							self.base_selbox[2] * .5,
-							self.base_selbox[3] * .5,
-							self.base_selbox[4] * .5,
-							self.base_selbox[5] * .5,
-							self.base_selbox[6] * .5
-						}
-					})
-					-- tamed and owned by parents' owner
-					ent2.child = true
-					ent2.tamed = true
-					ent2.owner = self.owner
+						-- using specific child texture (if found)
+						if self.child_texture then
+							textures = self.child_texture[1]
+							ent2.mommy_tex = self.base_texture
+						end
+
+						-- and resize to half height
+						mob:set_properties({
+							textures = textures,
+							visual_size = {
+								x = self.base_size.x * .5,
+								y = self.base_size.y * .5
+							},
+							collisionbox = {
+								self.base_colbox[1] * .5,
+								self.base_colbox[2] * .5,
+								self.base_colbox[3] * .5,
+								self.base_colbox[4] * .5,
+								self.base_colbox[5] * .5,
+								self.base_colbox[6] * .5
+							},
+							selectionbox = {
+								self.base_selbox[1] * .5,
+								self.base_selbox[2] * .5,
+								self.base_selbox[3] * .5,
+								self.base_selbox[4] * .5,
+								self.base_selbox[5] * .5,
+								self.base_selbox[6] * .5
+							}
+						})
+
+						-- tamed and owned by parents' owner
+						ent2.child = true
+						ent2.tamed = true
+						ent2.owner = self.owner
+						ent2.base_texture = textures
+					end
 				end, self, ent)
 
 				break
