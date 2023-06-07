@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230606",
+	version = "20230607",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -188,7 +188,6 @@ mobs.mob_class = {
 	gotten = false,
 	health = 0,
 	reach = 3,
-	htimer = 0,
 	docile_by_day = false,
 	time_of_day = 0.5,
 	fear_height = 0,
@@ -739,19 +738,21 @@ local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 -- update nametag and infotext
 function mob_class:update_tag()
 
-	local col = "#00FF00"
-	local qua = self.hp_max / 4
+	local col
+	local qua = self.hp_max / 6
 
-	if self.health <= floor(qua * 3) then
-		col = "#FFFF00"
-	end
-
-	if self.health <= floor(qua * 2) then
-		col = "#FF6600"
-	end
-
-	if self.health <= floor(qua) then
+	if self.health <= qua then
 		col = "#FF0000"
+	elseif self.health <= (qua * 2) then
+		col = "#FF7A00"
+	elseif self.health <= (qua * 3) then
+		col = "#FFB500"
+	elseif self.health <= (qua * 4) then
+		col = "#FFFF00"
+	elseif self.health <= (qua * 5) then
+		col = "#B4FF00"
+	elseif self.health > (qua * 5) then
+		col = "#00FF00"
 	end
 
 	local text = ""
