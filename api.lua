@@ -25,7 +25,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230609",
+	version = "20230613",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {}
 }
@@ -1141,7 +1141,7 @@ function mob_class:do_env_damage()
 		end
 
 	-- damage_per_second node check (not fire and lava)
-	elseif nodef.damage_per_second ~= 0
+	elseif nodef.damage_per_second and nodef.damage_per_second ~= 0
 	and nodef.groups.lava == nil and nodef.groups.fire == nil then
 
 		self.health = self.health - nodef.damage_per_second
