@@ -1,7 +1,19 @@
 -- lib_mount by Blert2112 (edited by TenPlus1)
 
-local is_50 = minetest.get_modpath("player_api") -- 5.x compatibility
+-- one of these is needed (for now) to ride mobs, otherwise no riding for you
+if not minetest.get_modpath("default")
+or not minetest.get_modpath("player_api") then
 
+	function mobs.attach() end
+	function mobs.detach() end
+	function mobs.fly() end
+	function mobs.drive() end
+
+	return
+end
+
+
+local is_50 = minetest.get_modpath("player_api") -- 5.x compatibility
 local abs, cos, floor, sin, sqrt, pi =
 		math.abs, math.cos, math.floor, math.sin, math.sqrt, math.pi
 

@@ -23,12 +23,11 @@ end
 -- CMI support check
 local use_cmi = minetest.global_exists("cmi")
 
-mobs = {
-	mod = "redo",
-	version = "20230715",
-	intllib = S,
-	invis = minetest.global_exists("invisibility") and invisibility or {}
-}
+mobs.mod = "redo"
+mobs.version = "20230726"
+mobs.intllib = S
+mobs.invis = minetest.global_exists("invisibility") and invisibility or {}
+
 
 -- localize common functions
 local pi = math.pi
@@ -132,12 +131,6 @@ local aoc_range = tonumber(settings:get("active_block_range")) * 16
 local creatura = minetest.get_modpath("creatura") and
 		settings:get_bool("mobs_attack_creatura") == true
 
--- default nodes
-local node_ice = "default:ice"
-local node_snowblock = "default:snowblock"
-local node_snow = "default:snow"
-
-mobs.fallback_node = minetest.registered_aliases["mapgen_dirt"] or "default:dirt"
 
 mobs.mob_class = {
 	stepheight = 1.1,
@@ -1252,7 +1245,7 @@ function mob_class:do_jump()
 	and (self.walk_chance == 0 or minetest.registered_items[self.looking_at].walkable)
 	and not blocked
 	and not self.facing_fence
-	and self.looking_at ~= node_snow then
+	and self.looking_at ~= mobs.node_snow then
 
 		local v = self.object:get_velocity()
 
@@ -2271,22 +2264,13 @@ function mob_class:do_states(dtime)
 	if is_node_dangerous(self, self.standing_in) then
 
 		local s = self.object:get_pos()
-		local lp
+		local grps = {}
 
-		-- is there something I need to avoid?
-		if self.water_damage > 0
-		and self.lava_damage > 0 then
+		if self.water_damage > 0 then table.insert(grps, "group:water") end
+		if self.fire_damage > 0 then table.insert(grps, "group:fire") end
+		if self.lava_damage > 0 then table.insert(grps, "group:lava") end
 
-			lp = minetest.find_node_near(s, 1, {"group:water", "group:igniter"})
-
-		elseif self.water_damage > 0 then
-
-			lp = minetest.find_node_near(s, 1, {"group:water"})
-
-		elseif self.lava_damage > 0 then
-
-			lp = minetest.find_node_near(s, 1, {"group:igniter"})
-		end
+		local lp = minetest.find_node_near(s, 1, grps)
 
 		if lp then
 
@@ -2295,7 +2279,7 @@ function mob_class:do_states(dtime)
 				lp = minetest.find_nodes_in_area_under_air(
 					{x = s.x - 5, y = s.y , z = s.z - 5},
 					{x = s.x + 5, y = s.y + 2, z = s.z + 5},
-					{"group:soil", "group:stone", "group:sand", node_ice, node_snowblock})
+					{"group:cracky", "group:crumbly", "group:choppy", "group:solid"})
 
 				-- did we find land?
 				if lp and #lp > 0 then
