@@ -174,6 +174,15 @@ local function find_free_pos(pos)
 end
 
 
+-- are we a real player ?
+local function is_player(player)
+
+	if player and type(player) == "userdata" and minetest.is_player(player) then
+		return true
+	end
+end
+
+
 function mobs.attach(entity, player)
 
 	entity.player_rotation = entity.player_rotation or {x = 0, y = 0, z = 0}
@@ -212,7 +221,7 @@ function mobs.attach(entity, player)
 
 	minetest.after(0.2, function()
 
-		if player and player:is_player() then
+		if is_player(player) then
 
 			if is_50 then
 				player_api.set_animation(player, "sit", 30)

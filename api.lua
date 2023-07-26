@@ -260,6 +260,15 @@ local get_distance = function(a, b)
 end
 
 
+-- are we a real player ?
+local function is_player(player)
+
+	if player and type(player) == "userdata" and minetest.is_player(player) then
+		return true
+	end
+end
+
+
 -- collision function based on jordan4ibanez' open_ai mod
 function mob_class:collision()
 
@@ -270,7 +279,7 @@ function mob_class:collision()
 
 	for _,object in ipairs(minetest.get_objects_inside_radius(pos, width)) do
 
-		if object:is_player() then
+		if is_player(object) then
 
 			local pos2 = object:get_pos()
 			local vec  = {x = pos.x - pos2.x, z = pos.z - pos2.z}
@@ -800,7 +809,7 @@ function mob_class:item_drop()
 	-- was mob killed by player?
 	local death_by_player = self.cause_of_death
 		and self.cause_of_death.puncher
-		and self.cause_of_death.puncher:is_player()
+		and is_player(self.cause_of_death.puncher)
 
 	-- check for tool 'looting_level' under tool_capabilities as default, or use
 	-- meta string 'looting_level' if found (max looting level is 3).
@@ -1954,7 +1963,7 @@ function mob_class:general_attack()
 		local ent = objs[n]:get_luaentity()
 
 		-- are we a player?
-		if objs[n]:is_player() then
+		if is_player(objs[n]) then
 
 			-- if player invisible or mob cannot attack then remove from list
 			if not damage_enabled
@@ -2052,7 +2061,7 @@ function mob_class:do_runaway_from()
 	-- loop through entities surrounding mob
 	for n = 1, #objs do
 
-		if objs[n]:is_player() then
+		if is_player(objs[n]) then
 
 			pname = objs[n]:get_player_name()
 
@@ -2156,7 +2165,7 @@ function mob_class:follow_flop()
 		end
 	else
 		-- stop following player if not holding specific item or mob is horny
-		if self.following and self.following:is_player()
+		if self.following and is_player(self.following)
 		and (self:follow_holding(self.following) == false or self.horny) then
 			self.following = nil
 		end
@@ -2169,7 +2178,7 @@ function mob_class:follow_flop()
 		local s = self.object:get_pos()
 		local p
 
-		if self.following:is_player() then
+		if is_player(self.following) then
 			p = self.following:get_pos()
 		elseif self.following.object then
 			p = self.following.object:get_pos()
@@ -2316,7 +2325,7 @@ function mob_class:do_states(dtime)
 
 			for n = 1, #objs do
 
-				if objs[n]:is_player() then
+				if is_player(objs[n]) then
 					lp = objs[n]:get_pos()
 					break
 				end
@@ -2428,7 +2437,7 @@ function mob_class:do_states(dtime)
 		or not self.attack
 		or not self.attack:get_pos()
 		or self.attack:get_hp() <= 0
-		or (self.attack:is_player()
+		or (is_player(self.attack)
 		and is_invisible(self, self.attack:get_player_name())) then
 
 --print(" ** stop attacking **", self.name, self.health, dist, self.view_range)
@@ -2819,7 +2828,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if self.protected then
 
 		-- did player hit mob and if so is it in protected area
-		if hitter:is_player() then
+		if is_player(hitter) then
 
 			local player_name = hitter:get_player_name()
 
@@ -2880,7 +2889,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	-- check if hit by player item or entity
 	local hit_item = weapon_def.name
 
-	if not hitter:is_player() then
+	if not is_player(hitter) then
 		hit_item = hitter:get_luaentity().name
 	end
 
@@ -2987,7 +2996,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 			local entity = hitter and hitter:get_luaentity()
 
 			-- check if arrow from same mob, if so then do no damage
-			if (entity and entity.name ~= self.arrow) or hitter:is_player() then
+			if (entity and entity.name ~= self.arrow) or is_player(hitter) then
 				self.health = self.health - floor(damage)
 			end
 		end
@@ -3350,7 +3359,7 @@ function mob_class:mob_expire(pos, dtime)
 
 			for n = 1, #objs do
 
-				if objs[n]:is_player() then
+				if is_player(objs[n]) then
 
 					self.lifetimer = 20
 
@@ -3730,7 +3739,7 @@ local function count_mobs(pos, type)
 
 	for n = 1, #objs do
 
-		if not objs[n]:is_player() then
+		if not is_player(objs[n]) then
 
 			ent = objs[n]:get_luaentity()
 
@@ -4052,7 +4061,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 		for n = 1, #objs do
 
-			if objs[n]:is_player() then
+			if is_player(objs[n]) then
 --print("--- player too close", name)
 				return
 			end
@@ -4248,7 +4257,7 @@ function mobs:register_arrow(name, def)
 
 				for _,player in pairs(minetest.get_objects_inside_radius(pos, 1.0)) do
 
-					if self.hit_player and player:is_player() then
+					if self.hit_player and is_player(player) then
 
 						self:hit_player(player)
 
@@ -4496,7 +4505,7 @@ end
 function mobs:capture_mob(
 		self, clicker, chance_hand, chance_net, chance_lasso, force_take, replacewith)
 
-	if not self or not clicker:is_player() or not clicker:get_inventory() then
+	if not self or not is_player(clicker) or not clicker:get_inventory() then
 		return false
 	end
 
