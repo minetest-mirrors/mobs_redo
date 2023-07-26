@@ -7,11 +7,6 @@ minetest.register_privilege("peaceful_player", {
 	give_to_singleplayer = false
 })
 
--- global
-mobs = {}
-
--- Compatibility
-dofile(path .. "/compatibility.lua")
 
 -- Mob API
 dofile(path .. "/api.lua")

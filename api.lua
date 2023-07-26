@@ -23,10 +23,15 @@ end
 -- CMI support check
 local use_cmi = minetest.global_exists("cmi")
 
-mobs.mod = "redo"
-mobs.version = "20230726"
-mobs.intllib = S
-mobs.invis = minetest.global_exists("invisibility") and invisibility or {}
+mobs = {
+	mod = "redo",
+	version = "20230726",
+	intllib = S,
+	invis = minetest.global_exists("invisibility") and invisibility or {},
+	node_snow = minetest.registered_aliases["mapgen_snow"] or "mcl_core:snow",
+	node_dirt = minetest.registered_aliases["mapgen_dirt"] or "mcl_core:dirt"
+}
+mobs.fallback_node = mobs.node_dirt
 
 
 -- localize common functions
