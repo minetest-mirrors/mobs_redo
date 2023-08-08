@@ -1,22 +1,13 @@
 -- Check for translation method
 local S
-if minetest.get_translator ~= nil then
+if minetest.get_translator then
 	S = minetest.get_translator("mobs") -- 5.x translation function
-else
-	if minetest.get_modpath("intllib") then
-		dofile(minetest.get_modpath("intllib") .. "/init.lua")
-		if intllib.make_gettext_pair then
-			S = intllib.make_gettext_pair() -- new gettext method
-		else
-			S = intllib.Getter() -- old text file method
-		end
-	else -- boilerplate function
-		S = function(str, ...)
-			local args = {...}
-			return str:gsub("@%d+", function(match)
-				return args[tonumber(match:sub(2))]
-			end)
-		end
+else -- boilerplate function
+	S = function(str, ...)
+		local args = {...}
+		return str:gsub("@%d+", function(match)
+			return args[tonumber(match:sub(2))]
+		end)
 	end
 end
 
@@ -25,7 +16,7 @@ local use_cmi = minetest.global_exists("cmi")
 
 mobs = {
 	mod = "redo",
-	version = "20230807",
+	version = "20230808",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"] or "mcl_core:snow",
