@@ -1,29 +1,24 @@
--- Check for translation method
-local S
-if minetest.get_translator then
-	S = minetest.get_translator("mobs") -- 5.x translation function
-else -- boilerplate function
-	S = function(str, ...)
-		local args = {...}
-		return str:gsub("@%d+", function(match)
-			return args[tonumber(match:sub(2))]
-		end)
-	end
-end
+-- Translation support
+local S = minetest.get_translator("mobs")
 
 -- CMI support check
 local use_cmi = minetest.global_exists("cmi")
 
+-- MineClone2 check
+local use_mc2 = minetest.get_modpath("mcl_core")
+
+-- Global
 mobs = {
 	mod = "redo",
-	version = "20230808",
+	version = "20230809",
 	intllib = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
-	node_snow = minetest.registered_aliases["mapgen_snow"] or "mcl_core:snow",
-	node_dirt = minetest.registered_aliases["mapgen_dirt"] or "mcl_core:dirt"
+	node_snow = minetest.registered_aliases["mapgen_snow"]
+			or (use_mc2 and "mcl_core:snow") or "default:snow",
+	node_dirt = minetest.registered_aliases["mapgen_dirt"]
+			or (use_mc2 and "mcl_core:dirt") or "default:dirt"
 }
 mobs.fallback_node = mobs.node_dirt
-
 
 -- localize common functions
 local pi = math.pi
