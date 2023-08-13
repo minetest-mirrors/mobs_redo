@@ -3352,7 +3352,7 @@ function mob_class:mob_expire(pos, dtime)
 				end
 			end
 
---			minetest.log("action", S("lifetimer expired, removed @1", self.name))
+--			minetest.log("action", "lifetimer expired, removed " .. self.name)
 
 			effect(pos, 15, "tnt_smoke.png", 2, 4, 2, 0)
 
@@ -4755,7 +4755,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			esc(FS("Enter name:")) ..
 			";" .. tag .. "]" ..
 			"button_exit[2.5,3.5;3,1;mob_rename;" ..
-			esc(S("Rename")) .. "]")
+			esc(FS("Rename")) .. "]")
 
 		return true
 	end
