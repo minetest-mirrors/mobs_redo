@@ -1,5 +1,6 @@
 -- Translation support
 local S = minetest.get_translator("mobs")
+local FS = function(...) return minetest.formspec_escape(S(...)) end
 
 -- CMI support check
 local use_cmi = minetest.global_exists("cmi")
@@ -10,8 +11,8 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20230809",
-	intllib = S,
+	version = "20230813",
+	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
 			or (use_mc2 and "mcl_core:snow") or "default:snow",
@@ -4751,7 +4752,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 		minetest.show_formspec(name, "mobs_nametag",
 			"size[8,4]" ..
 			"field[0.5,1;7.5,0;name;" ..
-			esc(S("Enter name:")) ..
+			esc(FS("Enter name:")) ..
 			";" .. tag .. "]" ..
 			"button_exit[2.5,3.5;3,1;mob_rename;" ..
 			esc(S("Rename")) .. "]")
@@ -4769,9 +4770,9 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			end
 
 			minetest.chat_send_player(clicker:get_player_name(),
-					S("@1 follows:\n- @2",
-					self.name:split(":")[2],
-					table.concat(self.follow, "\n- ")))
+					S("@1 follows:",
+					self.name:split(":")[2]) .. "\n" ..
+					table.concat(self.follow, "\n- "))
 		end
 	end
 
