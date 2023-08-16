@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20230813",
+	version = "20230816",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -3043,15 +3043,15 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		self.following = nil
 	end
 
-	local name = hitter:get_player_name() or ""
+	local hitter_name = hitter:get_player_name() or ""
 
 	-- attack puncher and call other mobs for help
 	if self.passive == false
 	and self.state ~= "flop"
 	and self.child == false
 	and self.attack_players == true
-	and hitter:get_player_name() ~= self.owner
-	and not is_invisible(self, name)
+	and not (is_player(hitter) and hitter_name == self.owner)
+	and not is_invisible(self, hitter_name)
 	and self.object ~= hitter then
 
 		-- attack whoever punched mob
@@ -3060,25 +3060,25 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		-- alert others to the attack
 		local objs = minetest.get_objects_inside_radius(hitter:get_pos(), self.view_range)
-		local obj
+		local ent
 
 		for n = 1, #objs do
 
-			obj = objs[n]:get_luaentity()
+			ent = objs[n] and objs[n]:get_luaentity()
 
-			if obj and obj._cmi_is_mob then
+			if ent and ent._cmi_is_mob then
 
 				-- only alert members of same mob and assigned helper
-				if obj.group_attack == true
-				and obj.state ~= "attack"
-				and obj.owner ~= name
-				and (obj.name == self.name or obj.name == self.group_helper) then
-					obj:do_attack(hitter)
+				if ent.group_attack == true
+				and ent.state ~= "attack"
+				and not (is_player(hitter) and ent.owner == name)
+				and (ent.name == self.name or ent.name == self.group_helper) then
+					ent:do_attack(hitter)
 				end
 
 				-- have owned mobs attack player threat
-				if obj.owner == name and obj.owner_loyal then
-					obj:do_attack(self.object)
+				if is_player(hitter) and ent.owner == hitter_name and ent.owner_loyal then
+					ent:do_attack(self.object)
 				end
 			end
 		end
