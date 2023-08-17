@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20230816",
+	version = "20230817",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -3071,7 +3071,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 				-- only alert members of same mob and assigned helper
 				if ent.group_attack == true
 				and ent.state ~= "attack"
-				and not (is_player(hitter) and ent.owner == name)
+				and not (is_player(hitter) and ent.owner == hitter_name)
 				and (ent.name == self.name or ent.name == self.group_helper) then
 					ent:do_attack(hitter)
 				end
