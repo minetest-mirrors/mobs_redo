@@ -4216,7 +4216,8 @@ function mobs:register_arrow(name, def)
 			visual_size = def.visual_size,
 			textures = def.textures,
 			collisionbox = def.collisionbox or {-.1, -.1, -.1, .1, .1, .1},
-			glow = def.glow
+			glow = def.glow,
+			automatic_face_movement_dir = def.rotate and (def.rotate - (pi / 180)) or false,
 		},
 
 		velocity = def.velocity,
@@ -4230,8 +4231,6 @@ function mobs:register_arrow(name, def)
 		switch = 0,
 		owner_id = def.owner_id,
 		rotate = def.rotate,
-
-		automatic_face_movement_dir = def.rotate and (def.rotate - (pi / 180)) or false,
 
 		on_activate = def.on_activate,
 
