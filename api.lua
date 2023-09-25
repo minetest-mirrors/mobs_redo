@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20230923",
+	version = "20230925",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -736,17 +736,17 @@ function mob_class:update_tag()
 	local qua = self.initial_properties.hp_max / 6
 
 	if self.health <= qua then
-		col = "#FF0000"
+		col = "#FF0000" -- (255,0,0)
 	elseif self.health <= (qua * 2) then
-		col = "#FF7A00"
+		col = "#FF7A00" -- (255,122,0)
 	elseif self.health <= (qua * 3) then
-		col = "#FFB500"
+		col = "#FFB500" -- (255,181,0)
 	elseif self.health <= (qua * 4) then
-		col = "#FFFF00"
+		col = "#FFFF00" -- (255,255,0)
 	elseif self.health <= (qua * 5) then
-		col = "#B4FF00"
+		col = "#B4FF00" -- (180,255,0)
 	elseif self.health > (qua * 5) then
-		col = "#00FF00"
+		col = "#00FF00" -- (0,255,0)
 	end
 
 	local text = ""
@@ -773,7 +773,10 @@ function mob_class:update_tag()
 
 	-- set changes
 	self.object:set_properties({
-			nametag = self.nametag, nametag_color = col, infotext = self.infotext})
+		nametag = self.nametag,
+		nametag_color = col,
+		infotext = self.infotext
+	})
 end
 
 
@@ -3608,7 +3611,7 @@ minetest.register_entity(":" .. name, setmetatable({
 		selectionbox = def.selectionbox or collisionbox,
 --		pointable
 		visual = def.visual,
-		visual_size = def.visual_size,
+		visual_size = def.visual_size or {x = 1, y = 1},
 		mesh = def.mesh,
 		textures = nil,
 --		colors
@@ -3899,6 +3902,7 @@ function mobs:add_mob(pos, def)
 		end
 
 		-- and resize to half height (multiplication is faster than division)
+
 		mob:set_properties({
 			textures = textures,
 			visual_size = {
