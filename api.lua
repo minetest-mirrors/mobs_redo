@@ -3913,6 +3913,7 @@ function mobs:add_mob(pos, def)
 		end
 
 		mob:set_properties({nametag = def.nametag})
+		ent.nametag = def.nametag
 
 		ent:update_tag()
 	end
