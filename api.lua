@@ -730,24 +730,37 @@ local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 
 
 -- update nametag and infotext
-function mob_class:update_tag()
+function mob_class:update_tag(newname)
 
 	local col
 	local prop = self.object:get_properties()
 	local qua = prop.hp_max / 6
 
-	if self.health <= qua then
-		col = "#FF0000"
-	elseif self.health <= (qua * 2) then
-		col = "#FF7A00"
-	elseif self.health <= (qua * 3) then
-		col = "#FFB500"
-	elseif self.health <= (qua * 4) then
-		col = "#FFFF00"
-	elseif self.health <= (qua * 5) then
-		col = "#B4FF00"
-	elseif self.health > (qua * 5) then
-		col = "#00FF00"
+	-- backwards compatibility
+	if self.nametag and self.nametag ~= "" then
+		newname = self.nametag
+		self.nametag = nil
+	end
+
+	if newname or (self._nametag and self._nametag ~= "") then
+
+		self._nametag = newname or self._nametag -- adopt new name if one found
+
+		if self.health <= qua then
+			col = "#FF0000"
+		elseif self.health <= (qua * 2) then
+			col = "#FF7A00"
+		elseif self.health <= (qua * 3) then
+			col = "#FFB500"
+		elseif self.health <= (qua * 4) then
+			col = "#FFFF00"
+		elseif self.health <= (qua * 5) then
+			col = "#B4FF00"
+		elseif self.health > (qua * 5) then
+			col = "#00FF00"
+		end
+
+		self.object:set_properties({nametag = self._nametag, nametag_color = col})
 	end
 
 	local text = ""
@@ -773,9 +786,8 @@ function mob_class:update_tag()
 		.. (self.owner == "" and "" or "\nOwner: " .. self.owner)
 		.. text
 
-	-- set changes
-	self.object:set_properties({
-			nametag = self.nametag, nametag_color = col, infotext = self.infotext})
+	-- set infotext changes
+	self.object:set_properties({infotext = self.infotext})
 end
 
 
@@ -1078,9 +1090,9 @@ end
 -- environmental damage (water, lava, fire, light etc.)
 function mob_class:do_env_damage()
 
-	self:update_tag()
-
 	local pos = self.object:get_pos() ; if not pos then return end
+
+	self:update_tag()
 
 	self.time_of_day = minetest.get_timeofday()
 
@@ -3153,9 +3165,9 @@ function mob_class:mob_staticdata()
 			make_footstep_sound = self.make_footstep_sound,
 			stepheight = self.stepheight,
 			glow = self.glow,
-			nametag = self.nametag,
+--			nametag = self.nametag,
 			damage_texture_modifier = self.damage_texture_modifier,
-			infotext = self.infotext
+--			infotext = self.infotext
 		}
 	end
 
@@ -3295,13 +3307,8 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.standing_in = "air"
 	self.standing_on = "air"
 
-	-- check for existing nametag
-	self.nametag = self.nametag or def.nametag
-
 	-- set anything changed above
---	self.object:set_properties(self)
 	self:set_yaw((random(0, 360) - 180) / 180 * pi, 6)
-	self:update_tag()
 	self:set_animation("stand")
 
 	-- apply any texture mods
@@ -3913,10 +3920,7 @@ function mobs:add_mob(pos, def)
 			def.nametag = def.nametag:sub(1, 64)
 		end
 
-		mob:set_properties({nametag = def.nametag})
-		ent.nametag = def.nametag
-
-		ent:update_tag()
+		ent:update_tag(def.nametag)
 	end
 
 	return ent
@@ -4764,7 +4768,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 		mob_sta[name] = item
 
 		local prop = self.object:get_properties()
-		local tag = prop.nametag or ""
+		local tag = self._nametag or ""
 		local esc = minetest.formspec_escape
 
 		minetest.show_formspec(name, "mobs_nametag", "size[8,4]"
@@ -4819,9 +4823,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 
 		-- update nametag
-		mob_obj[name].object:set_properties({nametag = fields.name})
-		mob_obj[name].nametag = fields.name
-		mob_obj[name]:update_tag()
+		mob_obj[name]:update_tag(fields.name)
 
 		-- if not in creative then take item
 		if not mobs.is_creative(name) then
