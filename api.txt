@@ -32,7 +32,6 @@ by it's own name e.g.
 ... and the 'definition' is a table which holds all of the settings and
 functions needed for the mob to work properly which contains the following:
 
-   'nametag'       contains the name which is shown above mob.
    'type'          holds the type of mob that inhabits your world e.g.
       "animal"     usually docile and walking around.
       "monster"    attacks player or npc on sight.
@@ -367,7 +366,7 @@ for each mob.
                         dogs
    'self.order'         set to "follow" or "stand" so that npc will follow owner
                         or stand it's ground
-   'self.nametag'       contains the name of the mob which it can show above
+   'self._nametag'      contains the name of the mob which it can show above
    'self.pause_timer'   used to stop mob thinking when punched so that knockback
                         can take effect.
    'self.disable_falling' currently used on spider mob when climbing walls, stops
