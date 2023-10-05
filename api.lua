@@ -905,6 +905,7 @@ function mob_class:check_for_death(cmi_cause)
 	end
 
 	local damaged = self.health < self.old_health
+	local prop = self.object:get_properties()
 
 	self.old_health = self.health
 
@@ -917,8 +918,8 @@ function mob_class:check_for_death(cmi_cause)
 		end
 
 		-- make sure health isn't higher than max
-		if self.health > self.hp_max then
-			self.health = self.hp_max
+		if self.health > prop.hp_max then
+			self.health = prop.hp_max
 		end
 
 		self:update_tag()
@@ -2933,13 +2934,14 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		minetest.sound_play(snd, {object = self.object, max_hear_distance = 8}, true)
 
+		local prop = self.object:get_properties()
+
 		-- blood_particles
 		if not disable_blood and self.blood_amount > 0 then
 
 			local pos = self.object:get_pos()
 			local blood = self.blood_texture
 			local amount = self.blood_amount
-			local prop = self.object:get_properties()
 
 			pos.y = pos.y + (-prop.collisionbox[2] + prop.collisionbox[5]) * .5
 
@@ -2961,7 +2963,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 			self.old_texture_mods = self.texture_mods
 
-			self.object:set_texture_mod(self.texture_mods .. self.damage_texture_modifier)
+			self.object:set_texture_mod(self.texture_mods .. prop.damage_texture_modifier)
 
 			minetest.after(0.3, function()
 
@@ -4097,7 +4099,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		if pos then
 
 			-- adjust for mob collision box
-			pos.y = pos.y + (ent.collisionbox[2] * -1) - 0.4
+			pos.y = pos.y + (ent.base_colbox[2] * -1) - 0.4
 
 			local mob = minetest.add_entity(pos, name)
 
