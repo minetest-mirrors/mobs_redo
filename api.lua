@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231005",
+	version = "20231007",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -126,17 +126,12 @@ local creatura = minetest.get_modpath("creatura") and
 
 
 mobs.mob_class = {
-	stepheight = 1.1,
 	fly_in = "air",
 	owner = "",
 	order = "",
 	jump_height = 4,
 	lifetimer = 180, -- 3 minutes
-	physical = true,
-	collisionbox = {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25},
-	visual_size = {x = 1, y = 1},
 	texture_mods = "",
-	makes_footstep_sound = false,
 	view_range = 5,
 	walk_velocity = 1,
 	run_velocity = 2,
@@ -3607,7 +3602,21 @@ function mobs:register_mob(name, def)
 
 minetest.register_entity(":" .. name, setmetatable({
 
-	stepheight = def.stepheight,
+	initial_properties = {
+		hp_max = max(1, (def.hp_max or 10) * difficulty),
+		physical = true,
+		collisionbox = collisionbox,
+		selectionbox = def.selectionbox or collisionbox,
+		visual = def.visual,
+		visual_size = def.visual_size or {x = 1, y = 1},
+		mesh = def.mesh,
+		textures = "",
+		makes_footstep_sound = def.makes_footstep_sound,
+		stepheight = def.stepheight,
+		glow = def.glow,
+		damage_texture_modifier = def.damage_texture_modifier or "^[colorize:#c9900070",
+	},
+
 	name = name,
 	type = def.type,
 	attack_type = def.attack_type,
@@ -3620,15 +3629,8 @@ minetest.register_entity(":" .. name, setmetatable({
 	can_leap = def.can_leap,
 	drawtype = def.drawtype, -- DEPRECATED, use rotate instead
 	rotate = rad(def.rotate or 0), -- 0=front 90=side 180=back 270=side2
-	glow = def.glow,
 	lifetimer = def.lifetimer,
 	hp_min = max(1, (def.hp_min or 5) * difficulty),
-	hp_max = max(1, (def.hp_max or 10) * difficulty),
-	collisionbox = collisionbox, --def.collisionbox,
-	selectionbox = def.selectionbox or collisionbox, --def.collisionbox,
-	visual = def.visual,
-	visual_size = def.visual_size or {x = 1, y = 1},
-	mesh = def.mesh,
 
 	-- backup entity model and size
 	base_mesh = def.mesh,
@@ -3636,13 +3638,11 @@ minetest.register_entity(":" .. name, setmetatable({
 	base_selbox = def.selectionbox or collisionbox,
 	base_size = def.visual_size or {x = 1, y = 1},
 
-	makes_footstep_sound = def.makes_footstep_sound,
 	view_range = def.view_range,
 	walk_velocity = def.walk_velocity,
 	run_velocity = def.run_velocity,
 	damage = max(0, (def.damage or 0) * difficulty),
 	damage_group = def.damage_group,
-	damage_texture_modifier = def.damage_texture_modifier or "^[colorize:#c9900070",
 	light_damage = def.light_damage,
 	light_damage_min = def.light_damage_min,
 	light_damage_max = def.light_damage_max,
@@ -4380,7 +4380,18 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			"^[mask:mobs_chicken_egg_overlay.png)"
 	end
 
+	-- does mob/entity exist
+	local is_mob = minetest.registered_entities[mob]
+
+	if not is_mob then
+		print("[Mobs Redo] Spawn Egg cannot be created for " .. mob)
+		return
+	end
+
 	-- register new spawn egg containing mob information (cannot be stacked)
+	-- these are only created for animals and npc mobs, not monsters
+if is_mob.type ~= "monster" then
+
 	minetest.register_craftitem(mob .. "_set", {
 
 		description = S("@1 (Tamed)", desc),
@@ -4430,7 +4441,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 			return itemstack
 		end
 	})
-
+end
 
 	-- register old stackable mob egg
 	minetest.register_craftitem(mob, {
