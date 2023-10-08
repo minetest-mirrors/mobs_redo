@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231007",
+	version = "20231008",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -1779,7 +1779,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			jumpheight = min(ceil(
 					self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
 
-		elseif self.stepheight > 0.5 then
+		elseif prop.stepheight > 0.5 then
 			jumpheight = 1
 		end
 
@@ -3612,7 +3612,7 @@ minetest.register_entity(":" .. name, setmetatable({
 		mesh = def.mesh,
 		textures = "",
 		makes_footstep_sound = def.makes_footstep_sound,
-		stepheight = def.stepheight,
+		stepheight = def.stepheight or 1.1,
 		glow = def.glow,
 		damage_texture_modifier = def.damage_texture_modifier or "^[colorize:#c9900070",
 	},
