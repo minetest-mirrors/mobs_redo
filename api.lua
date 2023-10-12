@@ -3423,7 +3423,7 @@ function mob_class:on_step(dtime, moveresult)
 		-- check and stop if standing at cliff and fear of heights
 		self.at_cliff = self:is_at_cliff()
 
-		if self.pause_timer <= 0 or self.at_cliff then
+		if self.pause_timer <= 0 and self.at_cliff then
 			self:set_velocity(0)
 		end
 
