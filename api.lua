@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231011",
+	version = "20231012",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -188,6 +188,7 @@ mobs.mob_class = {
 	friendly_fire = true,
 	facing_fence = false,
 	_breed_countdown = nil,
+	_tame_countdown = nil,
 	_cmi_is_mob = true
 }
 
@@ -761,6 +762,8 @@ function mob_class:update_tag(newname)
 		text = "\nLoving: " .. (self.hornytimer - (HORNY_TIME + HORNY_AGAIN_TIME))
 	elseif self.child == true then
 		text = "\nGrowing: " .. (self.hornytimer - CHILD_GROW_TIME)
+	elseif self._tame_countdown then
+		text = "\nTaming: " .. self._tame_countdown
 	elseif self._breed_countdown then
 		text = "\nBreeding: " .. self._breed_countdown
 	end
@@ -3420,7 +3423,7 @@ function mob_class:on_step(dtime, moveresult)
 		-- check and stop if standing at cliff and fear of heights
 		self.at_cliff = self:is_at_cliff()
 
-		if self.pause_timer <= 0 and self.at_cliff then
+		if self.pause_timer <= 0 or self.at_cliff then
 			self:set_velocity(0)
 		end
 
@@ -4709,6 +4712,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 		-- feed and tame
 		self.food = (self.food or 0) + 1
 		self._breed_countdown = breed and (feed_count - self.food)
+		self._tame_countdown = not self.tamed and tame and (feed_count - self.food)
 
 		if self.food >= feed_count then
 
