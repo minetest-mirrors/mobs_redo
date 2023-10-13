@@ -3493,7 +3493,7 @@ function mob_class:on_step(dtime, moveresult)
 
 		self.pause_timer = self.pause_timer - dtime
 
-		if self.pause_timer <= 0 and self.order == "stand" then
+		if self.pause_timer < 0 and self.order == "stand" then
 
 			self.pause_timer = 0
 			self:set_velocity(0)

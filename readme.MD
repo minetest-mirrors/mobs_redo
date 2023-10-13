@@ -106,7 +106,7 @@ https://forum.minetest.net/viewtopic.php?f=11&t=9917
 
 ### Version 1.48
 
-* Added `mobs:set_velocity(self, velocity)` global function
+* Added `mobs:set_velocity(self, velocity)` global function [deprecated]
 
 ### Version 1.47
 
