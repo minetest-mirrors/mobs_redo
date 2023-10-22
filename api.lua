@@ -4094,11 +4094,13 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 			if mob_log_spawn then
 
+				local pos_string = pos and minetest.pos_to_string(pos) or ""
+
 				minetest.log(
 					"[MOBS] Spawned "
 					.. (name or "")
 					.. " at "
-					.. (pos and minetest.pos_to_string(pos)) or ""
+					.. pos_string
 				)
 			end
 
