@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231022",
+	version = "20231024",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -1087,6 +1087,19 @@ function mob_class:is_at_cliff()
 end
 
 
+-- check for nodes or groups inside mob
+function mob_class:is_inside(itemtable)
+
+	local cb = self.object:get_properties().collisionbox
+	local pos = self.object:get_pos()
+	local nn = minetest.find_nodes_in_area(
+		vector.offset(pos, cb[1], cb[2], cb[3]),
+		vector.offset(pos, cb[4], cb[5], cb[6]), itemtable)
+
+	if nn and #nn > 0 then return true end
+end
+
+
 -- environmental damage (water, lava, fire, light etc.)
 function mob_class:do_env_damage()
 
@@ -1133,7 +1146,7 @@ function mob_class:do_env_damage()
 		end
 
 	-- fire damage
-	elseif self.fire_damage ~= 0 and nodef.groups.fire then
+	elseif self.fire_damage ~= 0 and self:is_inside("group:fire") then -- nodef.groups.fire then
 
 		self.health = self.health - self.fire_damage
 
