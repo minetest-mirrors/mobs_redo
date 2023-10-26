@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231024",
+	version = "20231026",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -1134,7 +1134,7 @@ function mob_class:do_env_damage()
 		end
 
 	-- lava damage
-	elseif self.lava_damage ~= 0 and nodef.groups.lava  then
+	elseif self.lava_damage ~= 0 and self:is_inside("group:lava") then -- nodef.groups.lava  then
 
 		self.health = self.health - self.lava_damage
 
