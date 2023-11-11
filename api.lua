@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231106",
+	version = "20231111",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -4022,6 +4022,11 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		end
 
 		local ent = minetest.registered_entities[name]
+
+		if not ent or not ent.base_colbox then
+			print("[MOBS] Error spawning mob: " .. name)
+			return
+		end
 
 		-- should we check mob area for obstructions ?
 		if mob_area_spawn ~= true then
