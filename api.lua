@@ -2655,8 +2655,7 @@ function mob_class:do_states(dtime)
 
 					-- setup homing arrow and target
 					if self.homing then
-						ent._target = self.attack
-						ent.homing = true
+						ent._homing_target = self.attack
 					end
 
 					 -- offset makes shoot aim accurate
@@ -4232,9 +4231,9 @@ function mobs:register_arrow(name, def)
 			end
 
 			-- make homing arrows follow target if seen
-			if self.homing and self._target then
+			if self._homing_target then
 
-				local p = self._target:get_pos()
+				local p = self._homing_target:get_pos()
 
 				if p then
 
@@ -4244,7 +4243,7 @@ function mobs:register_arrow(name, def)
 							vector.direction(self.object:get_pos(), p) * self.velocity)
 					end
 				else
-					self._target = nil
+					self._homing_target = nil
 				end
 			end
 
