@@ -148,8 +148,9 @@ functions needed for the mob to work properly which contains the following:
    'dogshoot_count2_max' contains how many seconds before switching from shoot
                          to dogfight.
    'shoot_interval'      has the number of seconds between shots.
-   'shoot_offset'        holds the y position added as to where the
+   'shoot_offset'         holds the y position added as to where the
                          arrow/fireball appears on mob.
+   'homing'              When True arrows will follow player when visible.
    'specific_attack'     has a table of entity names that mob can also attack
                          e.g. {"player", "mobs_animal:chicken"}.
    'friendly_fire`       when set to false, mobs will not be able to harm other

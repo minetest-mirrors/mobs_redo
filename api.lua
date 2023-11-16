@@ -11,7 +11,7 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231111",
+	version = "20231116",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -2653,6 +2653,12 @@ function mob_class:do_states(dtime)
 					ent.switch = 1
 					ent.owner_id = tostring(self.object) -- add unique owner id to arrow
 
+					-- setup homing arrow and target
+					if self.homing then
+						ent._target = self.attack
+						ent.homing = true
+					end
+
 					 -- offset makes shoot aim accurate
 					vec.y = vec.y + self.shoot_offset
 					vec.x = vec.x * (v / amount)
@@ -3593,6 +3599,7 @@ minetest.register_entity(":" .. name, setmetatable({
 	arrow = def.arrow,
 	arrow_override = def.arrow_override,
 	shoot_interval = def.shoot_interval,
+	homing = def.homing,
 	sounds = def.sounds,
 	animation = def.animation,
 	follow = def.follow,
@@ -4221,6 +4228,23 @@ function mobs:register_arrow(name, def)
 					self.object:remove() ; -- print("hit node")
 
 					return
+				end
+			end
+
+			-- make homing arrows follow target if seen
+			if self.homing and self._target then
+
+				local p = self._target:get_pos()
+
+				if p then
+
+					if minetest.line_of_sight(self.object:get_pos(), p) then
+
+						self.object:set_velocity(
+							vector.direction(self.object:get_pos(), p) * self.velocity)
+					end
+				else
+					self._target = nil
 				end
 			end
 
