@@ -8,10 +8,13 @@ local use_cmi = minetest.global_exists("cmi")
 -- MineClone2 check
 local use_mc2 = minetest.get_modpath("mcl_core")
 
+-- Visual Harm 1ndicator check
+local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
+
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231116",
+	version = "20231120",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -826,6 +829,10 @@ function mob_class:check_for_death(cmi_cause)
 	local prop = self.object:get_properties()
 
 	self.old_health = self.health
+
+	if use_vh1 then
+		VH1.update_bar(self.object, self.health)
+	end
 
 	-- still got some health? play hurt sound
 	if self.health > 0 then
@@ -2836,6 +2843,10 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if damage <= -1 then
 
 		self.health = self.health - floor(damage)
+
+		if use_vh1 then
+			VH1.update_bar(self.object, self.health)
+		end
 
 		return true
 	end
