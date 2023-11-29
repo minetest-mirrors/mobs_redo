@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231120",
+	version = "20231129",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -2657,7 +2657,6 @@ function mob_class:do_states(dtime)
 
 					local v = ent.velocity or 1 -- or set to default
 
-					ent.switch = 1
 					ent.owner_id = tostring(self.object) -- add unique owner id to arrow
 
 					-- setup homing arrow and target
@@ -4161,7 +4160,7 @@ function mobs:register_arrow(name, def)
 
 		initial_properties = {
 
-			physical = def.physical or false,
+			physical = false,
 			collide_with_objects = def.collide_with_objects or false,
 			static_save = false,
 			visual = def.visual,
@@ -4181,7 +4180,6 @@ function mobs:register_arrow(name, def)
 		drop = def.drop or false, -- drops arrow as registered item when true
 		timer = 0,
 		lifetime = def.lifetime or 4.5,
-		switch = 0,
 		owner_id = def.owner_id,
 		rotate = def.rotate,
 
@@ -4196,7 +4194,7 @@ function mobs:register_arrow(name, def)
 
 			local pos = self.object:get_pos()
 
-			if self.switch == 0 or self.timer > self.lifetime then
+			if self.timer > self.lifetime then
 
 				self.object:remove() ; -- print("removed arrow")
 
@@ -4218,29 +4216,6 @@ function mobs:register_arrow(name, def)
 				})
 			end
 
-			if self.hit_node then
-
-				local node = node_ok(pos).name
-
-				if minetest.registered_nodes[node].walkable then
-
-					self:hit_node(pos, node)
-
-					if self.drop == true then
-
-						pos.y = pos.y + 1
-
-						self.lastpos = (self.lastpos or pos)
-
-						minetest.add_item(self.lastpos, self.object:get_luaentity().name)
-					end
-
-					self.object:remove() ; -- print("hit node")
-
-					return
-				end
-			end
-
 			-- make homing arrows follow target if seen
 			if self._homing_target then
 
@@ -4258,48 +4233,90 @@ function mobs:register_arrow(name, def)
 				end
 			end
 
-			if self.hit_player or self.hit_mob or self.hit_object then
+			-- raycasting
+			self.lastpos = self.lastpos or pos
 
-				for _,player in pairs(minetest.get_objects_inside_radius(pos, 1.0)) do
+			local cast = minetest.raycast(self.lastpos, pos, true, true)
+			local thing = cast:next()
 
-					if self.hit_player and is_player(player) then
+			-- loop through things
+			while thing do
 
-						self:hit_player(player)
+				-- if inside object that isn't arrow
+				if thing.type == "object" and thing.ref ~= self.object
+				and tostring(thing.ref) ~= self.owner_id then
 
-						self.object:remove() ; -- print("hit player")
+					if self.hit_player and is_player(thing.ref) then
+
+						self:hit_player(thing.ref)
+
+						self.object:remove()
+
+--print("hit player", thing.ref:get_player_name())
 
 						return
+
 					end
 
-					local entity = player:get_luaentity()
+					local entity = thing.ref:get_luaentity()
 
 					if entity
 					and self.hit_mob
-					and entity._cmi_is_mob == true
-					and tostring(player) ~= self.owner_id
-					and entity.name ~= self.object:get_luaentity().name then
+					and entity._cmi_is_mob == true then
 
-						self:hit_mob(player)
+						self:hit_mob(thing.ref)
 
-						self.object:remove() ; -- print("hit mob")
+						self.object:remove()
+
+--print("hit mob", entity.name)
 
 						return
 					end
 
 					if entity
 					and self.hit_object
-					and (not entity._cmi_is_mob)
-					and tostring(player) ~= self.owner_id
-					and entity.name ~= self.object:get_luaentity().name then
+					and (not entity._cmi_is_mob) then
 
-						self:hit_object(player)
+						self:hit_object(thing.ref)
 
-						self.object:remove() ; -- print("hit object")
+						self.object:remove()
+
+--print("hit object", entity.name)
+
+						return
+					end
+
+				end
+
+				-- if inside node
+				if thing.type == "node" and self.hit_node then
+
+					local node = minetest.get_node(pos)
+					local def = minetest.registered_nodes[node.name]
+
+					if def and def.walkable then
+
+						self:hit_node(pos, node)
+
+						if self.drop == true then
+
+							pos.y = pos.y + 1
+
+							minetest.add_item(self.lastpos,
+									self.object:get_luaentity().name)
+						end
+
+						self.object:remove()
+
+--print("hit node", node.name)
 
 						return
 					end
 				end
-			end
+
+				thing = cast:next()
+
+			end -- end thing loop
 
 			self.lastpos = pos
 		end
