@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231129",
+	version = "20231202",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -4160,7 +4160,7 @@ function mobs:register_arrow(name, def)
 
 		initial_properties = {
 
-			physical = false,
+			physical = def.physical,
 			collide_with_objects = def.collide_with_objects or false,
 			static_save = false,
 			visual = def.visual,
