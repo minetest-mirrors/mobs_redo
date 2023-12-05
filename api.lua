@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20231202",
+	version = "20231205",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -3569,6 +3569,7 @@ minetest.register_entity(":" .. name, setmetatable({
 
 	name = name,
 	type = def.type,
+	_nametag = def.nametag,
 	attack_type = def.attack_type,
 	fly = def.fly,
 	fly_in = def.fly_in,
