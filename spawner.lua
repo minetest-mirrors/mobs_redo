@@ -97,7 +97,7 @@ minetest.register_abm({
 	label = "Mob spawner node",
 	nodenames = {"mobs:spawner"},
 	interval = 10,
-	chance = 4,
+	chance = 1,--4,
 	catch_up = false,
 
 	action = function(pos, node, active_object_count, active_object_count_wider)
@@ -150,24 +150,26 @@ minetest.register_abm({
 			return
 		end
 
-		-- spawn mob if player detected and in range
+		-- when player distance above 0, spawn mob if player detected and in range
 		if pla > 0 then
 
-			local in_range = 0
-			local objsp = minetest.get_objects_inside_radius(pos, pla)
+			local in_range, player
+			local players = minetest.get_connected_players()
 
-			for _, oir in pairs(objsp) do
+			for i = 1, #players do
 
-				if is_player(oir) then
+				player = players[i]
 
-					in_range = 1
+				if player:get_pos():distance(pos) <= pla then
+
+					in_range = true
 
 					break
 				end
 			end
 
 			-- player not found
-			if in_range == 0 then
+			if not in_range then
 				return
 			end
 		end
