@@ -97,7 +97,7 @@ minetest.register_abm({
 	label = "Mob spawner node",
 	nodenames = {"mobs:spawner"},
 	interval = 10,
-	chance = 1,--4,
+	chance = 4,
 	catch_up = false,
 
 	action = function(pos, node, active_object_count, active_object_count_wider)
