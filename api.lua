@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240312",
+	version = "20240401",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -505,7 +505,7 @@ function mob_class:attempt_flight_correction(override)
 
 	local flyable_nodes = minetest.find_nodes_in_area(
 		{x = pos.x - 1, y = pos.y - 1, z = pos.z - 1},
-		{x = pos.x + 1, y = pos.y + 2, z = pos.z + 1}, searchnodes)
+		{x = pos.x + 1, y = pos.y + 1, z = pos.z + 1}, searchnodes)
 
 	if #flyable_nodes < 1 then
 		return false
@@ -2491,35 +2491,39 @@ function mob_class:do_states(dtime)
 		or (self.attack_type == "dogshoot" and dist <= self.reach
 		and self:dogswitch() == 0) then
 
-			if self.fly
-			and dist > self.reach then
+			-- if flying mobs are moving around inside proper medium
+			if self.fly and dist > self.reach and self:flight_check() then
 
-				local p1 = s
-				local me_y = floor(p1.y)
-				local p2 = p
-				local p_y = floor(p2.y + 1)
+				local s_y = floor(s.y) -- self
+				local p_y = floor(p.y + 1) -- attacker
 				local v = self.object:get_velocity()
 
-				if self:flight_check() then
+				-- fly/swim up towards attacker
+				if s_y < p_y then
 
-					if me_y < p_y then
+					-- if correct medium above then move up
+					if #minetest.find_nodes_in_area(
+						{x = s.x, y = s.y + 1, z = s.z},
+						{x = s.x, y = s.y + 1, z = s.z}, self.fly_in) > 0 then
 
 						self.object:set_velocity({
-							x = v.x, y = 1 * self.walk_velocity, z = v.z})
-
-					elseif me_y > p_y then
-
-						self.object:set_velocity({
-							x = v.x, y = -1 * self.walk_velocity, z = v.z})
+							x = v.x, y = self.walk_velocity, z = v.z})
+					else
+						self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
 					end
-				else
-					if me_y < p_y then
 
-						self.object:set_velocity({x = v.x, y = 0.01, z = v.z})
+				-- fly/swim down towards attacker
+				elseif s_y > p_y then
 
-					elseif me_y > p_y then
+					-- if correct medium below then move down
+					if #minetest.find_nodes_in_area(
+						{x = s.x, y = s.y - 1, z = s.z},
+						{x = s.x, y = s.y - 1, z = s.z}, self.fly_in) > 0 then
 
-						self.object:set_velocity({x = v.x, y = -0.01, z = v.z})
+						self.object:set_velocity({
+							x = v.x, y = -self.walk_velocity, z = v.z})
+					else
+						self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
 					end
 				end
 			end
