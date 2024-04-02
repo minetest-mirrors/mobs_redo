@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240401",
+	version = "20240402",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -497,21 +497,24 @@ function mob_class:attempt_flight_correction(override)
 	-- We are not flying in what we are supposed to.
 	-- See if we can find intended flight medium and return to it
 	local pos = self.object:get_pos() ; if not pos then return true end
-	local searchnodes = self.fly_in
-
-	if type(searchnodes) == "string" then
-		searchnodes = {self.fly_in}
-	end
-
 	local flyable_nodes = minetest.find_nodes_in_area(
 		{x = pos.x - 1, y = pos.y - 1, z = pos.z - 1},
-		{x = pos.x + 1, y = pos.y + 1, z = pos.z + 1}, searchnodes)
+		{x = pos.x + 1, y = pos.y + 1, z = pos.z + 1}, self.fly_in)
 
-	if #flyable_nodes < 1 then
+	if #flyable_nodes == 0 then
 		return false
 	end
 
 	local escape_target = flyable_nodes[random(#flyable_nodes)]
+
+	-- stop swimming mobs moving above water surface
+	if escape_target.y > pos.y and #minetest.find_nodes_in_area(
+		{x = escape_target.x, y = escape_target.y + 1, z = escape_target.z},
+		{x = escape_target.x, y = escape_target.y + 1, z = escape_target.z},
+		self.fly_in) == 0 then
+		escape_target.y = pos.y
+	end
+
 	local escape_direction = vdirection(pos, escape_target)
 
 	self.object:set_velocity(vmultiply(escape_direction, 1))
