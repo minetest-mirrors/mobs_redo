@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240402",
+	version = "20240408",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -718,10 +718,11 @@ function mob_class:update_tag(newname)
 		end
 	end
 
-	self.infotext = "Health: " .. self.health .. " / " .. prop.hp_max
+	self.infotext = "Entity: " .. self.name .. " | Type: " .. self.type
+		.. ("\nHealth: " .. self.health .. " / " .. prop.hp_max)
 		.. (self.owner == "" and "" or "\nOwner: " .. self.owner)
-		.. ("\nEntity: " .. self.name)
 		.. text
+
 
 	-- set infotext changes
 	if self.infotext ~= prop.infotext then
@@ -4856,7 +4857,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 			minetest.chat_send_player(clicker:get_player_name(),
 					S("@1 follows:",
-					self.name:split(":")[2]) .. "\n" ..
+					self.name:split(":")[2]) .. "\n- " ..
 					table.concat(self.follow, "\n- "))
 		end
 	end
