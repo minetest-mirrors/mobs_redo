@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240408",
+	version = "20240425",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -1480,9 +1480,9 @@ function mob_class:breed()
 						-- using specific child texture (if found)
 						if self.child_texture then
 							textures = self.child_texture[1]
-							ent2.mommy_tex = self.base_texture -- when grown
 						end
 
+						ent2.mommy_tex = self.base_texture -- when grown
 						ent2.object:set_properties({textures = textures})
 						ent2.base_texture = textures
 					end
