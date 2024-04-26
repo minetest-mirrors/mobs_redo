@@ -882,7 +882,14 @@ function mob_class:check_for_death(cmi_cause)
 	-- execute official engine on_death function if found
 	if self.on_death then
 
-		self:on_death(self, cmi_cause)
+		-- only return killer if punched by player
+		if cmi_cause.type == "punch" and is_player(cmi_cause.puncher) then
+			cmi_cause = cmi_cause.puncher
+		else
+			cmi_cause = nil
+		end
+
+		self:on_death(cmi_cause)
 
 		remove_mob(self, true)
 
