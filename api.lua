@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240425",
+	version = "20240426",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -878,6 +878,16 @@ function mob_class:check_for_death(cmi_cause)
 	self:mob_sound(self.sounds.death)
 
 	local pos = self.object:get_pos()
+
+	-- execute official engine on_death function if found
+	if self.on_death then
+
+		self:on_death(self, cmi_cause)
+
+		remove_mob(self, true)
+
+		return true
+	end
 
 	-- execute custom death function
 	if pos and self.on_die then
@@ -3713,6 +3723,7 @@ minetest.register_entity(":" .. name, setmetatable({
 
 	on_rightclick = def.on_rightclick,
 	on_die = def.on_die,
+	on_death = def.on_death, -- engine function for entity death
 	on_flop = def.on_flop,
 	do_custom = def.do_custom,
 	on_replace = def.on_replace,
