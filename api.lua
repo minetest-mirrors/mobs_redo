@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240426",
+	version = "20240505",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -4463,7 +4463,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 	-- these are only created for animals and npc mobs, not monsters
 if is_mob.type ~= "monster" then
 
-	minetest.register_craftitem(mob .. "_set", {
+	minetest.register_craftitem(":" .. mob .. "_set", {
 
 		description = S("@1 (Tamed)", desc),
 		inventory_image = invimg,
@@ -4520,7 +4520,7 @@ if is_mob.type ~= "monster" then
 end
 
 	-- register old stackable mob egg
-	minetest.register_craftitem(mob, {
+	minetest.register_craftitem(":" .. mob, {
 
 		description = desc,
 		inventory_image = invimg,
