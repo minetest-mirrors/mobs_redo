@@ -419,7 +419,9 @@ mob_class:day_docile() -- return True if mob docile during current daytime
 mob_class:mob_expire(pos, dtime) -- check if mob is to despawn
 mob_class:get_nodes() -- get specific nodes around mob
 mob_class:on_blast(damage) -- function called when mob in blast area
-mob_class:is_inside(itemtable) -- returns True is mob collisionbox inside any node/group in table
+mob_class:is_inside(itemtable) -- returns True is mob collisionbox inside any node/group
+in table
+mob_class:go_to(pos) -- makes mob go to that position or nearby
 
 
 Adding Mobs in World
