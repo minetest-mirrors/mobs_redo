@@ -14,7 +14,7 @@ local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240525",
+	version = "20240620",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = minetest.registered_aliases["mapgen_snow"]
@@ -73,7 +73,7 @@ local mob_area_spawn = settings:get_bool("mob_area_spawn")
 local difficulty = tonumber(settings:get("mob_difficulty")) or 1.0
 local max_per_block = tonumber(settings:get("max_objects_per_block") or 99)
 local mob_nospawn_range = tonumber(settings:get("mob_nospawn_range") or 12)
-local active_limit = tonumber(settings:get("mob_active_limit") or 0)
+local active_limit = tonumber(settings:get("mob_active_limit")) or 0
 local mob_chance_multiplier = tonumber(settings:get("mob_chance_multiplier") or 1)
 local peaceful_player_enabled = settings:get_bool("enable_peaceful_player")
 local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
@@ -202,6 +202,15 @@ mobs.mob_class = {
 
 local mob_class = mobs.mob_class -- Compatibility
 local mob_class_meta = {__index = mob_class}
+
+-- return True if number of mobs is at limit
+local function at_limit()
+
+	if active_limit and active_limit > 0
+	and active_mobs and active_mobs >= active_limit then
+		return true
+	end
+end
 
 
 -- play sound
@@ -819,10 +828,10 @@ local function remove_mob(self, decrease)
 
 	self.object:remove()
 
-	if decrease and active_limit > 1 then
+	if decrease and active_limit and active_limit > 1 then
 		active_mobs = active_mobs - 1
-	end
 --print("-- active mobs: " .. active_mobs .. " / " .. active_limit)
+	end
 end
 
 -- global function for removing mobs
@@ -1454,7 +1463,7 @@ function mob_class:breed()
 				self:update_tag()
 
 				-- have we reached active mob limit
-				if active_limit > 0 and active_mobs >= active_limit then
+				if at_limit() then
 
 					minetest.chat_send_player(self.owner, S("Active Mob Limit Reached!")
 							.. "  (" .. active_mobs .. " / " .. active_limit .. ")")
@@ -3224,7 +3233,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	end
 
 	-- remove mob if not tamed and mob total reached
-	if active_limit > 0 and active_mobs >= active_limit and not self.tamed then
+	if at_limit() and not self.tamed then
 
 		remove_mob(self)
 --print("-- mob limit reached, removing " .. self.name)
@@ -3888,7 +3897,7 @@ function mobs:add_mob(pos, def)
 	end
 
 	-- are we over active mob limit
-	if active_limit > 0 and active_mobs >= active_limit then
+	if at_limit() then
 --print("--- active mob limit reached", active_mobs, active_limit)
 		return
 	end
@@ -4048,7 +4057,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		end
 
 		-- are we over active mob limit
-		if active_limit > 0 and active_mobs >= active_limit then
+		if at_limit() then
 --print("--- active mob limit reached", active_mobs, active_limit)
 			return
 		end
@@ -4515,7 +4524,7 @@ if is_mob.type ~= "monster" then
 			if pos and not minetest.is_protected(pos, placer:get_player_name()) then
 
 				-- have we reached active mob limit
-				if active_limit > 0 and active_mobs >= active_limit then
+				if at_limit() then
 
 					minetest.chat_send_player(placer:get_player_name(),
 							S("Active Mob Limit Reached!")
@@ -4571,7 +4580,7 @@ end
 			if pos and not minetest.is_protected(pos, placer:get_player_name()) then
 
 				-- have we reached active mob limit
-				if active_limit > 0 and active_mobs >= active_limit then
+				if at_limit() then
 
 					minetest.chat_send_player(placer:get_player_name(),
 							S("Active Mob Limit Reached!")
