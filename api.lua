@@ -11,16 +11,23 @@ local use_mc2 = minetest.get_modpath("mcl_core")
 -- Visual Harm 1ndicator check
 local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 
+-- Node check helper
+local function has(nodename)
+	if nodename and minetest.registered_nodes[nodename] then
+		return nodename
+	end
+end
+
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240620",
+	version = "20240629",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
-	node_snow = minetest.registered_aliases["mapgen_snow"]
-			or (use_mc2 and "mcl_core:snow") or "default:snow",
-	node_dirt = minetest.registered_aliases["mapgen_dirt"]
-			or (use_mc2 and "mcl_core:dirt") or "default:dirt"
+	node_snow = has(minetest.registered_aliases["mapgen_snow"])
+		or has("mcl_core:snow") or has("default:snow") or "air",
+	node_dirt = has(minetest.registered_aliases["mapgen_dirt"])
+		or has("mcl_core:dirt") or has("default:dirt") or "mobs:fallback_node"
 }
 mobs.fallback_node = mobs.node_dirt
 
