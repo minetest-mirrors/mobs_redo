@@ -156,7 +156,7 @@ mobs.mob_class = {
 	air_damage = 0,
 	node_damage = true,
 	suffocation = 2,
-	fall_damage = 1,
+	fall_damage = true,
 	fall_speed = -10, -- must be lower than -2 (default: -10)
 	drops = {},
 	armor = 100,
@@ -2791,7 +2791,7 @@ function mob_class:falling(pos)
 	else
 
 		-- fall damage onto solid ground
-		if self.fall_damage == 1
+		if self.fall_damage
 		and self.object:get_velocity().y == 0 then
 
 			local d = (self.old_y or 0) - self.object:get_pos().y
