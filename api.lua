@@ -21,7 +21,7 @@ end
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240701",
+	version = "20240716",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -2666,11 +2666,12 @@ function mob_class:do_states(dtime)
 
 				if self.timer > 1 then
 
+					self.timer = 0
+
 					-- no custom attack or custom attack returns true to continue
 					if not self.custom_attack
 					or self:custom_attack(self, p) == true then
 
-						self.timer = 0
 						self:set_animation("punch")
 
 						local p2 = p
