@@ -45,18 +45,18 @@ minetest.register_craftitem("mobs:leather", {
 
 -- raw meat
 minetest.register_craftitem("mobs:meat_raw", {
-	description = S("Raw Meat"),
+	description = S("Raw Meat") .. " (♥3)",
 	inventory_image = "mobs_meat_raw.png",
 	on_use = minetest.item_eat(3),
-	groups = {food_meat_raw = 1, flammable = 2}
+	groups = {food_meat_raw = 1, flammable = 2, eatable = 3}
 })
 
 -- cooked meat
 minetest.register_craftitem("mobs:meat", {
-	description = S("Meat"),
+	description = S("Meat") .. " (♥8)",
 	inventory_image = "mobs_meat.png",
 	on_use = minetest.item_eat(8),
-	groups = {food_meat = 1, flammable = 2}
+	groups = {food_meat = 1, flammable = 2, eatable = 8}
 })
 
 minetest.register_craft({
@@ -375,10 +375,13 @@ end)
 
 -- Meat Block
 minetest.register_node("mobs:meatblock", {
-	description = S("Meat Block"),
+	description = S("Meat Block") .. " (♥20)",
 	tiles = {"mobs_meat_top.png", "mobs_meat_bottom.png", "mobs_meat_side.png"},
 	paramtype2 = "facedir",
-	groups = {choppy = 1, oddly_breakable_by_hand = 1, flammable = 2, axey = 1, handy = 1},
+	groups = {
+		choppy = 1, oddly_breakable_by_hand = 1, flammable = 2, axey = 1, handy = 1,
+		eatable = 20
+	},
 	is_ground_content = false,
 	sounds = mod_def and default.node_sound_leaves_defaults(),
 	on_place = minetest.rotate_node,
@@ -398,10 +401,13 @@ minetest.register_craft({
 
 -- Meat Block (raw)
 minetest.register_node("mobs:meatblock_raw", {
-	description = S("Raw Meat Block"),
+	description = S("Raw Meat Block") .. " (♥20)",
 	tiles = {"mobs_meat_raw_top.png", "mobs_meat_raw_bottom.png", "mobs_meat_raw_side.png"},
 	paramtype2 = "facedir",
-	groups = {choppy = 1, oddly_breakable_by_hand = 1, flammable = 2, axey = 1, handy = 1},
+	groups = {
+		choppy = 1, oddly_breakable_by_hand = 1, flammable = 2, axey = 1, handy = 1,
+		eatable = 20
+	},
 	is_ground_content = false,
 	sounds = mod_def and default.node_sound_leaves_defaults(),
 	on_place = minetest.rotate_node,
