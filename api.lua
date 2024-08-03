@@ -5065,7 +5065,7 @@ local old_sound_play = minetest.sound_play
 
 minetest.sound_play = function(spec, param, eph)
 
-	local op_params = {}
+	local op_params = {} ; param = param or {}
 
 	-- store sound position
 	if param.pos then
@@ -5074,6 +5074,11 @@ minetest.sound_play = function(spec, param, eph)
 		op_params.pos = param.object:get_pos()
 	elseif param.to_player then
 		op_params.pos = minetest.get_player_by_name(param.to_player):get_pos()
+	end
+
+	-- if no position found use default function
+	if not op_params.pos then
+		return old_sound_play(spec, param, eph)
 	end
 
 	-- store sound name and gain
