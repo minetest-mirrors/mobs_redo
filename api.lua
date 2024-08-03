@@ -2823,16 +2823,6 @@ local tr = minetest.get_modpath("toolranks")
 -- deal damage and effects when mob punched
 function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
-	-- is punch from sound detection
-	if hitter and hitter.type == "sound" then
-
-		if self.on_sound then
-			self.on_sound(self, hitter) -- pass sound table to custom function
-		end
-
-		return true
-	end
-
 	-- mob health check
 	if self.health <= 0 then
 		return true
@@ -5109,14 +5099,14 @@ minetest.sound_play = function(spec, param, eph)
 
 			local ent = obj:get_luaentity()
 
-			if ent and ent._cmi_is_mob then
+			if ent and ent._cmi_is_mob and ent.on_sound then
 
 				-- calculate loudness of sound to mob
 				op_params.distance = get_distance(op_params.pos, obj:get_pos())
 				op_params.loudness = op_params.gain / op_params.distance
 
-				-- run custom mob on_punch with sound information table
-				ent:on_punch(op_params)
+				-- run custom on_sound function
+				ent.on_sound(ent, op_params)
 			end
 		end
 	end
