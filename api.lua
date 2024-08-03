@@ -2824,10 +2824,10 @@ local tr = minetest.get_modpath("toolranks")
 function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 	-- is punch from sound detection
-	if hitter == "sound" then
+	if hitter and hitter.type == "sound" then
 
 		if self.on_sound then
-			self.on_sound(self, tool_capabilities) -- pass sound table to custom function
+			self.on_sound(self, hitter) -- pass sound table to custom function
 		end
 
 		return true
@@ -5065,7 +5065,7 @@ local old_sound_play = minetest.sound_play
 
 minetest.sound_play = function(spec, param, eph)
 
-	local op_params = {} ; param = param or {}
+	local op_params = {type = "sound"} ; param = param or {}
 
 	-- store sound position
 	if param.pos then
@@ -5116,7 +5116,7 @@ minetest.sound_play = function(spec, param, eph)
 				op_params.loudness = op_params.gain / op_params.distance
 
 				-- run custom mob on_punch with sound information table
-				ent:on_punch("sound", 0, op_params)
+				ent:on_punch(op_params)
 			end
 		end
 	end
