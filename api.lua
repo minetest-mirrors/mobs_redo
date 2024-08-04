@@ -21,7 +21,7 @@ end
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240803",
+	version = "20240804",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -5055,41 +5055,42 @@ local old_sound_play = minetest.sound_play
 
 minetest.sound_play = function(spec, param, eph)
 
-	local op_params = {type = "sound"} ; param = param or {}
+	local def = {} ; param = param or {}
 
 	-- store sound position
 	if param.pos then
-		op_params.pos = param.pos
+		def.pos = param.pos
 	elseif param.object then
-		op_params.pos = param.object:get_pos()
+		def.pos = param.object:get_pos()
 	elseif param.to_player then
-		op_params.pos = minetest.get_player_by_name(param.to_player):get_pos()
+		def.pos = minetest.get_player_by_name(param.to_player):get_pos()
 	end
 
 	-- if no position found use default function
-	if not op_params.pos then
+	if not def.pos then
 		return old_sound_play(spec, param, eph)
 	end
 
 	-- store sound name and gain
 	if type(spec) == "string" then
-		op_params.sound = spec
-		op_params.gain = param.gain or 1.0
+		def.sound = spec
+		def.gain = param.gain or 1.0
 	elseif type(spec) == "table" then
-		op_params.sound = spec.name
-		op_params.gain = spec.gain or param.gain or 1.0
+		def.sound = spec.name
+		def.gain = spec.gain or param.gain or 1.0
 	end
 
 	-- store player name or object reference
 	if param.to_player then
-		op_params.player = param.to_player
+		def.player = param.to_player
 	elseif param.object then
-		op_params.object = param.object
+		def.object = param.object
 	end
 
-	-- find mobs within sounds max_hear_distance
-	local objs = minetest.get_objects_inside_radius(op_params.pos,
-			param.max_hear_distance or 32)
+	def.max_hear_distance = param.max_hear_distance or 32
+
+	-- find mobs within sounds hearing range
+	local objs = minetest.get_objects_inside_radius(def.pos, def.max_hear_distance)
 
 	for n = 1, #objs do
 
@@ -5102,11 +5103,16 @@ minetest.sound_play = function(spec, param, eph)
 			if ent and ent._cmi_is_mob and ent.on_sound then
 
 				-- calculate loudness of sound to mob
-				op_params.distance = get_distance(op_params.pos, obj:get_pos())
-				op_params.loudness = op_params.gain / op_params.distance
+				def.distance = get_distance(def.pos, obj:get_pos())
+
+				local bit = def.gain / def.max_hear_distance
+				local rem = def.max_hear_distance - def.distance
+
+				-- loudness ranges from 0 (cannot hear) to 1.0 (close to source)
+				def.loudness = (bit * rem) / def.gain
 
 				-- run custom on_sound function
-				ent.on_sound(ent, op_params)
+				ent.on_sound(ent, def)
 			end
 		end
 	end
