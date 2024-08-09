@@ -21,7 +21,7 @@ end
 -- Global
 mobs = {
 	mod = "redo",
-	version = "20240804",
+	version = "20240809",
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -2872,6 +2872,15 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	local weapon = hitter:get_wielded_item()
 	local weapon_def = weapon:get_definition() or {}
 
+	--- check for ehchantments when using mineclonia/voxelibre
+	local enchants = {}
+
+	if use_mc2 then
+
+		enchants = minetest.deserialize(
+			weapon:get_meta():get_string("mcl_enchanting:enchantments")) or {}
+	end
+
 	-- calculate mob damage
 	local damage = 0
 	local armor = self.object:get_armor_groups() or {}
@@ -2965,6 +2974,14 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 	hitter:set_wielded_item(weapon)
 
+	-- check for damage increasing enchantments
+	if use_mc2 then
+
+		if enchants.sharpness then
+			damage = damage + (0.5 * enchants.sharpness) + 0.5
+		end
+	end
+
 	-- only play hit sound and show blood effects if damage is 1 or over
 	if damage >= 1 then
 
@@ -3031,6 +3048,11 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		local hot = tool_capabilities and tool_capabilities.damage_groups
 				and tool_capabilities.damage_groups.fire
 
+		-- check for any fire enchants also
+		if enchants.flame or enchants.fire_aspect then
+			hot = true
+		end
+
 		if self:check_for_death({type = "punch", puncher = hitter, hot = hot}) then
 			return true
 		end
@@ -3057,6 +3079,11 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		-- use tool knockback value or default
 		kb = tool_capabilities.damage_groups["knockback"] or kb
+
+		-- check for knockback enchantment
+		if use_mc2 and enchants.knockback then
+			kb = kb + (3 * enchants.knockback)
+		end
 
 		self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
 
@@ -3787,6 +3814,8 @@ minetest.register_entity(":" .. name, setmetatable({
 	on_breed = def.on_breed,
 	on_grown = def.on_grown,
 	on_sound = def.on_sound,
+
+	is_mob = true, _hittable_by_projectile = true, -- mineclone thing
 
 	on_activate = function(self, staticdata, dtime)
 		return self:mob_activate(staticdata, def, dtime)
