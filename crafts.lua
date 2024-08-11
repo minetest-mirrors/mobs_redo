@@ -23,6 +23,7 @@ sound_helper("node_sound_ice_defaults")
 sound_helper("node_sound_metal_defaults")
 sound_helper("node_sound_water_defaults")
 sound_helper("node_sound_snow_defaults")
+sound_helper("node_sound_glass_defaults")
 
 -- helper function to add {eatable} group to food items
 

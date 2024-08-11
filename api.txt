@@ -881,6 +881,7 @@ mobs.node_sound_ice_defaults()
 mobs.node_sound_metal_defaults()
 mobs.node_sound_water_defaults()
 mobs.node_sound_snow_defaults()
+mobs.node_sound_glass_defaults()
 
 
 Rideable Horse Example Mob
