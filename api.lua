@@ -3924,6 +3924,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			label = name .. " spawning",
 			nodenames = nodes,
 			run_at_every_load = false,
+			min_y = min_height, max_y = max_height,
 
 			action = function(pos, node)
 				spawn_action(pos, node)
@@ -3937,6 +3938,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			interval = interval,
 			chance = max(1, (chance * mob_chance_multiplier)),
 			catch_up = false,
+			min_y = min_height, max_y = max_height,
 
 			action = function(pos, node, active_object_count, active_object_count_wider)
 				spawn_action(pos, node, active_object_count, active_object_count_wider)
