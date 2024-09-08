@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20240823",
+	version = "20240908",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -2140,7 +2140,7 @@ function mob_class:do_states(dtime)
 			if lp then
 				yaw = self:yaw_to_pos(lp)
 			else
-				yaw = yaw + random(-0.5, 0.5)
+				yaw = yaw + random() - 0.5
 			end
 
 			self:set_yaw(yaw, 8)
@@ -2164,7 +2164,7 @@ function mob_class:do_states(dtime)
 
 		if self.randomly_turn and random(100) <= 30 then
 
-			yaw = yaw + random(-0.5, 0.5)
+			yaw = yaw + random() - 0.5
 
 			self:set_yaw(yaw, 8)
 
@@ -3122,6 +3122,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.textures = textures
 	self.standing_in = "air"
 	self.standing_on = "air"
+	self.state = self.state or "stand"
 
 	-- set anything changed above
 	self:set_yaw((random(0, 360) - 180) / 180 * pi, 6)
