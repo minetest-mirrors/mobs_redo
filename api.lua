@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20240908",
+	version = "20240914",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -4750,7 +4750,8 @@ if settings:get_bool("mobs_can_hear") ~= false then
 		elseif param.object then
 			def.pos = param.object:get_pos()
 		elseif param.to_player then
-			def.pos = minetest.get_player_by_name(param.to_player):get_pos()
+			local player = minetest.get_player_by_name(param.to_player)
+			def.pos = player and player:get_pos()
 		end
 
 		-- if no position found use default function
