@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20240914",
+	version = "20240917",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -1115,7 +1115,7 @@ function mob_class:do_jump()
 	local vel = self.object:get_velocity() ; if not vel then return false end
 
 	-- don't jump if ordered to stand or already in mid-air or moving forwards
-	if self.state == "stand" or vel.y ~= 0 or self:get_velocity() > 0.2 then
+	if self.state == "stand" or vel.y ~= 0 then --or self:get_velocity() > 0.2 then
 		return false
 	end
 
