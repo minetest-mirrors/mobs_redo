@@ -4812,7 +4812,9 @@ if settings:get_bool("mobs_can_hear") ~= false then
 				def.distance = get_distance(def.pos, ps[n])
 				def.loudness = def.gain - (bit * def.distance)
 
-				if ndef and ndef.on_sound then ndef.on_sound(ps[n], def) end
+				if def.loudness > 0 and ndef and ndef.on_sound then
+					ndef.on_sound(ps[n], def)
+				end
 			end
 		end
 
