@@ -443,7 +443,9 @@ minetest.register_node("mobs:hearing_vines", {
 		type = "fixed", fixed = {-6 / 16, -0.5, -6 / 16, 6 / 16, -0.25, 6 / 16},
 	},
 	on_sound = function(pos, def)
-		minetest.set_node(pos, {name = "mobs:hearing_vines_active"})
+		if def.loudness > 0.5 then
+			minetest.set_node(pos, {name = "mobs:hearing_vines_active"})
+		end
 	end
 })
 

@@ -4775,6 +4775,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 		-- find mobs within sounds hearing range
 		local objs = minetest.get_objects_inside_radius(def.pos, def.max_hear_distance)
+		local bit = def.gain / def.max_hear_distance
 
 		for n = 1, #objs do
 
@@ -4788,9 +4789,6 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 					-- calculate loudness of sound to mob
 					def.distance = get_distance(def.pos, obj:get_pos())
-
-					local bit = def.gain / def.max_hear_distance
-
 					def.loudness = def.gain - (bit * def.distance)
 
 					-- run custom on_sound function if heard
@@ -4810,6 +4808,9 @@ if settings:get_bool("mobs_can_hear") ~= false then
 			for n = 1, #ps do
 
 				local ndef = minetest.registered_nodes[minetest.get_node(ps[n]).name]
+
+				def.distance = get_distance(def.pos, ps[n])
+				def.loudness = def.gain - (bit * def.distance)
 
 				if ndef and ndef.on_sound then ndef.on_sound(ps[n], def) end
 			end
