@@ -357,6 +357,14 @@ enhance mob functionality and have them do many interesting things:
       'max_hear_distance' max distance sound can be heard from source.
 
 
+Hearing Nodes
+-------------
+
+If a node has the {on_sound = 1} group and an on_sound() function set as above then
+nodes within 8 blocks of a sound will be activated and the function run.  Check the
+"mobs:hearing_vines" node as an example which has mesecons support when active.
+
+
 Internal Variables
 ------------------
 
