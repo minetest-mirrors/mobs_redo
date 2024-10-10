@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241002",
+	version = "20241010",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -4737,6 +4737,7 @@ minetest.register_chatcommand("clear_mobs", {
 
 if settings:get_bool("mobs_can_hear") ~= false then
 
+	local node_hear = settings:get_bool("mobs_can_hear_node")
 	local old_sound_play = minetest.sound_play
 
 	minetest.sound_play = function(spec, param, eph)
@@ -4798,22 +4799,25 @@ if settings:get_bool("mobs_can_hear") ~= false then
 		end
 
 		-- find nodes that can hear up to 8 blocks away
-		local dist = min(def.max_hear_distance, 8)
-		local ps = minetest.find_nodes_in_area(
-				vector.subtract(def.pos, dist),
-				vector.add(def.pos, dist), {"group:on_sound"})
+		if node_hear then
 
-		if #ps > 0 then
+			local dist = min(def.max_hear_distance, 8)
+			local ps = minetest.find_nodes_in_area(
+					vector.subtract(def.pos, dist),
+					vector.add(def.pos, dist), {"group:on_sound"})
 
-			for n = 1, #ps do
+			if #ps > 0 then
 
-				local ndef = minetest.registered_nodes[minetest.get_node(ps[n]).name]
+				for n = 1, #ps do
 
-				def.distance = get_distance(def.pos, ps[n])
-				def.loudness = def.gain - (bit * def.distance)
+					local ndef = minetest.registered_nodes[minetest.get_node(ps[n]).name]
 
-				if def.loudness > 0 and ndef and ndef.on_sound then
-					ndef.on_sound(ps[n], def)
+					def.distance = get_distance(def.pos, ps[n])
+					def.loudness = def.gain - (bit * def.distance)
+
+					if def.loudness > 0 and ndef and ndef.on_sound then
+						ndef.on_sound(ps[n], def)
+					end
 				end
 			end
 		end
