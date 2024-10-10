@@ -3148,6 +3148,8 @@ function mob_class:mob_activate(staticdata, def, dtime)
 		self._cmi_components = cmi.activate_components(self.serialized_cmi_components)
 		cmi.notify_activate(self.object, dtime)
 	end
+
+	if use_vh1 then VH1.update_bar(self.object, self.health) end
 end
 
 -- handle mob lifetimer and expiration
