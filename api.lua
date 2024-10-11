@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241010",
+	version = "20241011",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -4774,6 +4774,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 --print("==", def.sound)
 
+		def.gain = def.gain or 1.0
 		def.max_hear_distance = param.max_hear_distance or 32
 
 		-- find mobs within sounds hearing range
