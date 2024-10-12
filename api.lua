@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241011",
+	version = "20241012",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -3320,7 +3320,7 @@ function mob_class:on_step(dtime, moveresult)
 
 		self.pause_timer = self.pause_timer - dtime
 
-		if self.pause_timer < 0 and self.order == "stand" then
+		if self.pause_timer <= 0 and (self.order == "stand" or self.state == "stand") then
 
 			self.pause_timer = 0
 			self:set_velocity(0)
