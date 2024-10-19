@@ -1351,8 +1351,8 @@ function mob_class:breed()
 					if not self.object:get_luaentity() then return end
 
 					-- reset parent movement
-					self.follow_stop = false
-					ent.follow_stop = false
+--					self.follow_stop = false
+--					ent.follow_stop = false
 
 					-- custom breed function
 					if self.on_breed then
@@ -1990,13 +1990,13 @@ function mob_class:follow_flop()
 				if dist >= self.reach and self.order ~= "stand" then
 
 					self:set_velocity(self.walk_velocity)
-					self.follow_stop = nil
+--					self.follow_stop = nil
 
 					if self.walk_chance ~= 0 then self:set_animation("walk") end
 				else
 					self:set_velocity(0)
 					self:set_animation("stand")
-					self.follow_stop = true
+--					self.follow_stop = true
 				end
 
 				return
@@ -2110,7 +2110,7 @@ function mob_class:do_states(dtime)
 		end
 	end
 
-	if self.state == "stand" and not self.follow_stop then
+	if self.state == "stand" then -- and not self.follow_stop then
 
 		if self.randomly_turn and random(4) == 1 then
 
