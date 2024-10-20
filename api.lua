@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241012",
+	version = "20241020",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -2600,6 +2600,8 @@ end
 
 -- deal damage and effects when mob punched
 
+local dis_damage_kb = settings:get_bool("mobs_disable_damage_kb")
+
 function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 	-- mob health check
@@ -2826,7 +2828,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if self.knock_back and tflp >= punch_interval then
 
 		local v = self.object:get_velocity() ; if not v then return true end
-		local kb = damage or 1
+		local kb = dis_damage_kb and 1 or (damage or 1)
 		local up = 2
 
 		-- if already in air then dont go up anymore when hit
