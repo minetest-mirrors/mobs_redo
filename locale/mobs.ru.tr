@@ -33,6 +33,6 @@ Mob Spawner=Спавнер Мобов
 (mob name) (min light) (max light) (amount) (player distance) (Y offset)=(имя моба) (минимальный свет) (максимальный свет) (количество) (дистанция игрока) (смещение Y)
 Command:=Команда:
 Spawner Not Active (enter settings)=Спавнер Не Активен (введите настройки)
-Spawner Active (@1)=Активные Спавнер (@1)
+Spawner Active (@1)=Спавнер Активен (@1)
 Mob Spawner settings failed!=Настроить Спавнер Мобов не удалось!
 Syntax: “name min_light[0-14] max_light[0-14] max_mobs_in_area[0 to disable] player_distance[1-20] y_offset[-10 to 10]”=Синтаксис: “имя мин_свет[0-14] макс_свет[0-14] макс_мобов_в_зоне[0 чтобы выключить] дистанция_игроков[1-20] смещение_y[-10 to 10]”
