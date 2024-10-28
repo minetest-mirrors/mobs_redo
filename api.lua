@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241020",
+	version = "20241028",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -1437,6 +1437,8 @@ function mob_class:replace(pos)
 		end
 
 		minetest.set_node(pos, {name = with})
+
+		self:mob_sound(self.sounds.replace)
 	end
 end
 
@@ -4248,7 +4250,12 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 						return
 					end
 
-					pos.y = pos.y + 1
+					-- get mob collisionbox and determine how high up to spawn
+					local _mob = minetest.registered_entities[mob]
+					local _prop = _mob and _mob.initial_properties or {}
+					local _y = _prop and -_prop.collisionbox[2] or 1
+
+					pos.y = pos.y + _y--1
 
 					local data = itemstack:get_metadata()
 					local smob = minetest.add_entity(pos, mob, data)
@@ -4304,7 +4311,12 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 					return
 				end
 
-				pos.y = pos.y + 1
+				-- get mob collisionbox and determine how high up to spawn
+				local _mob = minetest.registered_entities[mob]
+				local _prop = _mob and _mob.initial_properties or {}
+				local _y = _prop and -_prop.collisionbox[2] or 1
+
+				pos.y = pos.y + _y--1
 
 				local smob = minetest.add_entity(pos, mob)
 				local ent = smob and smob:get_luaentity()
