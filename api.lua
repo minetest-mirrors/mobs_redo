@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241028",
+	version = "20241110",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -4213,6 +4213,10 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 		return
 	end
 
+	-- get mob collisionbox and determine y_offset when spawning
+	local _prop = is_mob and is_mob.initial_properties or {}
+	local _y = _prop and -_prop.collisionbox[2] or 1
+
 	-- register new spawn egg containing mob information (cannot be stacked)
 	-- these are only created for animals and npc's, not monsters
 	if is_mob.type ~= "monster" then
@@ -4250,12 +4254,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 						return
 					end
 
-					-- get mob collisionbox and determine how high up to spawn
-					local _mob = minetest.registered_entities[mob]
-					local _prop = _mob and _mob.initial_properties or {}
-					local _y = _prop and -_prop.collisionbox[2] or 1
-
-					pos.y = pos.y + _y--1
+					pos.y = pos.y + _y
 
 					local data = itemstack:get_metadata()
 					local smob = minetest.add_entity(pos, mob, data)
@@ -4311,12 +4310,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 					return
 				end
 
-				-- get mob collisionbox and determine how high up to spawn
-				local _mob = minetest.registered_entities[mob]
-				local _prop = _mob and _mob.initial_properties or {}
-				local _y = _prop and -_prop.collisionbox[2] or 1
-
-				pos.y = pos.y + _y--1
+				pos.y = pos.y + _y
 
 				local smob = minetest.add_entity(pos, mob)
 				local ent = smob and smob:get_luaentity()
