@@ -18,7 +18,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241110",
+	version = "20241113",
 	spawning_mobs = {},
 	translate = S,
 	invis = minetest.global_exists("invisibility") and invisibility or {},
@@ -1402,7 +1402,7 @@ function mob_class:replace(pos)
 		return
 	end
 
-	local what, with, y_offset
+	local what, with, y_offset, reach
 
 	if type(self.replace_what[1]) == "table" then
 
@@ -1411,15 +1411,23 @@ function mob_class:replace(pos)
 		what = self.replace_what[num][1] or ""
 		with = self.replace_what[num][2] or ""
 		y_offset = self.replace_what[num][3] or 0
+		reach = self.replace_what[num][4] or 0
 	else
 		what = self.replace_what
 		with = self.replace_with or ""
 		y_offset = self.replace_offset or 0
+		reach = 0
 	end
 
 	pos.y = pos.y + y_offset
 
-	if #minetest.find_nodes_in_area(pos, pos, what) > 0 then
+	local found = minetest.find_nodes_in_area(
+			{x = pos.x - reach, y = pos.y, z = pos.z - reach},
+			{x = pos.x + reach, y = pos.y, z = pos.z + reach}, what)
+
+	if #found > 0 then
+
+		pos = found[random(#found)]
 
 -- print("replace node = ".. minetest.get_node(pos).name, pos.y)
 
