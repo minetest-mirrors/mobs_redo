@@ -7,6 +7,7 @@ local use_cmi = minetest.global_exists("cmi")
 local use_mc2 = minetest.get_modpath("mcl_core") -- MineClonia support
 local use_vh1 = minetest.get_modpath("visual_harm_1ndicators")
 local use_tr = minetest.get_modpath("toolranks")
+local use_invisibility = minetest.get_modpath("invisibility")
 
 -- Node check helper
 
@@ -18,10 +19,9 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241113",
+	version = "20241114",
 	spawning_mobs = {},
 	translate = S,
-	invis = minetest.global_exists("invisibility") and invisibility or {},
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
 	node_dirt = has(minetest.registered_aliases["mapgen_dirt"])
@@ -1211,7 +1211,10 @@ end
 
 local function is_invisible(self, player_name)
 
-	if mobs.invis[player_name] and not self.ignore_invisibility then return true end
+	if use_invisibility and not self.ignore_invisibility
+	and invisibility.is_visible and not invisibility.is_visible(player_name) then
+		return true
+	end
 end
 
 -- should mob follow what I'm holding ?
