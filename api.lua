@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241114",
+	version = "20241116",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -1215,6 +1215,10 @@ local function is_invisible(self, player_name)
 	and invisibility.is_visible and not invisibility.is_visible(player_name) then
 		return true
 	end
+end
+
+function mobs:is_invisible(self, player_name)
+	return is_invisible(self, player_name)
 end
 
 -- should mob follow what I'm holding ?
