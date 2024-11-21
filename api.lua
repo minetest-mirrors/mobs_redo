@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241116",
+	version = "20241121",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -4182,14 +4182,14 @@ end
 
 -- make explosion with protection and tnt mod check
 
-function mobs:boom(self, pos, radius, damage_radius, texture)
+function mobs:boom(self, pos, entity_radius, node_damage_radius, texture)
 
 	if mobs_griefing and minetest.get_modpath("tnt") and tnt and tnt.boom
 	and not minetest.is_protected(pos, "") then
 
 		tnt.boom(pos, {
-			radius = radius,
-			damage_radius = damage_radius,
+			radius = node_damage_radius,
+			damage_radius = entity_radius,
 			sound = self.sounds and self.sounds.explode,
 			explode_center = true,
 			tiles = {(texture or "tnt_smoke.png")}
