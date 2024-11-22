@@ -4184,6 +4184,8 @@ end
 
 function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 
+	texture = texture or "tnt_smoke.png"
+
 	if mobs_griefing and minetest.get_modpath("tnt") and tnt and tnt.boom
 	and not minetest.is_protected(pos, "") then
 
@@ -4192,7 +4194,7 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 			damage_radius = entity_radius,
 			sound = self.sounds and self.sounds.explode,
 			explode_center = true,
-			tiles = {(texture or "tnt_smoke.png")}
+			tiles = texture
 		})
 	else
 		mobs:safe_boom(self, pos, node_damage_radius, texture)
