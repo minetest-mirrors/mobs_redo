@@ -4195,7 +4195,7 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 			tiles = {(texture or "tnt_smoke.png")}
 		})
 	else
-		mobs:safe_boom(self, pos, radius, texture)
+		mobs:safe_boom(self, pos, node_damage_radius, texture)
 	end
 end
 
