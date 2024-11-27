@@ -85,8 +85,6 @@ functions needed for the mob to work properly which contains the following:
    'fire_damage'   holds the damage per second inflicted to mobs when standing
    'node_damage'   True by default, will harm mobs when inside damage_per_second
                    nodes.
-                   in fire.
-
    'light_damage'  holds the damage per second inflicted to mobs when light
                    level is between the min and max values below
    'light_damage_min' minimum light value when mob is affected (default: 14)
@@ -178,6 +176,9 @@ functions needed for the mob to work properly which contains the following:
       {"default:gold_lump", -10} -- heals by 10 health points.
       {"default:coal_block", 20} -- 20 damage when hit on head with coal blocks.
       {"all"} -- stops all weapons causing damage apart from those on list.
+                         nodes can also be added so that node_per_second damage
+                         does not affect the mob either e.g.
+      {"ethereal:crystal_spike", 0} -- causes no damage.
 
    'makes_footstep_sound' when true you can hear mobs walking.
    'sounds'               this is a table with sounds of the mob

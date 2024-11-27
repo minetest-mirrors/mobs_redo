@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241122",
+	version = "20241127",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -1039,9 +1039,22 @@ function mob_class:do_env_damage()
 	if self.node_damage and nodef.damage_per_second and nodef.damage_per_second ~= 0
 	and nodef.groups.lava == nil and nodef.groups.fire == nil then
 
-		self.health = self.health - nodef.damage_per_second
+		local damage = nodef.damage_per_second
 
-		effect(py, 5, "tnt_smoke.png")
+		-- check for node immunity or special damage
+		for n = 1, #self.immune_to do
+
+			if self.immune_to[n][1] == self.standing_in then
+
+				damage = self.immune_to[n][2] or 0
+
+				break
+			end
+		end
+
+		self.health = self.health - damage
+
+		if damage > 0 then effect(py, 5, "tnt_smoke.png") end
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then return true end
