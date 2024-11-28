@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241127",
+	version = "20241128",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -914,7 +914,7 @@ end
 
 -- Returns true if node can deal damage to self
 
-function mobs:is_node_dangerous(mob_object, nodename)
+local function is_node_dangerous(mob_object, nodename)
 
 	if mob_object.water_damage > 0
 	and minetest.get_item_group(nodename, "water") ~= 0 then return true end
@@ -925,13 +925,26 @@ function mobs:is_node_dangerous(mob_object, nodename)
 	if mob_object.fire_damage > 0
 	and minetest.get_item_group(nodename, "fire") ~= 0 then return true end
 
-	if minetest.registered_nodes[nodename].damage_per_second > 0 then return true end
+	local def = minetest.registered_nodes[nodename]
 
-	return false
+	if mob_object.node_damage and def.damage_per_second > 0 then
+
+		-- check for node immunity or special damage
+		local damage = def.damage_per_second
+
+		for n = 1, #mob_object.immune_to do
+
+			if mob_object.immune_to[n][1] == nodename then
+				damage = mob_object.immune_to[n][2] or 0 ; break
+			end
+		end
+
+		if damage > 0 then return true end
+	end
 end
 
-local function is_node_dangerous(mob_object, nodename)
-	return mobs:is_node_dangerous(mob_object, nodename)
+function mobs:is_node_dangerous(mob_object, nodename)
+	return is_node_dangerous(mob_object, nodename)
 end
 
 -- is mob facing a cliff
@@ -1045,10 +1058,7 @@ function mob_class:do_env_damage()
 		for n = 1, #self.immune_to do
 
 			if self.immune_to[n][1] == self.standing_in then
-
-				damage = self.immune_to[n][2] or 0
-
-				break
+				damage = self.immune_to[n][2] or 0 ; break
 			end
 		end
 
@@ -2725,9 +2735,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		if self.immune_to[n][1] == hit_item then
 
-			damage = self.immune_to[n][2] or 0
-
-			break
+			damage = self.immune_to[n][2] or 0 ; break
 
 		-- if "all" then no tools deal damage unless it's specified in list
 		elseif self.immune_to[n][1] == "all" then
