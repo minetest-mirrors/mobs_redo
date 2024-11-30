@@ -22,7 +22,7 @@ local abs, cos, floor, sin, sqrt, pi =
 
 -- helper functions
 
-local node_ok = function(pos, fallback)
+local function node_ok(pos, fallback)
 
 	fallback = fallback or mobs.fallback_node
 
@@ -454,7 +454,7 @@ function mobs.fly(entity, _, speed, shoots, arrow, moving_anim, stand_anim)
 		if ent then
 
 			ent.switch = 1 -- for mob specific arrows
-			ent.owner_id = tostring(entity.object) -- so arrows dont hurt entity you are riding
+			ent.owner_id = tostring(entity.object) -- so arrows dont hurt mob
 
 			local vec = {x = dir.x * 6, y = dir.y * 6, z = dir.z * 6}
 
