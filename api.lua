@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241201",
+	version = "20241202",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -900,7 +900,7 @@ local function is_node_dangerous(self, nodename)
 		-- check for node immunity or special damage
 		local damage = def.damage_per_second
 
-		for n = 1, #mob_object.immune_to do
+		for n = 1, #self.immune_to do
 
 			if self.immune_to[n][1] == nodename then
 				damage = self.immune_to[n][2] or 0 ; break
