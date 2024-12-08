@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241202",
+	version = "20241208",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -3716,7 +3716,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			pos, node, active_object_count, active_object_count_wider)
 
 		-- use instead of abm's chance setting when using lbm
-		if map_load and random(max(1, (chance * mob_chance_multiplier))) > 1 then
+		if map_load and random(max(1, (chance * mob_chance_multiplier))) == 1 then
 			return
 		end
 
@@ -3726,8 +3726,10 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
+		local ent = minetest.registered_entities[name]
+
 		-- is mob actually registered?
-		if not mobs.spawning_mobs[name] or not minetest.registered_entities[name] then
+		if not mobs.spawning_mobs[name] or not ent then
 --print("--- mob doesn't exist", name)
 			return
 		end
@@ -3738,7 +3740,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
-		-- additional custom checks for spawning mob
+		-- additional custom checks for mob spawning
 		if mobs:spawn_abm_check(pos, node, name) then
 			return
 		end
@@ -3781,13 +3783,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		local ent = minetest.registered_entities[name]
-
-		if not ent or not ent.base_colbox then
-			print("[MOBS] Error spawning mob: " .. name) ; return
-		end
-
-		-- spawn above node
+		-- change position to node above
 		pos.y = pos.y + 1
 
 		-- are we spawning within height limits?
