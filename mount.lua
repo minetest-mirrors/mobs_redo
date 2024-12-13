@@ -220,7 +220,6 @@ end
 
 -- vars
 
-local GRAVITY = -9.8
 local damage_counter = 0
 
 -- ride mob like car or horse
@@ -232,7 +231,7 @@ function mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 
 	if entity.player_rotation.y == 90 then rot_view = pi / 2 end
 
-	local acce_y = GRAVITY
+	local acce_y = 0
 	local velo = entity.object:get_velocity() ; if not velo then return end
 
 	entity.v = get_v(velo) * get_sign(entity.v)

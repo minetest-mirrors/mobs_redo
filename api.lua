@@ -2616,7 +2616,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if use_mc2 then
 
 		enchants = minetest.deserialize(
-			weapon:get_meta():get_string("mcl_enchanting:enchantments")) or {}
+				weapon:get_meta():get_string("mcl_enchanting:enchantments")) or {}
 	end
 
 	-- calculate mob damage
