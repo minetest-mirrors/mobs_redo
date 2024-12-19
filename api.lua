@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241208",
+	version = "20241219",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -3712,17 +3712,18 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 	mobs.spawning_mobs[name].aoc = aoc
 
-	local spawn_action = function(
-			pos, node, active_object_count, active_object_count_wider)
+	local function spawn_action(pos, node, active_object_count, active_object_count_wider)
 
-		-- use instead of abm's chance setting when using lbm
-		if map_load and random(max(1, (chance * mob_chance_multiplier))) == 1 then
+		-- do not spawn if too many entities in area
+		if active_object_count_wider and active_object_count_wider >= max_per_block then
+--print("--- too many entities in area", active_object_count_wider)
 			return
 		end
 
-		-- use instead of abm's neighbor setting when using lbm
-		if map_load and not minetest.find_node_near(pos, 1, neighbors) then
---print("--- lbm neighbors not found")
+		-- when using lbm manually check for chance and neighbor
+		if map_load and (random(max(1, (chance * mob_chance_multiplier))) > 1
+		or not minetest.find_node_near(pos, 1, neighbors)) then
+--print("-- lbm no chance or neighbor not found")
 			return
 		end
 
@@ -3734,7 +3735,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
-		-- are we over active mob limit
+		-- are we over set mob limit
 		if at_limit() then
 --print("--- active mob limit reached", active_mobs, active_limit)
 			return
@@ -3742,12 +3743,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 		-- additional custom checks for mob spawning
 		if mobs:spawn_abm_check(pos, node, name) then
-			return
-		end
-
-		-- do not spawn if too many entities in area
-		if active_object_count_wider and active_object_count_wider >= max_per_block then
---print("--- too many entities in area", active_object_count_wider)
 			return
 		end
 
