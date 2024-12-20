@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241219",
+	version = "20241220",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -233,8 +233,7 @@ function mob_class:do_attack(player, force)
 
 	if self.state == "attack" and not force then return end
 
-	self.attack = player
-	self.state = "attack"
+	self.attack = player ; self.state = "attack"
 
 	if random(100) < 90 then self:mob_sound(self.sounds.war_cry) end
 end
@@ -528,24 +527,21 @@ function mobs:yaw_to_pos(self, target, rot) -- [deprecated]
 	return self:yaw_to_pos(target, rot)
 end
 
--- if stay near set then periodically check for nodes and turn towards them
+-- if stay near set then periodically check for nodes and move towards them
 
 function mob_class:do_stay_near()
 
 	if not self.stay_near then return false end
 
 	local pos = self.object:get_pos()
-	local searchnodes = self.stay_near[1]
 	local chance = self.stay_near[2] or 10
 
 	if not pos or random(chance) > 1 then return false end
 
-	if type(searchnodes) == "string" then searchnodes = {self.stay_near[1]} end
-
 	local r = self.view_range
 	local nearby_nodes = minetest.find_nodes_in_area(
 			{x = pos.x - r, y = pos.y - 1, z = pos.z - r},
-			{x = pos.x + r, y = pos.y + 1, z = pos.z + r}, searchnodes)
+			{x = pos.x + r, y = pos.y + 1, z = pos.z + r}, self.stay_near[1])
 
 	if #nearby_nodes < 1 then return false end
 
@@ -601,8 +597,7 @@ function mob_class:update_tag(newname)
 
 	-- backwards compatibility
 	if self.nametag and self.nametag ~= "" then
-		newname = self.nametag
-		self.nametag = nil
+		newname = self.nametag ; self.nametag = nil
 	end
 
 	if newname or (self._nametag and self._nametag ~= "") then
@@ -610,18 +605,12 @@ function mob_class:update_tag(newname)
 		self._nametag = newname or self._nametag -- adopt new name if one found
 
 		-- choose tag colour depending on mob health
-		if self.health <= qua then
-			self.nametag_col = "#FF0000"
-		elseif self.health <= (qua * 2) then
-			self.nametag_col = "#FF7A00"
-		elseif self.health <= (qua * 3) then
-			self.nametag_col = "#FFB500"
-		elseif self.health <= (qua * 4) then
-			self.nametag_col = "#FFFF00"
-		elseif self.health <= (qua * 5) then
-			self.nametag_col = "#B4FF00"
-		elseif self.health > (qua * 5) then
-			self.nametag_col = "#00FF00"
+		if self.health <= qua then				self.nametag_col = "#FF0000"
+		elseif self.health <= (qua * 2) then	self.nametag_col = "#FF7A00"
+		elseif self.health <= (qua * 3) then	self.nametag_col = "#FFB500"
+		elseif self.health <= (qua * 4) then	self.nametag_col = "#FFFF00"
+		elseif self.health <= (qua * 5) then	self.nametag_col = "#B4FF00"
+		elseif self.health > (qua * 5) then		self.nametag_col = "#00FF00"
 		end
 
 		if self._nametag ~= old_nametag or self.nametag_col ~= old_nametag_color then
@@ -1818,8 +1807,7 @@ function mob_class:general_attack()
 		dist = get_distance(p, s)
 
 		-- aim higher to make looking up hills more realistic
-		p.y = p.y + 1
-		sp.y = sp.y + 1
+		p.y = p.y + 1 ; sp.y = sp.y + 1
 
 		-- choose closest player to attack that isnt self
 		if dist ~= 0 and dist < min_dist
@@ -1877,8 +1865,7 @@ function mob_class:do_runaway_from()
 			p = player and player:get_pos() or s
 
 			-- aim higher to make looking up hills more realistic
-			p.y = p.y + 1
-			sp.y = sp.y + 1
+			p.y = p.y + 1 ; sp.y = sp.y + 1
 
 			dist = get_distance(p, s)
 
@@ -2060,7 +2047,7 @@ function mob_class:do_states(dtime)
 				{x = s.x + 7, y = s.y + 1.0, z = s.z + 7},
 				{"group:cracky", "group:crumbly", "group:choppy", "group:solid"})
 
-		-- did we find land ? if so face random block to climb onto
+		-- did we find land ? if so move towards random block to climb onto
 		if #lp > 0 then
 
 			yaw = self:yaw_to_pos( lp[random(#lp)] )
@@ -4615,10 +4602,7 @@ function mobs:alias_mob(old_name, new_name)
 	-- entity
 	minetest.register_entity(":" .. old_name, {
 
-		initial_properties = {
-			physical = false,
-			static_save = false,
-		},
+		initial_properties = {physical = false, static_save = false},
 
 		on_activate = function(self, staticdata)
 
