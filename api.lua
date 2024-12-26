@@ -1080,8 +1080,9 @@ function mob_class:do_jump()
 
 	local vel = self.object:get_velocity() ; if not vel then return false end
 
-	-- don't jump if ordered to stand or already in mid-air
-	if self.state == "stand" or vel.y ~= 0 then return false end
+	-- don't jump if ordered to stand, are already in mid-air, can fly or are a child
+	if self.state == "stand" or self.order == "stand" or vel.y ~= 0
+	or self.fly or self.child then return false end
 
 	-- we can only jump if standing on solid node
 	if minetest.registered_nodes[self.standing_on].walkable == false then
@@ -1095,12 +1096,11 @@ function mob_class:do_jump()
 	if self.can_leap then blocked = false ; self.facing_fence = false end
 
 	-- jump if possible
-	if self.jump and self.jump_height > 0 and not self.fly and not self.child
-	and self.order ~= "stand"
+	if self.jump and self.jump_height > 0
 	and (self.walk_chance == 0 or minetest.registered_items[self.looking_at].walkable)
-	and not blocked
-	and not self.facing_fence
-	and self.looking_at ~= mobs.node_snow then
+	and not blocked	and not self.facing_fence
+	and self.standing_in ~= mobs.node_snow
+	and not self.standing_in:find("carpet") then
 
 		vel.y = self.jump_height
 
