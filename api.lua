@@ -19,7 +19,7 @@ end
 
 mobs = {
 	mod = "redo",
-	version = "20241220",
+	version = "20241226",
 	spawning_mobs = {},
 	translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
@@ -31,24 +31,17 @@ mobs.fallback_node = mobs.node_dirt
 
 -- localize common functions
 
-local pi = math.pi
-local square = math.sqrt
-local sin = math.sin
-local cos = math.cos
-local abs = math.abs
-local min = math.min
-local max = math.max
-local random = math.random
-local floor = math.floor
-local ceil = math.ceil
-local rad = math.rad
-local deg = math.deg
+local pi, abs = math.pi, math.abs
+local square, random = math.sqrt, math.random
+local sin, cos = math.sin, math.cos
+local min, max = math.min, math.max
+local floor, ceil = math.floor, math.ceil
+local rad, deg = math.rad, math.deg
 local atann = math.atan
-local atan = function(x)
+local function atan(x)
 	if not x or x ~= x then return 0 else return atann(x) end
 end
-local table_copy = table.copy
-local table_remove = table.remove
+local table_copy, table_remove = table.copy, table.remove
 local vdirection = vector.direction
 local vmultiply = vector.multiply
 local vsubtract = vector.subtract
@@ -81,7 +74,7 @@ local active_limit = tonumber(settings:get("mob_active_limit")) or 0
 local mob_chance_multiplier = tonumber(settings:get("mob_chance_multiplier") or 1)
 local peaceful_player_enabled = settings:get_bool("enable_peaceful_player")
 local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
-local mob_height_fix = settings:get_bool("mob_height_fix") ~= false
+local mob_height_fix = settings:get_bool("mob_height_fix")
 local mob_log_spawn = settings:get_bool("mob_log_spawn") == true
 local active_mobs = 0
 
@@ -364,10 +357,8 @@ function mob_class:set_yaw(yaw, delay)
 	delay = mob_smooth_rotate and delay or 0
 
 	-- simplified yaw clamp
-	if yaw > 6.283185 then
-		yaw = yaw - 6.283185
-	elseif yaw < 0 then
-		yaw = 6.283185 + yaw
+	if yaw > 6.283185 then	yaw = yaw - 6.283185
+	elseif yaw < 0 then		yaw = 6.283185 + yaw
 	end
 
 	if delay == 0 then self.object:set_yaw(yaw) ; return yaw ; end
@@ -543,7 +534,7 @@ function mob_class:do_stay_near()
 			{x = pos.x - r, y = pos.y - 1, z = pos.z - r},
 			{x = pos.x + r, y = pos.y + 1, z = pos.z + r}, self.stay_near[1])
 
-	if #nearby_nodes < 1 then return false end
+	if #nearby_nodes == 0 then return false end
 
 	self:yaw_to_pos(nearby_nodes[random(#nearby_nodes)])
 	self:set_animation("walk")
@@ -713,10 +704,7 @@ function mob_class:item_drop()
 			end
 
 			if obj and obj:get_luaentity() then
-
-				obj:set_velocity({
-						x = random(-10, 10) / 9, y = 6, z = random(-10, 10) / 9})
-
+				obj:set_velocity({x = random() - 0.5, y = 4, z = random() - 0.5})
 			elseif obj then
 				obj:remove() -- item does not exist
 			end
@@ -812,9 +800,7 @@ function mob_class:check_for_death(cmi_cause)
 	-- reset vars and set state
 	self.attack = nil
 	self.following = nil
-	self.v_start = false
-	self.timer = 0
-	self.blinktimer = 0
+	self.v_start = false ; self.timer = 0 ; self.blinktimer = 0
 	self.passive = true
 	self.state = "die"
 	self.fly = false
@@ -1495,14 +1481,12 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 	if not has_lineofsight then
 
 		if los_switcher then
-			use_pathfind = true
-			los_switcher = false
+			use_pathfind = true ; los_switcher = false
 		end -- cannot see target!
 	else
 		if not los_switcher then
 
-			los_switcher = true
-			use_pathfind = false
+			los_switcher = true ; use_pathfind = false
 
 			minetest.after(1, function(self)
 
@@ -1830,8 +1814,7 @@ function mob_class:do_runaway_from()
 	if not self.runaway_from then return end
 
 	local s = self.object:get_pos() ; if not s then return end
-	local p, sp, dist, pname
-	local player, obj, min_player, name
+	local p, sp, dist, pname, player, obj, min_player, name
 	local min_dist = self.view_range + 1
 	local objs = minetest.get_objects_inside_radius(s, self.view_range)
 
@@ -1845,15 +1828,13 @@ function mob_class:do_runaway_from()
 			if is_invisible(self, pname) or self.owner == pname then
 				name = ""
 			else
-				player = objs[n]
-				name = "player"
+				player = objs[n] ; name = "player"
 			end
 		else
 			obj = objs[n]:get_luaentity()
 
 			if obj then
-				player = obj.object
-				name = obj.name or ""
+				player = obj.object ; name = obj.name or ""
 			end
 		end
 
@@ -2022,9 +2003,7 @@ function mob_class:stop_attack()
 
 	self.attack = nil
 	self.following = nil
-	self.v_start = false
-	self.timer = 0
-	self.blinktimer = 0
+	self.v_start = false ; self.timer = 0 ; self.blinktimer = 0
 	self.path.way = nil
 	self:set_velocity(0)
 	self.state = "stand"
@@ -2408,8 +2387,7 @@ function mob_class:do_states(dtime)
 
 						local p2, s2 = p, s
 
-						p2.y = p2.y + .5
-						s2.y = s2.y + .5
+						p2.y = p2.y + .5 ; s2.y = s2.y + .5
 
 						if self:line_of_sight(p2, s2) then
 
@@ -2439,8 +2417,7 @@ function mob_class:do_states(dtime)
 		or (self.attack_type == "dogshoot" and dist > self.reach and
 		self:dogswitch() == 0) then
 
-			p.y = p.y - .5
-			s.y = s.y + .5
+			p.y = p.y - .5 ; s.y = s.y + .5
 
 			local vec = {x = p.x - s.x, y = p.y - s.y, z = p.z - s.z}
 
@@ -2867,9 +2844,7 @@ local function clean_staticdata(self)
 		t = type(stat)
 
 		if  t ~= "function" and t ~= "nil" and t ~= "userdata"
-		and _ ~= "object" and _ ~= "_cmi_components" then
-			tmp[_] = self[_]
-		end
+		and _ ~= "object" and _ ~= "_cmi_components" then tmp[_] = self[_] end
 	end
 
 	return tmp
@@ -2909,29 +2884,7 @@ function mob_class:mob_staticdata()
 	if use_cmi then
 		self.serialized_cmi_components = cmi.serialize_components(self._cmi_components)
 	end
---[[
-	-- move existing variables to new table for future compatibility
-	-- using self.initial_properties lost some variables when backing up?!?
-	if not self.backup_properties then
 
-		self.backup_properties = {
-			hp_max = self.hp_max,
-			physical = self.physical,
-			collisionbox = self.collisionbox,
-			selectionbox = self.selectionbox,
-			visual = self.visual,
-			visual_size = self.visual_size,
-			mesh = self.mesh,
-			textures = self.textures,
-			make_footstep_sound = self.make_footstep_sound,
-			stepheight = self.stepheight,
-			glow = self.glow,
---			nametag = self.nametag,
-			damage_texture_modifier = self.damage_texture_modifier,
---			infotext = self.infotext
-		}
-	end
-]]
 	return minetest.serialize(clean_staticdata(self))
 end
 
@@ -3003,10 +2956,8 @@ function mob_class:mob_activate(staticdata, def, dtime)
 
 	-- get texture, model and size
 	local textures = self.base_texture
-	local mesh = self.base_mesh
-	local vis_size = self.base_size
-	local colbox = self.base_colbox
-	local selbox = self.base_selbox
+	local mesh, vis_size  = self.base_mesh, self.base_size
+	local colbox, selbox = self.base_colbox, self.base_selbox
 
 	-- is there a specific texture if gotten
 	if self.gotten and def.gotten_texture then textures = def.gotten_texture end
@@ -3177,10 +3128,7 @@ function mob_class:on_step(dtime, moveresult)
 	if use_cmi then cmi.notify_step(self.object, dtime) end
 
 	local pos = self.object:get_pos()
-	local yaw = self.object:get_yaw()
-
-	-- early warning check, if no yaw then no entity, skip rest of function
-	if not yaw then return end
+	local yaw = self.object:get_yaw() ; if not yaw then return end
 
 	self.node_timer = (self.node_timer or 0) + dtime
 
@@ -3642,8 +3590,7 @@ function mobs:add_mob(pos, def)
 	end
 
 	if def.owner then
-		ent.tamed = true
-		ent.owner = def.owner
+		ent.tamed = true ; ent.owner = def.owner
 	end
 
 	if def.nametag then
@@ -3890,13 +3837,10 @@ function mobs:spawn(def)
 		def.name,
 		def.nodes or {"group:soil", "group:stone"},
 		def.neighbors or {"air"},
-		def.min_light or 0,
-		def.max_light or 15,
-		def.interval or 30,
-		def.chance or 5000,
+		def.min_light or 0, def.max_light or 15,
+		def.interval or 30, def.chance or 5000,
 		def.active_object_count or 1,
-		def.min_height or -31000,
-		def.max_height or 31000,
+		def.min_height or -31000, def.max_height or 31000,
 		def.day_toggle,
 		def.on_spawn,
 		def.on_map_load)
@@ -4520,8 +4464,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 	and (name == self.owner or minetest.check_player_privs(name, "protection_bypass")) then
 
 		-- store mob and nametag stack in external variables
-		mob_obj[name] = self
-		mob_sta[name] = item
+		mob_obj[name] = self ; mob_sta[name] = item
 
 		local prop = self.object:get_properties()
 		local tag = self._nametag or ""
@@ -4584,8 +4527,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 
 		-- reset external variables
-		mob_obj[name] = nil
-		mob_sta[name] = nil
+		mob_obj[name] = nil ; mob_sta[name] = nil
 	end
 end)
 
