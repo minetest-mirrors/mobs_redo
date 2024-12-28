@@ -12,16 +12,14 @@ local use_invisibility = minetest.get_modpath("invisibility")
 -- Node check helper
 
 local function has(nodename)
-	if nodename and minetest.registered_nodes[nodename] then return nodename end
+	return minetest.registered_nodes[nodename] and nodename
 end
 
 -- Global table
 
 mobs = {
-	mod = "redo",
-	version = "20241226",
-	spawning_mobs = {},
-	translate = S,
+	mod = "redo", version = "20241228",
+	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
 	node_dirt = has(minetest.registered_aliases["mapgen_dirt"])
@@ -31,21 +29,16 @@ mobs.fallback_node = mobs.node_dirt
 
 -- localize common functions
 
-local pi, abs = math.pi, math.abs
+local pi, abs, min, max = math.pi, math.abs, math.min, math.max
 local square, random = math.sqrt, math.random
-local sin, cos = math.sin, math.cos
-local min, max = math.min, math.max
-local floor, ceil = math.floor, math.ceil
-local rad, deg = math.rad, math.deg
-local atann = math.atan
+local sin, cos, rad, deg = math.sin, math.cos, math.rad, math.deg
+local floor, ceil, vdirection = math.floor, math.ceil, vector.direction
+local vmultiply, vsubtract = vector.multiply, vector.subtract
+local settings, atann = minetest.settings, math.atan
 local function atan(x)
 	if not x or x ~= x then return 0 else return atann(x) end
 end
 local table_copy, table_remove = table.copy, table.remove
-local vdirection = vector.direction
-local vmultiply = vector.multiply
-local vsubtract = vector.subtract
-local settings = minetest.settings
 
 -- creative check
 
@@ -79,19 +72,17 @@ local mob_log_spawn = settings:get_bool("mob_log_spawn") == true
 local active_mobs = 0
 
 -- loop interval for node and main functions timers
+
 local node_timer_interval = tonumber(settings:get("mob_node_timer_interval") or 0.25)
 local main_timer_interval = tonumber(settings:get("mob_main_timer_interval") or 1.0)
 
 -- pathfinding settings
+
 local pathfinding_enable = settings:get_bool("mob_pathfinding_enable") or true
--- how long before stuck mobs start searching
 local pathfinding_stuck_timeout = tonumber(
 		settings:get("mob_pathfinding_stuck_timeout")) or 3.0
--- how long will mob follow path before giving up
 local pathfinding_stuck_path_timeout = tonumber(
 		settings:get("mob_pathfinding_stuck_path_timeout")) or 5.0
--- which algorithm to use, Dijkstra(default) or A*_noprefetch or A*
--- fix settings not allowing "*"
 local pathfinding_algorithm = settings:get("mob_pathfinding_algorithm") or "Dijkstra"
 
 if pathfinding_algorithm == "AStar_noprefetch" then
@@ -100,15 +91,13 @@ elseif pathfinding_algorithm == "AStar" then
 	pathfinding_algorithm = "A*"
 end
 
--- max search distance from search positions (default 16)
+local pathfinding_max_jump = tonumber(settings:get("mob_pathfinding_max_jump") or 4)
+local pathfinding_max_drop = tonumber(settings:get("mob_pathfinding_max_drop") or 6)
 local pathfinding_searchdistance = tonumber(
 		settings:get("mob_pathfinding_searchdistance") or 16)
--- max jump height (default 4)
-local pathfinding_max_jump = tonumber(settings:get("mob_pathfinding_max_jump") or 4)
--- max drop height (default 6)
-local pathfinding_max_drop = tonumber(settings:get("mob_pathfinding_max_drop") or 6)
 
 -- Peaceful mode message so players will know there are no monsters
+
 if peaceful_only then
 	minetest.register_on_joinplayer(function(player)
 		minetest.chat_send_player(player:get_player_name(),
@@ -117,9 +106,11 @@ if peaceful_only then
 end
 
 -- calculate aoc range for mob count
+
 local aoc_range = tonumber(settings:get("active_block_range")) * 16
 
 -- can we attack Creatura mobs ?
+
 local creatura = minetest.get_modpath("creatura") and
 		settings:get_bool("mobs_attack_creatura") == true
 
@@ -281,7 +272,7 @@ end
 
 local function check_for(look_for, look_inside)
 
-	if type(look_inside) == "string" and look_inside == look_for then return true
+	if look_inside == look_for then return true
 
 	elseif type(look_inside) == "table" then
 
@@ -383,9 +374,7 @@ function mob_class:set_animation(anim, force)
 
 	-- only use different animation for attacks when using same set
 	if force ~= true and anim ~= "punch" and anim ~= "shoot"
-	and string.find(self.animation.current, anim) then
-		return
-	end
+	and string.find(self.animation.current, anim) then return end
 
 	local num = 0
 
@@ -393,9 +382,7 @@ function mob_class:set_animation(anim, force)
 	for n = 1, 4 do
 
 		if self.animation[anim .. n .. "_start"]
-		and self.animation[anim .. n .. "_end"] then
-			num = n
-		end
+		and self.animation[anim .. n .. "_end"] then num = n end
 	end
 
 	-- choose random animation from set
@@ -406,9 +393,7 @@ function mob_class:set_animation(anim, force)
 
 	if (anim == self.animation.current and force ~= true)
 	or not self.animation[anim .. "_start"]
-	or not self.animation[anim .. "_end"] then
-		return
-	end
+	or not self.animation[anim .. "_end"] then return end
 
 	self.animation.current = anim
 
@@ -755,9 +740,7 @@ function mob_class:check_for_death(cmi_cause)
 		-- make sure health isn't higher than max
 		if self.health > prop.hp_max then self.health = prop.hp_max end
 
-		self:update_tag()
-
-		return false
+		self:update_tag() ; return false
 	end
 
 	self.cause_of_death = cmi_cause
@@ -780,9 +763,7 @@ function mob_class:check_for_death(cmi_cause)
 
 		self:on_death(cmi_cause)
 
-		remove_mob(self, true)
-
-		return true
+		remove_mob(self, true) ; return true
 	end
 
 	-- execute custom death function
@@ -792,9 +773,7 @@ function mob_class:check_for_death(cmi_cause)
 
 		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
 
-		remove_mob(self, true)
-
-		return true
+		remove_mob(self, true) ; return true
 	end
 
 	-- reset vars and set state
@@ -948,10 +927,7 @@ function mob_class:do_env_damage()
 
 	-- halt mob if standing inside ignore node
 	if self.standing_in == "ignore" then
-
-		self.object:set_velocity({x = 0, y = 0, z = 0})
-
-		return true
+		self.object:set_velocity({x = 0, y = 0, z = 0}) ; return true
 	end
 
 	local prop = self.object:get_properties()
@@ -1121,9 +1097,7 @@ function mob_class:do_jump()
 			self:mob_sound(self.sounds.jump)
 		end
 
-		self.jump_count = 0
-
-		return true
+		self.jump_count = 0 ; return true
 	end
 
 	-- if blocked for 3 counts then turn
@@ -1203,21 +1177,17 @@ function mob_class:breed()
 
 		if self.hornytimer > CHILD_GROW_TIME then
 
-			self.child = false
-			self.hornytimer = 0
+			self.child = false ; self.hornytimer = 0
 
 			-- replace child texture with adult one
 			if self.mommy_tex then
-				self.base_texture = self.mommy_tex
-				self.mommy_tex = nil
+				self.base_texture = self.mommy_tex ; self.mommy_tex = nil
 			end
 
 			self.object:set_properties({
 				textures = self.base_texture,
-				mesh = self.base_mesh,
-				visual_size = self.base_size,
-				collisionbox = self.base_colbox,
-				selectionbox = self.base_selbox
+				mesh = self.base_mesh, visual_size = self.base_size,
+				collisionbox = self.base_colbox, selectionbox = self.base_selbox
 			})
 
 			-- custom function when child grows up
@@ -1785,8 +1755,7 @@ function mob_class:general_attack()
 	-- go through remaining entities and select closest
 	for _,player in pairs(objs) do
 
-		p = player:get_pos()
-		sp = s
+		p = player:get_pos() ; sp = s
 
 		dist = get_distance(p, s)
 
@@ -2211,6 +2180,7 @@ function mob_class:do_states(dtime)
 				self.blinktimer = 0
 				self.blinkstatus = false
 				self.object:set_texture_mod("")
+				self.object:set_properties({glow = self.glow})
 			end
 
 			-- walk right up to player unless the timer is active
@@ -2237,8 +2207,10 @@ function mob_class:do_states(dtime)
 
 					if self.blinkstatus then
 						self.object:set_texture_mod(self.texture_mods)
+						self.object:set_properties({glow = (self.glow or 0)})
 					else
 						self.object:set_texture_mod(self.texture_mods .. "^[brighten")
+						self.object:set_properties({glow = (self.glow or 0) + 3})
 					end
 
 					self.blinkstatus = not self.blinkstatus
@@ -2250,7 +2222,7 @@ function mob_class:do_states(dtime)
 
 					local pos = self.object:get_pos()
 
-					-- dont damage anything if area protected or next to water
+					-- dont damage anything if area protected or near water
 					if minetest.find_node_near(pos, 1, {"group:water"})
 					or minetest.is_protected(pos, "") then
 						node_break_radius = 1
@@ -2312,24 +2284,20 @@ function mob_class:do_states(dtime)
 
 				-- no paths longer than 50
 				if #self.path.way > 50 or dist < self.reach then
-					self.path.following = false
-					return
+					self.path.following = false ; return
 				end
 
 				local p1 = self.path.way[1]
 
 				if not p1 then
-					self.path.following = false
-					return
+					self.path.following = false ; return
 				end
 
 				if abs(p1.x - s.x) + abs(p1.z - s.z) < 0.6 then
-					-- reached waypoint, remove it from queue
-					table_remove(self.path.way, 1)
+					table_remove(self.path.way, 1) -- remove waypoint once reached
 				end
 
-				-- set new temporary target
-				p = {x = p1.x, y = p1.y, z = p1.z}
+				p = {x = p1.x, y = p1.y, z = p1.z} -- set new temporary target
 			end
 
 			self:yaw_to_pos(p)
@@ -2349,8 +2317,7 @@ function mob_class:do_states(dtime)
 
 				if self.at_cliff or pad < 0.2 then
 
-					-- when on top of player extend reach slightly so player can
-					-- still be attacked.
+					-- extend reach slightly when on top of player
 					self.reach_ext = 0.8
 					self:set_velocity(0)
 					self:set_animation("stand")
@@ -2421,8 +2388,7 @@ function mob_class:do_states(dtime)
 
 			local vec = {x = p.x - s.x, y = p.y - s.y, z = p.z - s.z}
 
-			self:yaw_to_pos(p)
-			self:set_velocity(0)
+			self:yaw_to_pos(p) ; self:set_velocity(0)
 
 			if self.shoot_interval and self.timer > self.shoot_interval
 			and random(100) <= 60 then
@@ -3945,11 +3911,9 @@ function mobs:register_arrow(name, def)
 
 						self:hit_player(thing.ref)
 
-						self.object:remove()
-
 --print("hit player", thing.ref:get_player_name())
 
-						return
+						self.object:remove() ; return
 
 					end
 
@@ -3959,22 +3923,18 @@ function mobs:register_arrow(name, def)
 
 						self:hit_mob(thing.ref)
 
-						self.object:remove()
-
 --print("hit mob", entity.name)
 
-						return
+						self.object:remove() ; return
 					end
 
 					if entity and self.hit_object and (not entity._cmi_is_mob) then
 
 						self:hit_object(thing.ref)
 
-						self.object:remove()
-
 --print("hit object", entity.name)
 
-						return
+						self.object:remove() ; return
 					end
 
 				end
@@ -3998,11 +3958,9 @@ function mobs:register_arrow(name, def)
 									self.object:get_luaentity().name)
 						end
 
-						self.object:remove()
-
 --print("hit node", node.name)
 
-						return
+						self.object:remove() ; return
 					end
 				end
 
@@ -4076,8 +4034,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 	local is_mob = minetest.registered_entities[mob]
 
 	if not is_mob then
-		print("[Mobs Redo] Spawn Egg cannot be created for " .. mob)
-		return
+		print("[Mobs Redo] Spawn Egg cannot be created for " .. mob) ; return
 	end
 
 	-- get mob collisionbox and determine y_offset when spawning
@@ -4250,19 +4207,13 @@ function mobs:capture_mob(
 
 	-- is mob tamed?
 	if self.tamed == false and force_take == false then
-
-		minetest.chat_send_player(name, S("Not tamed!"))
-
-		return false
+		minetest.chat_send_player(name, S("Not tamed!")) ; return false
 	end
 
 	-- cannot pick up if not owner (unless player has protection_bypass priv)
 	if not minetest.check_player_privs(name, "protection_bypass")
 	and self.owner ~= name and force_take == false then
-
-		minetest.chat_send_player(name, S("@1 is owner!", self.owner))
-
-		return false
+		minetest.chat_send_player(name, S("@1 is owner!", self.owner)) ; return false
 	end
 
 	if clicker:get_inventory():room_for_item("main", mobname) then
