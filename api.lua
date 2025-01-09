@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20241228",
+	mod = "redo", version = "20250109",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3037,7 +3037,7 @@ function mob_class:mob_expire(pos, dtime)
 
 			effect(pos, 15, "tnt_smoke.png", 2, 4, 2, 0)
 
-			remove_mob(self, true) ; return
+			remove_mob(self, true) ; return true
 		end
 	end
 end
@@ -3112,7 +3112,7 @@ function mob_class:on_step(dtime, moveresult)
 		if self.pause_timer <= 0 and self.at_cliff then self:set_velocity(0) end
 
 		-- has mob expired (0.25 instead of dtime since were in a timer)
-		self:mob_expire(pos, node_timer_interval)
+		if self:mob_expire(pos, node_timer_interval) then return end
 
 		-- check if mob can jump or is blocked facing fence/gate etc.
 		self:do_jump()
