@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250109",
+	mod = "redo", version = "20250117",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3375,7 +3375,7 @@ function mobs:register_mob(name, def)
 		on_grown = def.on_grown,
 		on_sound = def.on_sound,
 
-		is_mob = true, _hittable_by_projectile = true, -- mineclone thing
+--		is_mob = true, _hittable_by_projectile = true, -- mineclone thing
 
 		on_activate = function(self, staticdata, dtime)
 			return self:mob_activate(staticdata, def, dtime)
