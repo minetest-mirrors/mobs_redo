@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250117",
+	mod = "redo", version = "20250118",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2497,7 +2497,8 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	if self.health <= 0 then return true end
 
 	-- custom punch function (if false returned, do not continue and return true)
-	if self.do_punch and self:do_punch(hitter, tflp, tool_capabilities, dir) == false then
+	if self.do_punch and self:do_punch(
+			hitter, tflp, tool_capabilities, dir, damage) == false then
 		return true
 	end
 
