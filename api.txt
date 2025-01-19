@@ -331,8 +331,9 @@ enhance mob functionality and have them do many interesting things:
    'on_grown'       is called when a child mob has grown up, only paramater is
                     (self).
    'do_punch'       called when mob is punched with paramaters (self, hitter,
-                    time_from_last_punch, tool_capabilities, direction), return
-                    false to stop punch damage and knockback from taking place.
+                    time_from_last_punch, tool_capabilities, direction, damage),
+                    return false to stop punch damage and knockback from taking
+                    place.
    'custom_attack'  when set this function is called instead of the normal mob
                     melee attack, parameters are (self, to_attack) and if true
                     is returned normal attack function continued.
