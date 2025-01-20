@@ -567,6 +567,7 @@ This function registers a arrow for mobs with the attack type shoot.
     'definition'      is a table with the following values:
        'visual'       same is in minetest.register_entity()
        'visual_size'  same is in minetest.register_entity()
+       'mesh'         same is in minetest.register_entity()
        'textures'     same is in minetest.register_entity()
        'collide_with_objects'       same as above
        'velocity'     the velocity of the arrow

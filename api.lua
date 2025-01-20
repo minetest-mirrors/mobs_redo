@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250118",
+	mod = "redo", version = "20250120",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3827,6 +3827,7 @@ function mobs:register_arrow(name, def)
 			static_save = false,
 			visual = def.visual,
 			visual_size = def.visual_size,
+			mesh = def.mesh,
 			textures = def.textures,
 			collisionbox = def.collisionbox or {-.1, -.1, -.1, .1, .1, .1},
 			glow = def.glow,
