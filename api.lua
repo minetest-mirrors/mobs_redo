@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250120",
+	mod = "redo", version = "20250201",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2496,12 +2496,6 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	-- mob health check
 	if self.health <= 0 then return true end
 
-	-- custom punch function (if false returned, do not continue and return true)
-	if self.do_punch and self:do_punch(
-			hitter, tflp, tool_capabilities, dir, damage) == false then
-		return true
-	end
-
 	-- error checking when mod profiling is enabled
 	if not tool_capabilities then
 		minetest.log("warning",	"[mobs] Mod profiling enabled, damage not enabled")
@@ -2540,15 +2534,6 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 	local weapon = hitter:get_wielded_item()
 	local weapon_def = weapon:get_definition() or {}
-
-	--- check for ehchantments when using mineclonia/voxelibre
-	local enchants = {}
-
-	if use_mc2 then
-
-		enchants = minetest.deserialize(
-				weapon:get_meta():get_string("mcl_enchanting:enchantments")) or {}
-	end
 
 	-- calculate mob damage
 	local damage = 0
@@ -2593,6 +2578,27 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		end
 	end
 
+	--- check for ehchantments when using mineclonia/voxelibre
+	local enchants = {}
+
+	if use_mc2 then
+
+		-- get enchants
+		enchants = minetest.deserialize(
+				weapon:get_meta():get_string("mcl_enchanting:enchantments")) or {}
+
+		-- check for damage increasing enchantments
+		if enchants.sharpness then
+			damage = damage + (0.5 * enchants.sharpness) + 0.5
+		end
+	end
+
+	-- custom punch function (if false returned, do not continue and return true)
+	if self.do_punch and self:do_punch(
+			hitter, tflp, tool_capabilities, dir, damage) == false then
+		return true
+	end
+
 --print("Mob Damage is", damage)
 
 	-- healing
@@ -2632,11 +2638,6 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	end
 
 	hitter:set_wielded_item(weapon)
-
-	-- check for damage increasing enchantments
-	if use_mc2 and enchants.sharpness then
-		damage = damage + (0.5 * enchants.sharpness) + 0.5
-	end
 
 	-- only play hit sound and show blood effects if damage is 1 or over
 	if damage >= 1 then
