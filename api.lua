@@ -1060,8 +1060,10 @@ function mob_class:do_jump()
 	if self.state == "stand" or self.order == "stand" or vel.y ~= 0
 	or self.fly or self.child then return false end
 
-	-- we can only jump if standing on solid node
-	if minetest.registered_nodes[self.standing_on].walkable == false then
+	-- we can only jump if standing on solid node that allows it
+	local ndef = minetest.registered_nodes[self.standing_on]
+
+	if ndef.walkable == false or (ndef.groups and ndef.groups.disable_jump == 1) then
 		return false
 	end
 
@@ -1071,12 +1073,13 @@ function mob_class:do_jump()
 	-- if mob can leap then remove blockages and let them try
 	if self.can_leap then blocked = false ; self.facing_fence = false end
 
+	-- what node are we looking at?
+	ndef = minetest.registered_nodes[self.looking_at]
+
 	-- jump if possible
 	if self.jump and self.jump_height > 0
-	and (self.walk_chance == 0 or minetest.registered_items[self.looking_at].walkable)
-	and not blocked	and not self.facing_fence
-	and self.standing_in ~= mobs.node_snow
-	and not self.standing_in:find("carpet") then
+	and (self.walk_chance == 0 or (ndef.walkable and ndef.drawtype == "normal"))
+	and not blocked	and not self.facing_fence then
 
 		vel.y = self.jump_height
 
