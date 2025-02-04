@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250201",
+	mod = "redo", version = "20250204",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1379,6 +1379,35 @@ function mob_class:replace(pos)
 		minetest.set_node(pos, {name = with})
 
 		self:mob_sound(self.sounds.replace)
+	end
+end
+
+-- look directly around mob to see if it can pickup any dropped items
+
+function mob_class:check_item_pickup(pos)
+
+	if not self.on_pick_up or not self.pick_up or #self.pick_up == 0 then return end
+
+	for _,o in pairs(minetest.get_objects_inside_radius(pos, 2)) do
+
+		local l = o:get_luaentity()
+
+		if l and l.name == "__builtin:item" then
+
+			for k,v in pairs(self.pick_up) do
+
+				if self.on_pick_up and l.itemstring:find(v) then
+
+					local r = self.on_pick_up(self, l)
+
+					if r and r.is_empty and not r:is_empty() then
+						l.itemstring = r:to_string()
+					elseif r and r.is_empty and r:is_empty() then
+						o:remove()
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -3169,6 +3198,9 @@ function mob_class:on_step(dtime, moveresult)
 
 		-- node replace check (cow eats grass etc.)
 		self:replace(pos)
+
+		-- dropped item pickup check
+		self:check_item_pickup(pos)
 	end
 
 	-- knockback timer
@@ -3328,6 +3360,8 @@ function mobs:register_mob(name, def)
 		replace_what = def.replace_what,
 		replace_with = def.replace_with,
 		replace_offset = def.replace_offset,
+		pick_up = def.pick_up,
+		on_pick_up = def.on_pick_up,
 		reach = def.reach,
 		texture_list = def.textures,
 		texture_mods = def.texture_mods or "",

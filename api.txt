@@ -310,6 +310,25 @@ eating.
        properties. (DEPRECATED, use on_replace to make changes).
 
 
+Pickup Items
+------------
+
+   'pick_up'            table of itemstrings the mob will pick up.
+   'on_pick_up'         function that will be called on item pickup - arguments are
+                        (self, itemstring) and can return nil or a a modified itemstack e.g.
+
+on_pick_up = function(self, itemstring)
+
+		local istack = ItemStack(entity.itemstring)
+
+		print("-- took", istack:get_name())
+
+		istack:take_item(1)
+
+		return istack
+end,
+
+
 Custom Definition Functions
 ---------------------------
 
