@@ -19,8 +19,9 @@ https://forum.minetest.net/viewtopic.php?f=11&t=9917
 - **Shears**. Used to right-click sheep and return 1-3 wool.
 - **Protection Rune**. Protects tamed mobs from being harmed by other players.
 - **Mob Fence and Fence Top**. Stops mobs escaping or glitching throughfences.
+- Add mobs:mob_repellent block to stop mobs spawning within 16 node radius.
 
-**Lucky Blocks**: 12
+**Lucky Blocks**: 13
 
 ## Changelog
 

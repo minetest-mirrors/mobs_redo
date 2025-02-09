@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250204",
+	mod = "redo", version = "20250209",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3715,6 +3715,15 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 					return
 				end
 			end
+		end
+
+		-- is mob repellent nearby
+		if #minetest.find_nodes_in_area(
+				{x = pos.x - 16, y = pos.y - 16, z = pos.z - 16},
+				{x = pos.x + 16, y = pos.y + 16, z = pos.z + 16},
+				{"mobs:mob_repellent"}) > 0 then
+--print("--- mob repellent nearby")
+			return
 		end
 
 		-- change position to node above
