@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250209",
+	mod = "redo", version = "20250312",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3726,7 +3726,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
-		-- change position to node above
+		-- change position to above node
 		pos.y = pos.y + 1
 
 		-- are we spawning within height limits?
@@ -4609,6 +4609,8 @@ if settings:get_bool("mobs_can_hear") ~= false then
 	local old_sound_play = minetest.sound_play
 
 	minetest.sound_play = function(spec, param, eph)
+
+		if type(spec) == "table" then return end
 
 		local def = {} ; param = param or {}
 
