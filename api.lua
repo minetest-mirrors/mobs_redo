@@ -4610,7 +4610,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 	minetest.sound_play = function(spec, param, eph)
 
-		if type(spec) == "table" then return end
+		if type(spec) == "table" then return old_sound_play(spec, param, eph) end
 
 		local def = {} ; param = param or {}
 
