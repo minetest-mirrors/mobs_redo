@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250312",
+	mod = "redo", version = "20250318",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2525,8 +2525,8 @@ local dis_damage_kb = settings:get_bool("mobs_disable_damage_kb")
 
 function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
-	-- mob health check
-	if self.health <= 0 then return true end
+	-- mob health and nil check
+	if self.health <= 0 or not hitter then return true end
 
 	-- error checking when mod profiling is enabled
 	if not tool_capabilities then
