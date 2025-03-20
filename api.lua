@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250318",
+	mod = "redo", version = "20250320",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -70,6 +70,7 @@ local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
 local mob_height_fix = settings:get_bool("mob_height_fix")
 local mob_log_spawn = settings:get_bool("mob_log_spawn") == true
 local active_mobs = 0
+local mob_infotext = settings:get_bool("mob_infotext") ~= false
 
 -- loop interval for node and main functions timers
 
@@ -622,7 +623,7 @@ function mob_class:update_tag(newname)
 		.. (self.owner == "" and "" or "\nOwner: " .. self.owner) .. text
 
 	-- set infotext changes
-	if self.infotext ~= prop.infotext then
+	if mob_infotext and self.infotext ~= prop.infotext then
 		self.object:set_properties({infotext = self.infotext})
 	end
 end
