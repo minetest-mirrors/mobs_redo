@@ -18,7 +18,7 @@ end
 -- Global table
 
 mobs = {
-	mod = "redo", version = "20250320",
+	mod = "redo", version = "20250404",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -26,6 +26,10 @@ mobs = {
 			or has("mcl_core:dirt") or has("default:dirt") or "mobs:fallback_node"
 }
 mobs.fallback_node = mobs.node_dirt
+
+-- load compatibility check function
+
+dofile(minetest.get_modpath("mobs") .. "/compatibility.lua")
 
 -- localize common functions
 
@@ -1078,7 +1082,7 @@ function mob_class:do_jump()
 	ndef = minetest.registered_nodes[self.looking_at]
 
 	-- jump if possible
-	if self.jump and self.jump_height > 0
+	if self.jump_height > 0
 	and (self.walk_chance == 0 or (ndef.walkable and ndef.drawtype == "normal"))
 	and not blocked	and not self.facing_fence then
 
@@ -1561,7 +1565,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		local jumpheight = 0
 
-		if self.jump and self.jump_height >= pathfinding_max_jump then
+		if self.jump_height >= pathfinding_max_jump then
 
 			jumpheight = min(ceil(
 					self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
@@ -2879,9 +2883,6 @@ function mob_class:mob_staticdata()
 	self.following = nil
 	self.state = "stand"
 
-	-- used to rotate older mobs
-	if self.drawtype and self.drawtype == "side" then self.rotate = rad(90) end
-
 	if use_cmi then
 		self.serialized_cmi_components = cmi.serialize_components(self._cmi_components)
 	end
@@ -3426,6 +3427,10 @@ function mobs:register_mob(name, def)
 		end
 
 	}, mob_class_meta))
+
+	-- look for any older settings for compatibility
+	local self = minetest.registered_entities[name]
+	mobs.compatibility_check(self)
 end
 
 -- count how many mobs of one type are inside an area
