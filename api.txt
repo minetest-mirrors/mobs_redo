@@ -92,7 +92,7 @@ functions needed for the mob to work properly which contains the following:
                       When set to 16 then only natural light will kill mob.
    'suffocation'   when > 0 mobs will suffocate inside solid blocks and will be
                    hurt by the value given every second (0 to disable).
-   'floats'        when set to 1 mob will float in water, 0 has them sink.
+   'floats'        when True mob will float in water, otherwise they sink.
    'follow'        mobs follow player when holding any of the items which appear
                    on this table, the same items can be fed to a mob to tame or
                    breed e.g. {"farming:wheat", "default:apple", "group:fish"}
