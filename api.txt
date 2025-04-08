@@ -230,8 +230,6 @@ functions needed for the mob to work properly which contains the following:
    'rotate'            custom model rotation, 0 = front, 90 = side, 180 = back,
                        270 = other side.
    'glow'              has mob glow without light source, 0 to 15 or nil to disable
-   'double_melee_attack' when true has the api choose between 'punch' and
-                      'punch2' animations. [DEPRECATED]
 
    'animation'       holds a table containing animation names and settings for use with
                      mesh models:

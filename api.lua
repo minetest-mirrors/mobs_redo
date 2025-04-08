@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250405",
+	mod = "redo", version = "20250408",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -363,10 +363,6 @@ function mob_class:set_yaw(yaw, delay)
 	return self.target_yaw
 end
 
-function mobs:yaw(entity, yaw, delay) -- [deprecated]
-	mob_class.set_yaw(entity, yaw, delay)
-end
-
 -- set defined animation
 
 function mob_class:set_animation(anim, force)
@@ -407,10 +403,6 @@ function mob_class:set_animation(anim, force)
 		0, self.animation[anim .. "_loop"] ~= false)
 end
 
-function mobs:set_animation(entity, anim) -- [deprecated]
-	entity.set_animation(entity, anim)
-end
-
 -- check line of sight using raycasting (thx Astrobe)
 
 function mob_class:line_of_sight(pos1, pos2)
@@ -433,10 +425,6 @@ function mob_class:line_of_sight(pos1, pos2)
 	end
 
 	return true
-end
-
-function mobs:line_of_sight(entity, pos1, pos2) -- [deprecated]
-	return entity:line_of_sight(pos1, pos2)
 end
 
 -- if not flying in set medium, find some nearby to move to
@@ -500,10 +488,6 @@ function mob_class:yaw_to_pos(target, rot)
 	if target.x > pos.x then yaw = yaw + pi end
 
 	return self:set_yaw(yaw, rot)
-end
-
-function mobs:yaw_to_pos(self, target, rot) -- [deprecated]
-	return self:yaw_to_pos(target, rot)
 end
 
 -- look for stay_near nodes and move towards them
@@ -3323,7 +3307,6 @@ function mobs:register_mob(name, def)
 		explosion_timer = def.explosion_timer,
 		allow_fuse_reset = def.allow_fuse_reset,
 		stop_to_explode = def.stop_to_explode,
-		double_melee_attack = def.double_melee_attack,
 		dogshoot_switch = def.dogshoot_switch,
 		dogshoot_count_max = def.dogshoot_count_max,
 		dogshoot_count2_max = def.dogshoot_count2_max or def.dogshoot_count_max,
@@ -3759,15 +3742,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 	end
 end
 
--- compatibility with older mob registration [DEPRECATED]
-
-function mobs:register_spawn(name, nodes, max_light, min_light, chance,
-		active_object_count, max_height, day_toggle)
-
-	mobs:spawn_specific(name, nodes, {"air"}, min_light, max_light, 30,
-		chance, active_object_count, -31000, max_height, day_toggle)
-end
-
 -- MarkBu's newer spawn function (USE this one please modders)
 
 function mobs:spawn(def)
@@ -3979,10 +3953,6 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 	else
 		mobs:safe_boom(self, pos, node_damage_radius, texture)
 	end
-end
-
-function mobs:explosion(pos, radius) -- [deprecated] compatibility function
-	mobs:boom({sounds = {explode = "tnt_explode"}}, pos, radius, radius, "tnt_smoke.png")
 end
 
 -- Register spawn eggs - This also introduces the “spawn_egg” group:
@@ -4449,8 +4419,7 @@ function mobs:alias_mob(old_name, new_name)
 
 	minetest.register_alias(old_name, new_name) -- spawn egg
 
-	-- entity
-	minetest.register_entity(":" .. old_name, {
+	minetest.register_entity(":" .. old_name, { -- entity
 
 		initial_properties = {physical = false, static_save = false},
 
