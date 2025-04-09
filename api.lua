@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250408",
+	mod = "redo", version = "20250409",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -801,7 +801,7 @@ function mob_class:check_for_death(cmi_cause)
 
 		remove_mob(self, true)
 
-		effect(pos, 20, "tnt_smoke.png")
+		effect(pos, 20, "mobs_tnt_smoke.png")
 	end
 
 	return true
@@ -919,7 +919,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.water_damage
 
-		effect(py, 5, "bubble.png", nil, nil, 1, nil)
+		effect(py, 5, "mobs_bubble_particle.png", nil, nil, 1, nil)
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then return true end
@@ -930,7 +930,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.lava_damage
 
-		effect(py, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
+		effect(py, 15, "mobs_fire_particle.png", 1, 5, 1, 0.2, 15, true)
 
 		if self:check_for_death({type = "environment", pos = pos,
 				node = self.standing_in, hot = true}) then return true end
@@ -941,7 +941,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.fire_damage
 
-		effect(py, 15, "fire_basic_flame.png", 1, 5, 1, 0.2, 15, true)
+		effect(py, 15, "mobs_fire_particle.png", 1, 5, 1, 0.2, 15, true)
 
 		if self:check_for_death({type = "environment", pos = pos,
 				node = self.standing_in, hot = true}) then return true end
@@ -963,7 +963,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - damage
 
-		if damage > 0 then effect(py, 5, "tnt_smoke.png") end
+		if damage > 0 then effect(py, 5, "mobs_tnt_smoke.png") end
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then return true end
@@ -974,7 +974,7 @@ function mob_class:do_env_damage()
 
 		self.health = self.health - self.air_damage
 
-		effect(py, 3, "bubble.png", 1, 1, 1, 0.2)
+		effect(py, 3, "mobs_bubble_particle.png", 1, 1, 1, 0.2)
 
 		if self:check_for_death({type = "environment",
 				pos = pos, node = self.standing_in}) then return true end
@@ -997,7 +997,7 @@ function mob_class:do_env_damage()
 
 			self.health = self.health - self.light_damage
 
-			effect(py, 5, "tnt_smoke.png")
+			effect(py, 5, "mobs_tnt_smoke.png")
 
 			if self:check_for_death({type = "light"}) then return true end
 		end
@@ -2456,7 +2456,7 @@ function mob_class:falling(pos)
 
 				self.health = self.health - floor(damage)
 
-				effect(pos, 5, "tnt_smoke.png", 1, 2, 2, nil)
+				effect(pos, 5, "mobs_tnt_smoke.png", 1, 2, 2, nil)
 
 				if self:check_for_death({type = "fall"}) then return true end
 			end
@@ -3006,7 +3006,7 @@ function mob_class:mob_expire(pos, dtime)
 
 --			minetest.log("action", "lifetimer expired, removed " .. self.name)
 
-			effect(pos, 15, "tnt_smoke.png", 2, 4, 2, 0)
+			effect(pos, 15, "mobs_tnt_smoke.png", 2, 4, 2, 0)
 
 			remove_mob(self, true) ; return true
 		end
@@ -3474,7 +3474,7 @@ function mobs:add_mob(pos, def)
 --print("[mobs] entity not found " .. def.name)
 		return false
 	else
-		effect(pos, 15, "tnt_smoke.png", 1, 2, 2, 15, 5)
+		effect(pos, 15, "mobs_tnt_smoke.png", 1, 2, 2, 15, 5)
 	end
 
 	-- use new texture if found
@@ -3938,7 +3938,7 @@ end
 
 function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 
-	texture = texture or "tnt_smoke.png"
+	texture = texture or "mobs_tnt_smoke.png"
 
 	if mobs_griefing and minetest.get_modpath("tnt") and tnt and tnt.boom
 	and not minetest.is_protected(pos, "") then
@@ -4441,7 +4441,7 @@ end
 -- admin command to remove untamed mobs around players
 
 minetest.register_chatcommand("clear_mobs", {
-	params = "<text>",
+	params = "",
 	description = "Remove untamed mobs from around players.",
 	privs = {server = true},
 
