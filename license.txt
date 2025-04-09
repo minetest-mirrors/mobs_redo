@@ -23,6 +23,7 @@ THE SOFTWARE.
 Textures borrowed from minetest_game (CC BY-SA 3.0):
   mobs_tnt_smoke.png
   mobs_bubble_particle.png
+  mobs_heart_particle.png
 
 Textures under CC0 license by TenPlus1
 

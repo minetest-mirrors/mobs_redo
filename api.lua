@@ -1207,7 +1207,7 @@ function mob_class:breed()
 		local prop = self.object:get_properties().collisionbox
 
 		effect({x = pos.x, y = pos.y + prop[5], z = pos.z}, 8,
-				"heart.png", 3, 4, 1, 0.1, 1, true)
+				"mobs_heart_particle.png", 3, 4, 1, 0.1, 1, true)
 
 		local objs = minetest.get_objects_inside_radius(pos, 3)
 		local ent
@@ -1557,7 +1557,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 					size = 4,
 					collisiondetection = false,
 					vertical = false,
-					texture = "heart.png",
+					texture = "mobs_heart_particle.png",
 				})
 			end
 		end]]
