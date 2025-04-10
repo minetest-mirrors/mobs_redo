@@ -37,5 +37,5 @@ function mobs:register_spawn(name, nodes, max_light, min_light, chance,
 end
 
 function mobs:explosion(pos, radius)
-	mobs:boom({sounds = {explode = "tnt_explode"}}, pos, radius, radius, "tnt_smoke.png")
+	mobs:boom({sounds = {explode = "tnt_explode"}}, pos, radius, radius, "mobs_tnt_smoke.png")
 end
