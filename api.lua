@@ -3934,22 +3934,28 @@ function mobs:safe_boom(self, pos, radius, texture)
 	effect(pos, 32, texture, radius * 3, radius * 5, radius, 1, 0)
 end
 
--- explosion with protection and tnt mod check
+-- explosion with tnt mod checks
 
 function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 
 	texture = texture or "mobs_tnt_smoke.png"
 
-	if mobs_griefing and minetest.get_modpath("tnt") and tnt and tnt.boom
-	and not minetest.is_protected(pos, "") then
+	if mobs_griefing then
 
-		tnt.boom(pos, {
-			radius = node_damage_radius,
-			damage_radius = entity_radius,
-			sound = self and self.sounds and self.sounds.explode or "tnt_explode",
-			explode_center = true,
-			tiles = texture
-		})
+		if minetest.get_modpath("mcl_explosions") then
+
+			mcl_explosions.explode(pos, node_damage_radius)
+
+		elseif minetest.get_modpath("tnt") and tnt and tnt.boom then
+
+			tnt.boom(pos, {
+				radius = node_damage_radius,
+				damage_radius = entity_radius,
+				sound = self and self.sounds and self.sounds.explode or "tnt_explode",
+				explode_center = true,
+				tiles = texture
+			})
+		end
 	else
 		mobs:safe_boom(self, pos, node_damage_radius, texture)
 	end
