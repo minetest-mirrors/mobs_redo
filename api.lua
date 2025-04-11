@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250409",
+	mod = "redo", version = "20250411",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3923,7 +3923,7 @@ end
 
 function mobs:safe_boom(self, pos, radius, texture)
 
-	minetest.sound_play(self.sounds and self.sounds.explode or "tnt_explode", {
+	minetest.sound_play(self and self.sounds and self.sounds.explode or "tnt_explode", {
 		pos = pos,
 		gain = 1.0,
 		max_hear_distance = (self.sounds and self.sounds.distance) or 32
@@ -3946,7 +3946,7 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 		tnt.boom(pos, {
 			radius = node_damage_radius,
 			damage_radius = entity_radius,
-			sound = self.sounds and self.sounds.explode,
+			sound = self and self.sounds and self.sounds.explode or "tnt_explode",
 			explode_center = true,
 			tiles = texture
 		})
