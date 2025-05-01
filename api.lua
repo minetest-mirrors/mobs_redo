@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250411",
+	mod = "redo", version = "20250501",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(minetest.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -828,9 +828,9 @@ local function is_node_dangerous(self, nodename)
 
 	local def = minetest.registered_nodes[nodename]
 
-	if (self.water_damage and def.groups.water)
-	or (self.lava_damage and def.groups.lava)
-	or (self.fire_damage and def.groups.fire) then return true end
+	if (self.water_damage and self.water_damage > 0 and def.groups.water)
+	or (self.lava_damage and self.lava_damage > 0 and def.groups.lava)
+	or (self.fire_damage and self.fire_damage > 0 and def.groups.fire) then return true end
 
 	if self.node_damage and def.damage_per_second > 0 then
 
@@ -992,8 +992,7 @@ function mob_class:do_env_damage()
 			light = minetest.get_node_light(pos) or 0
 		end
 
-		if light >= self.light_damage_min
-		and light <= self.light_damage_max then
+		if light >= self.light_damage_min and light <= self.light_damage_max then
 
 			self.health = self.health - self.light_damage
 
