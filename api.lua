@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250504",
+	mod = "redo", version = "20250511",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -132,10 +132,7 @@ mobs.mob_class = {
 	view_range = 5,
 	walk_velocity = 1, run_velocity = 2,
 	light_damage = 0, light_damage_min = 14, light_damage_max = 15,
-	water_damage = 0,
-	lava_damage = 4,
-	fire_damage = 4,
-	air_damage = 0,
+	water_damage = 0, lava_damage = 4, fire_damage = 4, air_damage = 0,
 	node_damage = true,
 	suffocation = 2,
 	fall_damage = true,
@@ -193,9 +190,7 @@ local mob_class_meta = {__index = mob_class}
 local function at_limit()
 
 	if active_limit and active_limit > 0
-	and active_mobs and active_mobs >= active_limit then
-		return true
-	end
+	and active_mobs and active_mobs >= active_limit then return true end
 end
 
 -- play sound
@@ -209,10 +204,8 @@ function mob_class:mob_sound(sound)
 	pitch = pitch + random(-10, 10) * 0.005 -- random pitch difference
 
 	core.sound_play(sound, {
-		object = self.object,
-		gain = 1.0,
-		max_hear_distance = (self.sounds and self.sounds.distance) or 10,
-		pitch = pitch
+		object = self.object, gain = 1.0, pitch = pitch,
+		max_hear_distance = (self.sounds and self.sounds.distance) or 10
 	}, true)
 end
 
@@ -1667,7 +1660,6 @@ end
 
 local function is_peaceful_player(player)
 
-	-- main setting enabled
 	if peaceful_player_enabled then return true end
 
 	local player_name = player:get_player_name()
@@ -2121,8 +2113,7 @@ function mob_class:do_states(dtime)
 
 		-- check enemy is in sight
 		local in_sight = self:line_of_sight(
-				{x = s.x, y = s.y + 0.5, z = s.z},
-				{x = p.x, y = p.y + 0.5, z = p.z})
+				{x = s.x, y = s.y + 0.5, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z})
 
 		-- stop attacking when enemy not seen for 11 seconds
 		if not in_sight then
@@ -2230,8 +2221,7 @@ function mob_class:do_states(dtime)
 			-- make sure flying mobs are inside proper medium
 			if self.fly and dist > self.reach and self:flight_check() then
 
-				local s_y = floor(s.y) -- self
-				local p_y = floor(p.y + 1) -- attacker
+				local s_y, p_y = floor(s.y), floor(p.y + 1) -- self, attacker
 				local v = self.object:get_velocity()
 
 				-- fly/swim up towards attacker
@@ -2430,8 +2420,7 @@ function mob_class:falling(pos)
 	if self.floats and self.standing_in
 	and core.registered_nodes[self.standing_in].groups.liquid then
 
-		local visc = min(
-				core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
+		local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
 		self.object:set_velocity({x = v.x, y = 0.6, z = v.z})
 
@@ -4374,10 +4363,8 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 				self.follow = {self.follow}
 			end
 
-			core.chat_send_player(clicker:get_player_name(),
-					S("@1 follows:",
-					self.name:split(":")[2]) .. "\n- " ..
-					table.concat(self.follow, "\n- "))
+			core.chat_send_player(clicker:get_player_name(), S("@1 follows:",
+				self.name:split(":")[2]) .. "\n- " .. table.concat(self.follow, "\n- "))
 		end
 	end
 
