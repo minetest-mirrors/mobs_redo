@@ -1693,7 +1693,8 @@ function mob_class:general_attack()
 			-- remove from list if invisible or unable to attack
 			if not damage_enabled or self.attack_players == false
 			or self.owner == objs[n]:get_player_name()
---			or (self.owner and self.type ~= "monster")
+			-- npcs and animals that are tamed will not attack players unless provoked
+			or (self.type ~= "monster" and self.tamed)
 			or is_invisible(self, objs[n]:get_player_name())
 			or (self.specific_attack and not check_for("player", self.specific_attack)) then
 				objs[n] = nil
