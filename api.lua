@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250511",
+	mod = "redo", version = "20250515",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1692,7 +1692,8 @@ function mob_class:general_attack()
 
 			-- remove from list if invisible or unable to attack
 			if not damage_enabled or self.attack_players == false
-			or (self.owner and self.type ~= "monster")
+			or self.owner == objs[n]:get_player_name()
+--			or (self.owner and self.type ~= "monster")
 			or is_invisible(self, objs[n]:get_player_name())
 			or (self.specific_attack and not check_for("player", self.specific_attack)) then
 				objs[n] = nil
