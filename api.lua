@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250515",
+	mod = "redo", version = "20250516",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -162,7 +162,7 @@ mobs.mob_class = {
 	reach = 3,
 	docile_by_day = false,
 	time_of_day = 0.5,
-	fear_height = 0,
+	fear_height = 2,
 	runaway_timer = 0,
 	immune_to = {},
 	explosion_timer = 3,
