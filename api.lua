@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250516",
+	mod = "redo", version = "20250517",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -162,7 +162,7 @@ mobs.mob_class = {
 	reach = 3,
 	docile_by_day = false,
 	time_of_day = 0.5,
-	fear_height = 2,
+--	fear_height = 0,
 	runaway_timer = 0,
 	immune_to = {},
 	explosion_timer = 3,
@@ -3288,7 +3288,7 @@ function mobs:register_mob(name, def)
 		texture_mods = def.texture_mods or "",
 		child_texture = def.child_texture,
 		docile_by_day = def.docile_by_day,
-		fear_height = def.fear_height,
+		fear_height = def.fear_height or def.fly and 0 or 2,
 		runaway = def.runaway,
 		pathfinding = def.pathfinding,
 		immune_to = def.immune_to,
@@ -3343,7 +3343,7 @@ function mobs:register_mob(name, def)
 
 	}, mob_class_meta))
 
-	local self = core.registered_entities[name]
+	local self = core.registered_entities[name] ; print("--- FH", self.fear_height)
 	mobs.compatibility_check(self) -- older setting check for compatibility
 end
 
