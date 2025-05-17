@@ -3343,7 +3343,7 @@ function mobs:register_mob(name, def)
 
 	}, mob_class_meta))
 
-	local self = core.registered_entities[name] ; print("--- FH", self.fear_height)
+	local self = core.registered_entities[name]
 	mobs.compatibility_check(self) -- older setting check for compatibility
 end
 
