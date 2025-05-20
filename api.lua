@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250517",
+	mod = "redo", version = "20250520",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2729,7 +2729,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 	-- call for help and attack puncher
 	if self.passive == false and self.state ~= "flop"
-	and not self.child and self.attack_players
+	and not self.child --and self.attack_players
 	and not (is_player(hitter) and hitter_name == self.owner)
 	and not is_invisible(self, hitter_name)
 	and self.object ~= hitter then
