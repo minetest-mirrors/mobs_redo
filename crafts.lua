@@ -25,16 +25,6 @@ sound_helper("node_sound_water_defaults")
 sound_helper("node_sound_snow_defaults")
 sound_helper("node_sound_glass_defaults")
 
--- mob repellent node
-
-core.register_node("mobs:mob_repellent", {
-	description = S("Mob Repellent"),
-	tiles = {"mobs_repellent.png"},
-	is_ground_content = false,
-	groups = {handy = 1, cracky = 3},
-	sounds = mobs.node_sound_stone_defaults()
-})
-
 -- helper function to add {eatable} group to food items
 
 function mobs.add_eatable(item, hp)
@@ -56,6 +46,7 @@ end
 local items = {
 	paper = mc2 and "mcl_core:paper" or "default:paper",
 	dye_black = mc2 and "mcl_dye:black" or "dye:black",
+	dye_red = mc2 and "mcl_dye:red" or "dye:red",
 	string = mc2 and "mcl_mobitems:string" or "farming:string",
 	stick = mc2 and "mcl_core:stick" or "default:stick",
 	diamond = mc2 and "mcl_core:diamond" or "default:diamond",
@@ -68,6 +59,7 @@ local items = {
 	fence_wood = mc2 and "group:fence_wood" or "default:fence_wood",
 	meat_raw = mc2 and "mcl_mobitems:beef" or "group:food_meat_raw",
 	meat_cooked = mc2 and "mcl_mobitems:cooked_beef" or "group:food_meat",
+	obsidian = mc2 and "mcl_core:obsidian" or "default:obsidian"
 }
 
 -- name tag
@@ -205,6 +197,25 @@ core.register_craft({
 		{ "mobs:protector", items.mese_crystal, "mobs:protector" },
 		{ items.mese_crystal, items.diamond_block, items.mese_crystal },
 		{ "mobs:protector", items.mese_crystal, "mobs:protector" }
+	}
+})
+
+-- mob repellent node
+
+core.register_node("mobs:mob_repellent", {
+	description = S("Mob Repellent"),
+	tiles = {"mobs_repellent.png"},
+	is_ground_content = false,
+	groups = {handy = 1, cracky = 3},
+	sounds = mobs.node_sound_stone_defaults()
+})
+
+core.register_craft({
+	output = "mobs:mob_repellent",
+	recipe = {
+		{ items.obsidian, items.dye_red, items.obsidian },
+		{ items.obsidian, "mobs:protector", items.obsidian },
+		{ items.obsidian, items.obsidian, items.obsidian }
 	}
 })
 
