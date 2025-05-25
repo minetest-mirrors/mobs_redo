@@ -203,7 +203,7 @@ core.register_craft({
 -- mob repellent node
 
 core.register_node("mobs:mob_repellent", {
-	description = S("Mob Repellent"),
+	description = S("Mob Repellent (Stops mobs spawning within 16 block radius)"),
 	tiles = {"mobs_repellent.png"},
 	is_ground_content = false,
 	groups = {handy = 1, cracky = 3},
