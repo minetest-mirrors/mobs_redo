@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250520",
+	mod = "redo", version = "20250526",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -112,7 +112,7 @@ end
 
 -- calculate aoc range for mob count
 
-local aoc_range = tonumber(settings:get("active_block_range")) * 16
+local aoc_range = (tonumber(settings:get("active_block_range")) or 4) * 16
 
 -- can we attack Creatura mobs ?
 
