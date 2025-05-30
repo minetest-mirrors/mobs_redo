@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250526",
+	mod = "redo", version = "20250530",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3693,7 +3693,8 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 				local pos_string = pos and core.pos_to_string(pos) or ""
 
-				core.log("[MOBS] Spawned " .. (name or "") .. " at " .. pos_string)
+				core.log("action", "[MOBS] Spawned " .. (name or "")
+						.. " at " .. pos_string)
 			end
 
 			if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
