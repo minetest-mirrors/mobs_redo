@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250530",
+	mod = "redo", version = "20250603",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2841,11 +2841,6 @@ function mob_class:mob_activate(staticdata, def, dtime)
 		return
 	end
 
-	-- remove monsters in peaceful mode
-	if self.type == "monster" and peaceful_only then
-		remove_mob(self, true) ; return
-	end
-
 	-- load entity variables from staticdata into self.*
 	local tmp = core.deserialize(staticdata)
 
@@ -3538,6 +3533,14 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 	if not mobs_spawn or not mobs.spawning_mobs[name] then
 --print ("--- spawning not registered for " .. name)
+		return
+	end
+
+	-- remove monsters in peaceful mode
+	local ent = core.registered_entities[name]
+
+	if peaceful_only and ent and ent.type == "monster" then
+--print ("--- peaceful mode so no spawning of " .. name)
 		return
 	end
 
