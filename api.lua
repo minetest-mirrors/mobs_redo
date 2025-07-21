@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250603",
+	mod = "redo", version = "20250721",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2943,6 +2943,11 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self:set_animation("stand")
 
 	-- apply texture mods
+	if type(self.texture_mods) ~= "string" then
+		print("[Mobs Redo API] Error: self.texture_mods not a string")
+		self.texture_mods = ""
+	end
+
 	self.object:set_texture_mod(self.texture_mods)
 
 	-- set 5.x flag to remove monsters when map area unloaded
