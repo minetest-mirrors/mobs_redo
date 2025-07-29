@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250721",
+	mod = "redo", version = "20250729",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3936,6 +3936,8 @@ end
 -- explosion with tnt mod checks
 
 function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
+
+	if not pos then return end
 
 	texture = texture or "mobs_tnt_smoke.png"
 
