@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250729",
+	mod = "redo", version = "20250821",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -579,27 +579,27 @@ function mob_class:update_tag(newname)
 	local text = ""
 
 	if self.horny then
-		text = "\nLoving: " .. (self.hornytimer - (HORNY_TIME + HORNY_AGAIN_TIME))
+		text = "\n" .. S("Loving: @1", (self.hornytimer - (HORNY_TIME + HORNY_AGAIN_TIME)))
 	elseif self.child then
-		text = "\nGrowing: " .. (self.hornytimer - CHILD_GROW_TIME)
+		text = "\n" .. S("Growing: @1", (self.hornytimer - CHILD_GROW_TIME))
 	elseif self._tame_countdown then
-		text = "\nTaming: " .. self._tame_countdown
+		text = "\n" .. S("Taming: @1", self._tame_countdown)
 	elseif self._breed_countdown then
-		text = "\nBreeding: " .. self._breed_countdown
+		text = "\n" .. S("Breeding: @1", self._breed_countdown)
 	end
 
 	if self.protected then
 
 		if self.protected == 2 then
-			text = text .. "\nProtection: Level 2"
+			text = text .. "\n" .. S("Protection: Level 2")
 		else
-			text = text .. "\nProtection: Level 1"
+			text = text .. "\n" .. S("Protection: Level 1")
 		end
 	end
 
-	self.infotext = "Entity: " .. self.name .. " | Type: " .. self.type
-		.. ("\nHealth: " .. self.health .. " / " .. prop.hp_max)
-		.. (self.owner == "" and "" or "\nOwner: " .. self.owner) .. text
+	self.infotext = S("Entity: @1", self.name) .. " | " .. S("Type: @1", self.type)
+		.. ("\n" .. S("Health: @1", self.health) .. " / " .. prop.hp_max)
+		.. (self.owner == "" and "" or "\n" .. S("Owner: @1", self.owner)) .. text
 
 	-- apply infotext changes
 	if mob_infotext and self.infotext ~= prop.infotext then
