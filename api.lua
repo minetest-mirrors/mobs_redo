@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250824",
+	mod = "redo", version = "20250916",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -88,7 +88,7 @@ local pathfinding_stuck_timeout = tonumber(
 		settings:get("mob_pathfinding_stuck_timeout")) or 3.0
 local pathfinding_stuck_path_timeout = tonumber(
 		settings:get("mob_pathfinding_stuck_path_timeout")) or 5.0
-local pathfinding_algorithm = settings:get("mob_pathfinding_algorithm") or "Dijkstra"
+local pathfinding_algorithm = settings:get("mob_pathfinding_algorithm") or "A*_noprefetch"
 
 if pathfinding_algorithm == "AStar_noprefetch" then
 	pathfinding_algorithm = "A*_noprefetch"
