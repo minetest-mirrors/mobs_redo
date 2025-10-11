@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20250916",
+	mod = "redo", version = "20251011",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3653,12 +3653,17 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
-		if (spawn_protected == false
-		or (spawn_monster_protected == false
-		and core.registered_entities[name].type == "monster"))
-		and core.is_protected(pos, "") then
+		-- check if mob/monster can be spawned inside protected areas
+		if core.is_protected(pos, "") then
+
+			if core.registered_entities[name].type == "monster"
+			and spawn_monster_protected == false then
+--print("--- monster inside protected area", name)
+				return
+			elseif spawn_protected == false then
 --print("--- inside protected area", name)
-			return
+				return
+			end
 		end
 
 		for _,player in pairs(core.get_connected_players()) do
