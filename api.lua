@@ -2390,7 +2390,7 @@ function mob_class:do_states(dtime)
 					local amount = (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) ^ 0.5
 
 					-- check for arrow custom override
-					if self.arrow_override then self.arrow_override(ent) end
+					if self.arrow_override then self.arrow_override(ent, self) end
 
 					local v = ent.velocity or 1 -- or set to default
 

@@ -142,7 +142,7 @@ functions needed for the mob to work properly which contains the following:
    'arrow'               holds the pre-defined arrow object to shoot when
                          attacking.
    'arrow_override'      function that allows tweaking of arrow entity from
-                         inside mob definition (self) passed to function.
+                         inside mob definition (self, mob_ent) passed to function.
    'dogshoot_switch'     allows switching between attack types by using timers
                          (1 for shoot, 2 for dogfight)
    'dogshoot_count_max'  contains how many seconds before switching from
