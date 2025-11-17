@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20251011",
+	mod = "redo", version = "20251117",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2321,9 +2321,13 @@ function mob_class:do_states(dtime)
 
 				self:set_velocity(0)
 
-				if self.timer > 1 then
+				self.punch_timer = (self.punch_timer or 0) + dtime
 
-					self.timer = 0
+				if self.punch_timer >= self.punch_interval then
+
+					self.punch_timer = 0
+
+--					self.timer = 0
 
 					-- no custom attack or custom attack returns true to continue
 					if not self.custom_attack or self:custom_attack(self, p) then
@@ -3316,6 +3320,7 @@ function mobs:register_mob(name, def)
 		randomly_turn = def.randomly_turn ~= false,
 		ignore_invisibility = def.ignore_invisibility,
 		messages = def.messages,
+		punch_interval = def.punch_interval or 1,
 
 		on_rightclick = def.on_rightclick,
 		on_die = def.on_die,
