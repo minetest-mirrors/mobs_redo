@@ -626,7 +626,7 @@ Note: When an arrow hits a solid item moveresult is copied into the arrow
 Spawn Eggs
 ----------
 
-mobs:register_egg(name, description, background, addegg, no_creative)
+mobs:register_egg(name, description, background, addegg, no_creative, can_spawn_protect)
 
 This function registers a spawn egg which can be used to properly spawn in a mob.
 Animals are spawned as tamed unless sneak/shift is held while spawning.
@@ -638,6 +638,7 @@ Animals are spawned as tamed unless sneak/shift is held while spawning.
                  0 = no)
    'no_creative' when set to true this stops spawn egg appearing in creative
                  mode for destructive mobs like Dungeon Masters.
+   'can_spawn_protect' when true can spawn mob inside protected areas (default:nil).
 
 
 Explosion Function

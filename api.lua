@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20251117",
+	mod = "redo", version = "20251205",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3952,7 +3952,7 @@ end
 -- * spawn_egg=1: generic mob, no metadata
 -- * spawn_egg=2: captured/tamed mob, metadata
 
-function mobs:register_egg(mob, desc, background, addegg, no_creative)
+function mobs:register_egg(mob, desc, background, addegg, no_creative, can_spawn_protect)
 
 	local grp = {spawn_egg = 1}
 
@@ -3962,7 +3962,8 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 	local invimg = background
 
 	if addegg == 1 then
-		invimg = "mobs_chicken_egg.png^(" .. invimg .. "^[mask:mobs_chicken_egg_overlay.png)"
+		invimg = "mobs_chicken_egg.png^(" .. invimg
+				.. "^[mask:mobs_chicken_egg_overlay.png)"
 	end
 
 	-- does mob/entity exist
@@ -4001,7 +4002,13 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 							pointed_thing.under, under, placer, itemstack, pointed_thing)
 				end
 
-				if pos and not core.is_protected(pos, placer:get_player_name()) then
+				if pos then
+
+					-- can i spawn in protected areas?
+					if not can_spawn_protect
+					and core.is_protected(pos, placer:get_player_name()) then
+						return
+					end
 
 					if at_limit() then -- have we reached active mob limit
 
@@ -4014,6 +4021,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 
 					pos.y = pos.y + _y
 
+					-- copy egg data back into mob
 					local data = itemstack:get_metadata()
 					local smob = core.add_entity(pos, mob, data)
 					local ent = smob and smob:get_luaentity()
@@ -4054,7 +4062,13 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 						pointed_thing.under, under, placer, itemstack, pointed_thing)
 			end
 
-			if pos and not core.is_protected(pos, placer:get_player_name()) then
+			if pos then
+
+				-- can i spawn in protected areas?
+				if not can_spawn_protect
+				and core.is_protected(pos, placer:get_player_name()) then
+					return
+				end
 
 				if at_limit() then -- have we reached active mob limit
 
