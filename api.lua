@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20251205",
+	mod = "redo", version = "20251231",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -213,7 +213,8 @@ end
 
 function mob_class:do_attack(player, force)
 
-	if self.state == "attack" and not force then return end
+	if (self.state == "attack" or self.state == "die" or self.state == "runaway")
+	and not force then return end
 
 	self.attack = player ; self.state = "attack"
 
