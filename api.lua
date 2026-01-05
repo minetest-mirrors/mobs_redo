@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20251231",
+	mod = "redo", version = "20260105",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1415,11 +1415,9 @@ local function can_dig_drop(pos)
 	end
 end
 
--- pathfinder mod check and settings
+-- pathfinder mod check
 
 local pathfinder_mod = core.get_modpath("pathfinder")
-local los_switcher = false
-local height_switcher = false
 
 -- path finding and smart mob routine by rnd, line_of_sight and other edits by Elkien3
 
@@ -1445,13 +1443,13 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 	-- im stuck, search for path
 	if not has_lineofsight then
 
-		if los_switcher then
-			use_pathfind = true ; los_switcher = false
+		if self.path.los_switcher then
+			use_pathfind = true ; self.path.los_switcher = false
 		end -- cannot see target!
 	else
-		if not los_switcher then
+		if not self.path.los_switcher then
 
-			los_switcher = true ; use_pathfind = false
+			self.path.los_switcher = true ; use_pathfind = false
 
 			core.after(1, function(self)
 
@@ -1492,13 +1490,18 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 	if abs(s.y - target_pos.y) > prop.stepheight then
 
-		if height_switcher then use_pathfind = true ; height_switcher = false end
+		if self.path.height_switcher then
+				use_pathfind = true ; self.path.height_switcher = false end
 	else
-		if not height_switcher then use_pathfind = false ; height_switcher = true end
+		if not self.path.height_switcher then
+				use_pathfind = false ; self.path.height_switcher = true end
 	end
 
 	-- try to find a path
 	if use_pathfind then
+
+		local cb = self.initial_properties.collisionbox
+		local sheight = cb[5] - cb[2]
 
 		-- round position to avoid getting stuck in walls
 		s.x = floor(s.x + 0.5) ; s.z = floor(s.z + 0.5)
@@ -1509,11 +1512,10 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		-- determine node above ground (adjust height for player models)
 		if not ssight then s.y = sground.y + 1 end
 
-		local p1 = self.attack and self.attack:get_pos()
-
-		if not p1 then return end
-
-		p1.x = floor(p1.x + 0.5) ; p1.y = floor(p1.y + 0.5) ; p1.z = floor(p1.z + 0.5)
+		local p1 = {
+			x = floor(target_pos.x + 0.5),
+			y = floor(target_pos.y + 0.5),
+			z = floor(target_pos.z + 0.5)}
 
 		local dropheight = pathfinding_max_drop
 
@@ -1521,7 +1523,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		local jumpheight = 0
 
-		if self.jump_height >= pathfinding_max_jump then
+		if self.jump and self.jump_height >= pathfinding_max_jump then
 
 			jumpheight = min(ceil(
 					self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
