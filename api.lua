@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260124",
+	mod = "redo", version = "20260203",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3925,7 +3925,7 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 
 	texture = texture or "mobs_tnt_smoke.png"
 
-	if mobs_griefing then
+	if mobs_griefing and not minetest.is_protected(pos, "") then
 
 		if core.get_modpath("mcl_explosions") then
 
