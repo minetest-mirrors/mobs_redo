@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260203",
+	mod = "redo", version = "20260204",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2155,7 +2155,9 @@ function mob_class:do_states(dtime)
 
 			self.target_time_lost = (self.target_time_lost or 0) + dtime
 
-			if self.target_time_lost > self.attack_patience then self:stop_attack() end
+			if self.target_time_lost > self.attack_patience then
+				self:stop_attack() ; return
+			end
 		else
 			self.target_time_lost = 0
 		end
