@@ -201,11 +201,9 @@ function mob_class:mob_sound(sound)
 
 	if type(sound) == "string" then sound = {name = sound} end
 
-	sound.pitch = sound.pitch or 1.0 -- default if needed
+	sound.pitch = (sound.pitch or 1.0) + random(-10, 10) * 0.005 -- random differences
 
 	sound.pitch = self.child and sound.pitch + .3 or sound.pitch -- higher for a child
-
-	sound.pitch = sound.pitch + random(-10, 10) * 0.005 -- random pitch difference
 
 	sound.max_hear_distance = sound.max_hear_distance or self.sounds.distance or 10
 
@@ -1313,6 +1311,7 @@ function mob_class:breed()
 						ent2.mommy_tex = self.base_texture -- when grown
 						ent2.object:set_properties({textures = textures})
 						ent2.base_texture = textures
+						mobs:scale_mob(ent2, .5, .5)
 					end
 				end, self, ent)
 
