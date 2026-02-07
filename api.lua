@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260204",
+	mod = "redo", version = "20260207",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -197,16 +197,19 @@ end
 
 function mob_class:mob_sound(sound)
 
-	if not sound then return end
+	if not sound or not self.sounds then return end
 
-	local pitch = self.child and 1.5 or 1.0 -- higher pitch for a child
+	if type(sound) == "string" then sound = {name = sound} end
 
-	pitch = pitch + random(-10, 10) * 0.005 -- random pitch difference
+	sound.pitch = sound.pitch or 1.0 -- default if needed
 
-	core.sound_play(sound, {
-		object = self.object, gain = 1.0, pitch = pitch,
-		max_hear_distance = (self.sounds and self.sounds.distance) or 10
-	}, true)
+	sound.pitch = self.child and sound.pitch + .3 or sound.pitch -- higher for a child
+
+	sound.pitch = sound.pitch + random(-10, 10) * 0.005 -- random pitch difference
+
+	sound.max_hear_distance = sound.max_hear_distance or self.sounds.distance or 10
+
+	core.sound_play(sound, true)
 end
 
 -- set attack
