@@ -1,4 +1,3 @@
-
 -- translation & mod checks
 
 local S = core.get_translator("mobs")
@@ -207,7 +206,9 @@ function mob_class:mob_sound(sound)
 
 	sound.max_hear_distance = sound.max_hear_distance or self.sounds.distance or 10
 
-	core.sound_play(sound, true)
+	sound.object = self.object -- bind sound to mob
+
+	core.sound_play(sound.name, sound, true)
 end
 
 -- set attack
