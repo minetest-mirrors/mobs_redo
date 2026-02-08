@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260207",
+	mod = "redo", version = "20260208",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -579,7 +579,7 @@ local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 function mob_class:update_tag(newname)
 
 	local col
-	local prop = self.object:get_properties()
+	local prop = self.object:get_properties() ; if not prop then return end
 	local qua = prop.hp_max / 6
 	local old_nametag = prop.nametag
 	local old_nametag_color = self.nametag_col
