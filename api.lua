@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260305",
+	mod = "redo", version = "20260315",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -833,13 +833,17 @@ function mob_class:check_for_death(cmi_cause)
 	return true
 end
 
--- get node, use fallback for nil or unknown
+-- faster get node, use fallback for unknown
+
+local get_id = core.get_node_raw
+local get_id_name = core.get_name_from_content_id
 
 local function node_ok(pos, fallback)
 
-	local node = core.get_node_or_nil(pos)
+	local id, p1, p2 = get_id(pos.x, pos.y, pos.z)
+	local name = get_id_name(id)
 
-	if node and core.registered_nodes[node.name] then return node end
+	if core.registered_nodes[name] then return {name = name, param1 = p1, param2 = p2} end
 
 	return core.registered_nodes[(fallback or mobs.fallback_node)]
 end
