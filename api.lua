@@ -429,17 +429,9 @@ function mob_class:set_animation(anim, force)
 		0, self.animation[anim .. "_loop"] ~= false)
 end
 
--- faster get node, use fallback for unknown
+-- get node, use fallback for unknown
 
-local get_id = core.get_node_raw
-local get_id_name = core.get_name_from_content_id
 local get_node = core.get_node
-
-if get_id then get_node = function(pos)
-		local id, p1, p2 = get_id(pos.x, pos.y, pos.z)
-		return {name = get_id_name(id), param1 = p1, param2 = p2}
-	end
-end
 
 local function node_ok(pos, fallback)
 
