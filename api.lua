@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260317",
+	mod = "redo", version = "20260318",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -429,9 +429,21 @@ function mob_class:set_animation(anim, force)
 		0, self.animation[anim .. "_loop"] ~= false)
 end
 
--- get node, use fallback for unknown
+-- use new functions if available
 
+local get_id = core.get_node_raw
+local get_id_name = core.get_name_from_content_id
 local get_node = core.get_node
+
+if get_id then get_node = function(pos)
+
+		local id, p1, p2, pos_ok = get_id(pos.x, pos.y, pos.z)
+
+		return {name = get_id_name(id), param1 = p1, param2 = p2, loaded = pos_ok}
+	end
+end
+
+-- get node at pos, return fallback for unknown
 
 local function node_ok(pos, fallback)
 
