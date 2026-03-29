@@ -360,7 +360,8 @@ enhance mob functionality and have them do many interesting things:
                     melee attack, parameters are (self, to_attack) and if true
                     is returned normal attack function continued.
    'on_die'         a function that is called when mob is killed (self, pos), also
-                    has access to self.cause_of_death table.
+                    has access to self.cause_of_death table, if True is returned
+                    then mob will not be removed (for special features).
    'on_death'       Official engine version of above when mob killed (self, killer),
                     'killer' is only returned if player killed the mob.
    'on_flop'        function called when flying or swimmimng mob is no longer in
@@ -466,6 +467,7 @@ mob_class:on_blast(damage) -- function called when mob in blast area
 mob_class:is_inside(itemtable) -- returns True is mob collisionbox inside any node/group
 in table
 mob_class:go_to(pos) -- makes mob go to that position or nearby
+mob_class:death_anim() -- plays mob death animation if found before removing mob
 
 
 Adding Mobs in World

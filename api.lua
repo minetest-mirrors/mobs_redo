@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260318",
+	mod = "redo", version = "20260329",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -756,6 +756,38 @@ function mobs:remove(self, decrease)
 	remove_mob(self, decrease)
 end
 
+-- death animation
+function mob_class:death_anim()
+
+	if self.animation and self.animation.die_start and self.animation.die_end then
+
+		local frames = self.animation.die_end - self.animation.die_start
+		local speed = self.animation.die_speed or 15
+		local length = max((frames / speed), 0)
+		local rot = self.animation.die_rotate and 5
+
+		self.object:set_properties({
+			pointable = false, collide_with_objects = false,
+			automatic_rotate = rot, static_save = false
+		})
+
+		self:set_velocity(0)
+		self:set_animation("die")
+
+		core.after(length, function(self)
+
+			if self.object:get_luaentity() then
+
+				if use_cmi then cmi.notify_die(self.object, cmi_cause) end
+
+				remove_mob(self, true)
+			end
+		end, self)
+
+		return true
+	end
+end
+
 -- check if dead
 
 function mob_class:check_for_death(cmi_cause)
@@ -789,6 +821,26 @@ function mob_class:check_for_death(cmi_cause)
 
 	local pos = self.object:get_pos()
 
+	-- reset vars
+	self.attack = nil
+	self.following = nil
+	self.v_start = false ; self.timer = 0 ; self.blinktimer = 0
+	self.passive = true
+	self.state = "die"
+	self.fly = false
+
+	-- execute mob api custom death function first for any special features
+	if pos and self.on_die then
+
+		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
+
+		if self:on_die(pos) then
+			return true -- skips removal of mob
+		end
+
+		remove_mob(self, true) ; return true
+	end
+
 	-- execute official engine on_death function if found
 	if self.on_death then
 
@@ -804,49 +856,8 @@ function mob_class:check_for_death(cmi_cause)
 		remove_mob(self, true) ; return true
 	end
 
-	-- execute mob api custom death function
-	if pos and self.on_die then
-
-		self:on_die(pos)
-
-		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
-
-		remove_mob(self, true) ; return true
-	end
-
-	-- reset vars
-	self.attack = nil
-	self.following = nil
-	self.v_start = false ; self.timer = 0 ; self.blinktimer = 0
-	self.passive = true
-	self.state = "die"
-	self.fly = false
-
-	-- check for die animation
-	if self.animation and self.animation.die_start and self.animation.die_end then
-
-		local frames = self.animation.die_end - self.animation.die_start
-		local speed = self.animation.die_speed or 15
-		local length = max((frames / speed), 0)
-		local rot = self.animation.die_rotate and 5
-
-		self.object:set_properties({
-			pointable = false, collide_with_objects = false,
-			automatic_rotate = rot, static_save = false
-		})
-
-		self:set_velocity(0)
-		self:set_animation("die")
-
-		core.after(length, function(self)
-
-			if self.object:get_luaentity() then
-
-				if use_cmi then cmi.notify_die(self.object, cmi_cause) end
-
-				remove_mob(self, true)
-			end
-		end, self)
+	-- did we find a death animation
+	if self:death_anim() then
 
 		return true
 
