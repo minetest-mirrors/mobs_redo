@@ -51,7 +51,7 @@ functions needed for the mob to work properly which contains the following:
    'randomly_turn' if set to false then mob will not turn to face player or
                    randomly turn while walking or standing.
    'jump'          when true allows your mob to jump updwards[DEPRECATED].
-   'jump_height'   holds the height your mob can jump, 0 to disable jumping.
+   'jump_height'   velocity your mob can jump, 0 to disable jumping.
    'can_leap'      when true obstacles like fences or pits wont stop a mob
                    from trying to jump out.
    'stepheight'    height of a block that your mob can easily walk up onto,
@@ -73,8 +73,8 @@ functions needed for the mob to work properly which contains the following:
                    or default when enabled is "^[colorize:#c9900070".
    'knock_back'    when true has mobs falling backwards when hit, the greater
                    the damage the more they move back.
-   'fear_height'   is how high a cliff or edge has to be before the mob stops
-                   walking, 0 to turn off height fear.
+   'fear_height'   is how many nodes high a cliff or edge has to be before the mob
+                   stops walking, 0 to turn off height fear.
    'fall_speed'    has the maximum speed the mob can fall at, default is -10.
    'fall_damage'   when true causes falling to inflict damage.
    'water_damage'  holds the damage per second infliced to mobs when standing in
