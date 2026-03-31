@@ -74,6 +74,7 @@ local mob_height_fix = settings:get_bool("mob_height_fix")
 local mob_log_spawn = settings:get_bool("mob_log_spawn") == true
 local active_mobs = 0
 local mob_infotext = settings:get_bool("mob_infotext") ~= false
+local gravity = tonumber(core.settings:get("movement_gravity")) or 9.81
 
 -- loop interval timers
 
@@ -1557,9 +1558,6 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 	-- try to find a path
 	if use_pathfind then
-
-		local cb = self.initial_properties.collisionbox
-		local sheight = cb[5] - cb[2]
 
 		-- round position to avoid getting stuck in walls
 		s.x = floor(s.x + 0.5) ; s.z = floor(s.z + 0.5)
@@ -3224,7 +3222,7 @@ function mob_class:on_step(dtime, moveresult)
 			if self:do_states(main_timer_interval) then return end
 		end
 
-		self:do_runaway_from(self)
+		self:do_runaway_from()
 		self:do_stay_near()
 
 		self.timer1 = 0
@@ -3283,6 +3281,7 @@ function mobs:register_mob(name, def)
 		keep_flying = def.keep_flying,
 		owner = def.owner,
 		order = def.order,
+		jump = def.jump,
 		jump_height = def.jump_height,
 		can_leap = def.can_leap,
 		drawtype = def.drawtype, -- DEPRECATED, use rotate
