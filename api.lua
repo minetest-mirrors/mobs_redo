@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260329",
+	mod = "redo", version = "20260401",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -90,10 +90,8 @@ local pathfinding_stuck_path_timeout = tonumber(
 		settings:get("mob_pathfinding_stuck_path_timeout")) or 5.0
 local pathfinding_algorithm = settings:get("mob_pathfinding_algorithm") or "A*_noprefetch"
 
-if pathfinding_algorithm == "AStar_noprefetch" then
-	pathfinding_algorithm = "A*_noprefetch"
-elseif pathfinding_algorithm == "AStar" then
-	pathfinding_algorithm = "A*"
+if pathfinding_algorithm == "AStar_noprefetch" then pathfinding_algorithm = "A*_noprefetch"
+elseif pathfinding_algorithm == "AStar" then pathfinding_algorithm = "A*"
 end
 
 local pathfinding_max_jump = tonumber(settings:get("mob_pathfinding_max_jump") or 4)
@@ -1089,34 +1087,28 @@ function mob_class:do_jump()
 
 	-- don't jump if ordered to stand, are already in mid-air, can fly or are a child
 	if self.state == "stand" or self.order == "stand" or vel.y ~= 0
-	or self.fly or self.child then return false end
+	or self.fly or self.child or self.jump_height == 0 then return false end
 
-	-- only jump if standing on solid node that allows it
 	local ndef = core.registered_nodes[self.standing_on]
 
-	if ndef.walkable == false or (ndef.groups and ndef.groups.disable_jump == 1) then
-		return false
-	end
+	-- only jump on solid nodes that allow it
+	if ndef.walkable == false or ndef.groups.disable_jump == 1 then return false end
 
 	-- is there anything stopping us from jumping up onto a block?
-	local blocked = core.registered_nodes[self.looking_above].walkable
+	local blocked = core.registered_nodes[self.looking_above].walkable or self.facing_fence
 
 	-- if mob can leap then remove blockages and let them try
-	if self.can_leap then blocked = false ; self.facing_fence = false end
+	if self.can_leap then blocked = false end
 
-	-- what node are we looking at?
-	ndef = core.registered_nodes[self.looking_at]
+	ndef = core.registered_nodes[self.looking_at] -- what node are we looking at?
 
-	-- jump if possible
-	if self.jump_height > 0
-	and (self.walk_chance == 0 or (ndef.walkable and ndef.drawtype == "normal"))
-	and not blocked	and not self.facing_fence then
+	-- jump if we have space above to, or are a jumping mob
+	if (not blocked and (ndef.drawtype == "normal" or ndef.drawtype:find("glasslike")))
+	or self.walk_chance == 0 then
 
 		vel.y = self.jump_height
 
-		self:set_animation("jump")
-
-		self.object:set_velocity(vel)
+		self:set_animation("jump") ; self.object:set_velocity(vel)
 
 		core.after(0.3, function(self, vel) -- move forward when in air
 
@@ -1496,8 +1488,8 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 	local use_pathfind = false
 	local has_lineofsight = core.line_of_sight(
-		{x = s.x, y = (s.y) + .5, z = s.z},
-		{x = target_pos.x, y = (target_pos.y) + 1.5, z = target_pos.z}, .2)
+			{x = s.x, y = (s.y) + .5, z = s.z},
+			{x = target_pos.x, y = (target_pos.y) + 1.5, z = target_pos.z}, .2)
 
 	-- im stuck, search for path
 	if not has_lineofsight then
@@ -1579,7 +1571,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		local jumpheight = 0
 
-		if self.jump and self.jump_height >= pathfinding_max_jump then
+		if self.jump_height >= pathfinding_max_jump then
 
 			jumpheight = min(ceil(
 					self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
@@ -1617,8 +1609,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		if self.attack then self:do_attack(self.attack) end
 
-		-- no path found
-		if not self.path.way then
+		if not self.path.way then -- no path found
 
 			self.path.following = false
 
@@ -1628,8 +1619,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 				-- is player more than 1 block higher than mob?
 				if p1.y > (s.y + 1) then
 
-					-- build upwards
-					if not core.is_protected(s, "") then
+					if not core.is_protected(s, "") then -- build upwards
 
 						local ndef1 = core.registered_nodes[self.standing_in]
 
@@ -1640,21 +1630,17 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 					local sheight = ceil(prop.collisionbox[5]) + 1
 
-					-- assume mob is 2 blocks high so it digs above its head
-					s.y = s.y + sheight
+					s.y = s.y + sheight -- assume mob is 2 blocks high to dig above head
 
-					-- remove one block above to make room to jump
-					can_dig_drop(s)
+					can_dig_drop(s) -- remove one block from above to make room to jump
 
 					s.y = s.y - sheight
 
 					self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
 
-				-- is player more than 1 block lower than mob
-				elseif p1.y < (s.y - 1) then
+				elseif p1.y < (s.y - 1) then -- is player move than 1 block lower
 
-					-- dig down
-					s.y = s.y - prop.collisionbox[4] - 0.2
+					s.y = s.y - prop.collisionbox[4] - 0.2 -- dig down
 
 					can_dig_drop(s)
 
@@ -1674,8 +1660,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		elseif s.y < p1.y and (not self.fly) then
 			self:do_jump() --add jump to pathfinding
 			self.path.following = true
-		else
-			-- yay i found path
+		else -- yay i found path
 			if self.attack then
 				self:mob_sound(self.sounds.war_cry)
 			else
@@ -1684,8 +1669,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 			self:set_velocity(self.walk_velocity)
 
-			-- now follow path
-			self.path.following = true
+			self.path.following = true -- now follow path
 		end
 	end
 end
@@ -3281,7 +3265,6 @@ function mobs:register_mob(name, def)
 		keep_flying = def.keep_flying,
 		owner = def.owner,
 		order = def.order,
-		jump = def.jump,
 		jump_height = def.jump_height,
 		can_leap = def.can_leap,
 		drawtype = def.drawtype, -- DEPRECATED, use rotate
