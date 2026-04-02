@@ -539,19 +539,19 @@ end
 
 function mob_class:do_stay_near()
 
-	if not self.stay_near then return false end
+	if not self.stay_near then return end
 
 	local pos = self.object:get_pos()
 	local chance = self.stay_near[2] or 10
 
-	if not pos or random(chance) > 1 then return false end
+	if not pos or random(chance) > 1 then return end
 
 	local r = self.view_range
 	local nearby_nodes = core.find_nodes_in_area(
 			{x = pos.x - r, y = pos.y - 1, z = pos.z - r},
 			{x = pos.x + r, y = pos.y + 1, z = pos.z + r}, self.stay_near[1])
 
-	if #nearby_nodes == 0 then return false end
+	if #nearby_nodes == 0 then return end
 
 	self:yaw_to_pos(nearby_nodes[random(#nearby_nodes)])
 	self:set_animation("walk")
@@ -684,9 +684,8 @@ function mob_class:item_drop()
 	if death_by_player then
 
 		local wield_stack = self.cause_of_death.puncher:get_wielded_item()
-		local wield_name = wield_stack:get_name()
 		local wield_stack_meta = wield_stack:get_meta()
-		local item_def = core.registered_items[wield_name]
+		local item_def = core.registered_items[wield_stack:get_name()]
 		local item_looting = item_def and item_def.tool_capabilities and
 				item_def.tool_capabilities.looting_level or 0
 
@@ -700,7 +699,7 @@ function mob_class:item_drop()
 
 		if random(self.drops[n].chance) == 1 then
 
-			num = random(self.drops[n].min or 0, self.drops[n].max or 1)
+			num = random(self.drops[n].min or 0, self.drops[n].max or 1) + looting
 			item = self.drops[n].name
 
 			-- cook items for a hot death
@@ -716,13 +715,11 @@ function mob_class:item_drop()
 
 			-- only drop rare items (drops.min = 0) if killed by player
 			if death_by_player or self.drops[n].min ~= 0 then
-				obj = core.add_item(pos, ItemStack(item .. " " .. (num + looting)))
+				obj = core.add_item(pos, ItemStack(item .. " " .. num))
 			end
 
 			if obj and obj:get_luaentity() then
 				obj:set_velocity({x = random() - 0.5, y = 4, z = random() - 0.5})
-			elseif obj then
-				obj:remove()
 			end
 		end
 	end
@@ -788,28 +785,27 @@ function mob_class:check_for_death(cmi_cause)
 	if self.health == self.old_health and self.health > 0 then return false end
 
 	local damaged = self.health < self.old_health
-	local prop = self.object:get_properties()
 
 	self.old_health = self.health
 
 	if use_vh1 then VH1.update_bar(self.object, self.health) end
 
-	if self.health > 0 then
+	if self.health > 0 then -- mob still alive but damaged
 
-		-- play hurt sound if damaged
 		if damaged then self:mob_sound(self.sounds.damage) end
 
 		-- make sure health isn't higher than max
+		local prop = self.object:get_properties()
+
 		if self.health > prop.hp_max then self.health = prop.hp_max end
 
-		self:update_tag() ; return false
+		self:update_tag() ; return
 	end
 
+	-- mob is dead
 	self.cause_of_death = cmi_cause
 	self:item_drop() -- drop items
 	self:mob_sound(self.sounds.death) -- play death sound
-
-	local pos = self.object:get_pos()
 
 	-- reset vars
 	self.attack = nil
@@ -819,14 +815,14 @@ function mob_class:check_for_death(cmi_cause)
 	self.state = "die"
 	self.fly = false
 
+	local pos = self.object:get_pos()
+
 	-- execute mob api custom death function first for any special features
 	if pos and self.on_die then
 
 		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
 
-		if self:on_die(pos) then
-			return true -- skips removal of mob
-		end
+		if self:on_die(pos) then return true end -- skips removal of mob
 
 		remove_mob(self, true) ; return true
 	end
@@ -835,11 +831,8 @@ function mob_class:check_for_death(cmi_cause)
 	if self.on_death then
 
 		-- only return killer if punched by player
-		if cmi_cause.type == "punch" and is_player(cmi_cause.puncher) then
-			cmi_cause = cmi_cause.puncher
-		else
-			cmi_cause = nil
-		end
+		cmi_cause = (cmi_cause.type == "punch" and is_player(cmi_cause.puncher))
+				and cmi_cause.puncher or nil
 
 		self:on_death(cmi_cause)
 
@@ -847,9 +840,7 @@ function mob_class:check_for_death(cmi_cause)
 	end
 
 	-- did we find a death animation
-	if self:death_anim() then
-
-		return true
+	if self:death_anim() then return true
 
 	elseif pos then -- otherwise remove mob and show particle effect
 
@@ -929,11 +920,10 @@ function mob_class:is_inside(itemtable)
 
 	local cb = self.object:get_properties().collisionbox
 	local pos = self.object:get_pos()
-	local nn = core.find_nodes_in_area(
-			vector.offset(pos, cb[1], cb[2], cb[3]),
-			vector.offset(pos, cb[4], cb[5], cb[6]), itemtable)
 
-	if nn and #nn > 0 then return true end
+	return #core.find_nodes_in_area(
+			vector.offset(pos, cb[1], cb[2], cb[3]),
+			vector.offset(pos, cb[4], cb[5], cb[6]), itemtable) > 0
 end
 
 -- environmental damage
@@ -1050,13 +1040,7 @@ function mob_class:do_env_damage()
 	and (nodef.node_box == nil or nodef.node_box.type == "regular")
 	and (nodef.groups.disable_suffocation ~= 1) then
 
-		local damage
-
-		if type(self.suffocation) == "boolean" and self.suffocation then
-			damage = 2
-		else
-			damage = self.suffocation
-		end
+		local damage = type(self.suffocation) == "number" and self.suffocation or 2
 
 		self.health = self.health - damage
 
@@ -1329,12 +1313,10 @@ end
 
 function mob_class:replace(pos)
 
-	local vel = self.object:get_velocity() ; if not vel then return end
+	local vel = self.object:get_velocity()
 
-	if not mobs_griefing or not self.replace_rate or not self.replace_what
-	or self.child or vel.y ~= 0 or random(self.replace_rate) > 1 then
-		return
-	end
+	if not vel or not mobs_griefing or not self.replace_rate or not self.replace_what
+	or self.child or vel.y ~= 0 or random(self.replace_rate) > 1 then return end
 
 	local what, with, y_offset, reach
 
@@ -1375,7 +1357,7 @@ function mob_class:replace(pos)
 				oldnode = get_node(pos).name
 			end
 
-			if not self:on_replace(pos, oldnode, newnode) then return end
+			if self.on_replace and self:on_replace(pos, oldnode, newnode) then return end
 		end
 
 		core.set_node(pos, {name = with})
