@@ -13,7 +13,7 @@ end
 
 local square = math.sqrt
 
-local get_distance = function(a, b)
+local function get_distance(a, b)
 
 	if not a or not b then return 50 end -- nil check and default distance
 
@@ -159,10 +159,7 @@ core.register_abm({
 				player = players[i]
 
 				if get_distance(player:get_pos(), pos) <= pla then
-
-					in_range = true
-
-					break
+					in_range = true ; break
 				end
 			end
 

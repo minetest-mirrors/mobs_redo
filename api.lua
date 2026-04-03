@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260402",
+	mod = "redo", version = "20260403",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -979,8 +979,8 @@ function mob_class:do_env_damage()
 	end
 
 	-- damage_per_second node check
-	if self.node_damage and nodef.damage_per_second and nodef.damage_per_second ~= 0
-	and nodef.groups.lava == nil and nodef.groups.fire == nil then
+	if self.node_damage and nodef.damage_per_second ~= 0
+	and not nodef.groups.lava and not nodef.groups.fire then
 
 		local damage = nodef.damage_per_second
 
@@ -1777,7 +1777,7 @@ end
 
 function mob_class:do_runaway_from()
 
-	if not self.runaway_from then return end
+	if not self.runaway_from and self.state ~= "flop" then return end
 
 	local s = self.object:get_pos() ; if not s then return end
 	local p, sp, dist, pname, player, obj, min_player, name
