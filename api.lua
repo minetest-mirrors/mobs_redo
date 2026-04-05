@@ -782,7 +782,7 @@ function mob_class:check_for_death(cmi_cause)
 	if self.state == "die" then return true end -- already dead
 
 	-- has health changed?
-	if self.health == self.old_health and self.health > 0 then return false end
+	if self.health == self.old_health and self.health > 0 then return end
 
 	local damaged = self.health < self.old_health
 
@@ -888,10 +888,10 @@ end
 function mob_class:is_at_cliff()
 
 	if self.driver or self.fear_height == 0 then -- 0 for no fear of heights
-		return false
+		return
 	end
 
-	local yaw = self.object:get_yaw() ; if not yaw then return false end
+	local yaw = self.object:get_yaw() ; if not yaw then return end
 	local prop = self.object:get_properties()
 	local dir_x = -sin(yaw) * (prop.collisionbox[4] + 0.5)
 	local dir_z = cos(yaw) * (prop.collisionbox[4] + 0.5)
@@ -1058,16 +1058,16 @@ end
 
 function mob_class:do_jump()
 
-	local vel = self.object:get_velocity() ; if not vel then return false end
+	local vel = self.object:get_velocity() ; if not vel then return end
 
 	-- is mob allowed to jump
 	if self.state == "stand" or self.order == "stand" or vel.y ~= 0
-	or self.fly or self.child or self.jump_height == 0 then return false end
+	or self.fly or self.child or self.jump_height == 0 then return end
 
 	local ndef = core.registered_nodes[self.standing_on]
 
 	-- only jump on solid nodes that allow it
-	if not ndef.walkable or ndef.groups.disable_jump == 1 then return false end
+	if not ndef.walkable or ndef.groups.disable_jump == 1 then return end
 
 	-- is there anything stopping us from jumping up onto a block?
 	local blocked = core.registered_nodes[self.looking_above].walkable or self.facing_fence
@@ -1153,7 +1153,7 @@ end
 
 function mob_class:follow_holding(clicker)
 
-	if is_invisible(self, clicker:get_player_name()) then return false end
+	if is_invisible(self, clicker:get_player_name()) then return end
 
 	return check_for(clicker:get_wielded_item():get_name(), self.follow)
 end
@@ -1407,7 +1407,7 @@ end
 
 local function can_dig_drop(pos)
 
-	if core.is_protected(pos, "") then return false end
+	if core.is_protected(pos, "") then return end
 
 	local node = node_ok(pos, "air").name
 	local ndef = core.registered_nodes[node]
@@ -2030,6 +2030,17 @@ function mob_class:do_states(dtime)
 			self.state = "walk"
 			self:set_animation("walk")
 		end
+
+		-- mobs who cant walk but jump around
+		if self.walk_chance == 0 and not self.at_cliff
+		and self.jump_chance and random(100) <= self.jump_chance then
+			self:set_velocity(self.walk_velocity)
+			self.state = "jump"
+		end
+
+	elseif self.state == "jump" then
+
+		self.state = "stand" -- we jump for one cycle before standing again
 
 	elseif self.state == "walk" then
 
@@ -3218,6 +3229,7 @@ function mobs:register_mob(name, def)
 		owner = def.owner,
 		order = def.order,
 		jump_height = def.jump_height,
+		jump_chance = def.jump_chance,
 		can_leap = def.can_leap,
 		drawtype = def.drawtype, -- DEPRECATED, use rotate
 		rotate = rad(def.rotate or 0), -- 0=front 90=side 180=back 270=side2
@@ -3450,7 +3462,7 @@ function mobs:add_mob(pos, def)
 
 	if not ent then
 --print("[mobs] entity not found " .. def.name)
-		return false
+		return
 	else
 		effect(pos, 15, "mobs_tnt_smoke.png", 1, 2, 2, 15, 5)
 	end
@@ -4340,8 +4352,6 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 				self.name:split(":")[2]) .. "\n- " .. table.concat(self.follow, "\n- "))
 		end
 	end
-
-	return false
 end
 
 -- inspired by blockmen's nametag mod
