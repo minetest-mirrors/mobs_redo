@@ -1777,7 +1777,7 @@ end
 
 function mob_class:do_runaway_from()
 
-	if not self.runaway_from and self.state ~= "flop" then return end
+	if not self.runaway_from or self.state == "flop" then return end
 
 	local s = self.object:get_pos() ; if not s then return end
 	local p, sp, dist, pname, player, obj, min_player, name
@@ -2012,11 +2012,8 @@ function mob_class:do_states(dtime)
 				end
 			end
 
-			if lp then -- lok at any players nearby, otherwise turn randomly
-				yaw = self:yaw_to_pos(lp)
-			else
-				yaw = yaw + random() - 0.5
-			end
+			-- look at any players nearby, otherwise turn randomly
+			yaw = lp and self:yaw_to_pos(lp) or yaw + random() - 0.5
 
 			self:set_yaw(yaw, 8)
 		end
