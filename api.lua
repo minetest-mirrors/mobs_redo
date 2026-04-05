@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260403",
+	mod = "redo", version = "20260405",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1277,9 +1277,7 @@ function mob_class:breed()
 					if not self.object:get_luaentity() then return end
 
 					-- custom breed function
-					if self.on_breed then
-						if not self:on_breed(ent) then return end
-					end
+					if self.on_breed and self:on_breed(ent) == false then return end
 
 					-- add baby
 					local ent2 = mobs:add_mob(pos, {
@@ -1357,7 +1355,9 @@ function mob_class:replace(pos)
 				oldnode = get_node(pos).name
 			end
 
-			if self.on_replace and self:on_replace(pos, oldnode, newnode) then return end
+			if self.on_replace and self:on_replace(pos, oldnode, newnode) == false then
+				return
+			end
 		end
 
 		core.set_node(pos, {name = with})
@@ -3130,7 +3130,7 @@ function mob_class:on_step(dtime, moveresult)
 	end
 
 	-- run custom function (defined in mob lua file) - when false skip going any further
-	if self.do_custom and not self:do_custom(dtime, moveresult) then
+	if self.do_custom and not self:do_custom(dtime, moveresult) == false then
 		return
 	end
 
