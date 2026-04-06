@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260405",
+	mod = "redo", version = "20260406",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -391,11 +391,11 @@ function mob_class:set_animation(anim, force)
 
 	if not self.animation or not anim then return end
 
-	self.animation.current = self.animation.current or ""
+	self.animation_current = self.animation_current or ""
 
 	-- only use different animation for attacks when using same set
 	if not force and anim ~= "punch" and anim ~= "shoot"
-	and string.find(self.animation.current, anim) then return end
+	and string.find(self.animation_current, anim) then return end
 
 	local num = 0
 
@@ -412,11 +412,11 @@ function mob_class:set_animation(anim, force)
 		anim = anim .. (num ~= 0 and num or "")
 	end
 
-	if (anim == self.animation.current and not force)
+	if (anim == self.animation_current and not force)
 	or not self.animation[anim .. "_start"]
 	or not self.animation[anim .. "_end"] then return end
 
-	self.animation.current = anim
+	self.animation_current = anim
 
 	self.object:set_animation({
 		x = self.animation[anim .. "_start"],
