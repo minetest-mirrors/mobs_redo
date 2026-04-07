@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260406",
+	mod = "redo", version = "20260407",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3141,7 +3141,7 @@ function mob_class:on_step(dtime, moveresult)
 	end
 
 	-- run custom function (defined in mob lua file) - when false skip going any further
-	if self.do_custom and not self:do_custom(dtime, moveresult) == false then
+	if self.do_custom and self:do_custom(dtime, moveresult) == false then
 		return
 	end
 
