@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260407",
+	mod = "redo", version = "20260408",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1698,51 +1698,42 @@ function mob_class:general_attack()
 
 		local ent = objs[n]:get_luaentity()
 
-		if is_player(objs[n]) then -- are we a player?
+		if damage_enabled and is_player(objs[n]) then -- are we a viable player?
 
-			-- remove from list if invisible or unable to attack
-			if not damage_enabled or not self.attack_players
-			or self.owner == objs[n]:get_player_name()
-			-- npcs and animals that are tamed will not attack players unless provoked
+			-- remove player if owner, invisible or just not interesting enough to attack
+			if not self.attack_players or self.owner == objs[n]:get_player_name()
+			-- tame npcs and animals will not attack players unless provoked
 			or (self.type ~= "monster" and self.tamed)
 			or is_invisible(self, objs[n]:get_player_name())
+			or is_peaceful_player(objs[n])
 			or (self.specific_attack and not check_for("player", self.specific_attack)) then
 				objs[n] = nil
---print("- pla", n)
 			end
 
 		-- are we a creatura mob?
 		elseif creatura and ent and ent._cmi_is_mob ~= true
 		and ent.hitbox and ent.stand_node then
 
-		-- monsters attack all creatura mobs, npc and animals will only attack
-		-- if the animal owner is currently being attacked by creatura mob
-		if self.name == ent.name
-		or (self.type ~= "monster"
+			-- monsters attack all creatura mobs, npc and animals will only attack
+			-- if the animal owner is currently being attacked by creatura mob
+			if self.name == ent.name or (self.type ~= "monster"
 			and self.owner ~= (ent._target and ent._target:get_player_name() or "."))
-		or (self.specific_attack and not check_for(ent.name, self.specific_attack)) then
-
-			objs[n] = nil
---print("-- creatura", ent.name)
-		end
+			or (self.specific_attack and not check_for(ent.name, self.specific_attack)) then
+				objs[n] = nil
+			end
 
 		-- or are we a mob?
 		elseif ent and ent._cmi_is_mob then
 
 			-- remove mobs to not attack
-			if self.name == ent.name
-			or check_for(ent.name, self.attack_ignore)
+			if self.name == ent.name or check_for(ent.name, self.attack_ignore)
 			or (not self.attack_animals and ent.type == "animal")
 			or (not self.attack_monsters and ent.type == "monster")
 			or (not self.attack_npcs and ent.type == "npc")
 			or (self.specific_attack and not check_for(ent.name, self.specific_attack)) then
 				objs[n] = nil
---print("- mob", n, self.name, ent.name)
 			end
-
-		-- remove all other entities
-		else
---print(" -obj", n)
+		else -- remove all other entities
 			objs[n] = nil
 		end
 	end
@@ -1750,7 +1741,6 @@ function mob_class:general_attack()
 	local p, sp, dist, min_player
 	local min_dist = self.view_range + 1
 
-	-- go through remaining entities and select closest
 	for _,player in pairs(objs) do
 
 		p = player:get_pos() ; sp = s
@@ -1760,9 +1750,8 @@ function mob_class:general_attack()
 		-- aim higher to make looking up hills more realistic
 		p.y = p.y + 1 ; sp.y = sp.y + 1
 
-		-- choose closest player to attack
-		if dist ~= 0 and dist < min_dist
-		and self:line_of_sight(sp, p) and not is_peaceful_player(player) then
+		-- choose closest entity to attack
+		if dist ~= 0 and dist < min_dist and self:line_of_sight(sp, p) then
 			min_dist = dist
 			min_player = player
 		end
