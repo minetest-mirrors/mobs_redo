@@ -36,6 +36,7 @@ https://forum.minetest.net/viewtopic.php?f=11&t=9917
 * Updated spawn egg metadata functions
 * Added jump_chance for non walking mobs (slimes)
 * Use self.animation_current
+* Simplify mob riding to use existing physics and env_damage
 * Many tweaks and code tidy
 
 ### Version 1.62
