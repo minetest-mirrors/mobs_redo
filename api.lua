@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260408",
+	mod = "redo", version = "20260409",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2431,7 +2431,7 @@ function mob_class:falling(pos)
 
 		local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
-		self.object:set_velocity({x = v.x, y = 0.6, z = v.z})
+		self.object:set_velocity({x = v.x, y = 0.4, z = v.z})
 
 		fall_speed = -1.2 / visc
 	else
