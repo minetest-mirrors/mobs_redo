@@ -202,7 +202,7 @@ function mobs.detach(player)
 	end)
 end
 
--- ride mob like car or horse
+-- ride mob like horse or even a car
 
 function mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 
@@ -246,6 +246,11 @@ function mobs.drive(entity, moving_anim, stand_anim, can_fly, dtime)
 		end
 
 		entity.object:set_yaw(horz - entity.rotate)
+
+		-- firing arrows
+		if ctrl.LMB and ctrl.sneak and entity.do_mount_action then
+			entity.do_mount_action(entity, dtime)
+		end
 
 		if can_fly then
 
@@ -335,7 +340,7 @@ end
 
 -- fly mob in facing direction (by D00Med, edited by TenPlus1)
 
-function mobs.fly(entity, _, speed, shoots, arrow, moving_anim, stand_anim)
+function mobs.fly(entity, dtime, speed, shoots, arrow, moving_anim, stand_anim)
 
 	local ctrl = entity.driver:get_player_control() ; if not ctrl then return end
 	local velo = entity.object:get_velocity() ; if not velo then return end

@@ -3304,6 +3304,7 @@ function mobs:register_mob(name, def)
 		on_death = def.on_death, -- engine function for entity death
 		on_flop = def.on_flop,
 		do_custom = def.do_custom,
+		do_mount_action = def.do_mount_action,
 		on_replace = def.on_replace,
 		custom_attack = def.custom_attack,
 		on_spawn = def.on_spawn,
