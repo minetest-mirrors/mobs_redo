@@ -226,7 +226,7 @@ end
 
 local function get_distance(a, b)
 
-	if not a or not b then return 50 end -- nil check and default distance
+	if not a or not b then return 50 end -- nil check with default distance
 
 	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
 
@@ -308,9 +308,9 @@ local function check_for(look_for, look_inside)
 
 		for _, str in pairs(look_inside) do
 
-			if str == look_for then return true end
+			if str == look_for then return true
 
-			if str and str:find("group:") then
+			elseif str and str:find("group:") then
 
 				local group = str:split(":")[2] or ""
 
@@ -858,7 +858,7 @@ end
 
 local function is_node_dangerous(self, nodename)
 
-	local def = core.registered_nodes[nodename]
+	local def = core.registered_nodes[nodename] ; if not def then return end
 
 	if (self.water_damage and self.water_damage > 0 and def.groups.water)
 	or (self.lava_damage and self.lava_damage > 0 and def.groups.lava)
@@ -880,16 +880,14 @@ local function is_node_dangerous(self, nodename)
 end
 
 function mobs:is_node_dangerous(mob_object, nodename)
-	return is_node_dangerous(mob_object, nodename)
+	return mob_object and is_node_dangerous(mob_object, nodename)
 end
 
 -- are we facing a cliff?
 
 function mob_class:is_at_cliff()
 
-	if self.driver or self.fear_height == 0 then -- 0 for no fear of heights
-		return
-	end
+	if self.driver or self.fear_height == 0 then return end -- 0 for no fear of heights
 
 	local yaw = self.object:get_yaw() ; if not yaw then return end
 	local prop = self.object:get_properties()
@@ -1398,9 +1396,7 @@ end
 -- are we docile during daylight hours?
 
 function mob_class:day_docile()
-
-	if self.docile_by_day
-	and self.time_of_day > 0.2 and self.time_of_day < 0.8 then return true end
+	return self.docile_by_day and self.time_of_day > 0.2 and self.time_of_day < 0.8
 end
 
 -- are we able to dig & drop a node?
@@ -1412,25 +1408,22 @@ local function can_dig_drop(pos)
 	local node = node_ok(pos, "air").name
 	local ndef = core.registered_nodes[node]
 
-	if node ~= "ignore" and ndef and ndef.drawtype ~= "airlike"
-	and not ndef.groups.level and not ndef.groups.unbreakable
-	and not ndef.groups.liquid then
+	if node == "ignore" or not ndef or ndef.drawtype == "airlike" or ndef.groups.level
+	or ndef.groups.unbreakable or ndef.groups.liquid then return end
 
-		local drops = core.get_node_drops(node)
+	local drops = core.get_node_drops(node)
 
-		for _, item in ipairs(drops) do
+	for _, item in ipairs(drops) do
 
-			core.add_item({
-				x = pos.x - 0.5 + random(),
-				y = pos.y - 0.5 + random(),
-				z = pos.z - 0.5 + random()
-			}, item)
-		end
-
-		core.remove_node(pos)
-
-		return true
+		core.add_item({
+			x = pos.x - 0.5 + random(),
+			y = pos.y - 0.5 + random(),
+			z = pos.z - 0.5 + random()}, item)
 	end
+
+	core.remove_node(pos)
+
+	return true
 end
 
 -- pathfinder mod check
@@ -1672,12 +1665,9 @@ local function is_peaceful_player(player)
 
 	if peaceful_player_enabled then return true end
 
-	local player_name = player:get_player_name()
+	local player_name = player:get_player_name() or ""
 
-	-- player priv enabled
-	if player_name and core.check_player_privs(player_name, "peaceful_player") then
-		return true
-	end
+	return core.check_player_privs(player_name, "peaceful_player")
 end
 
 -- general attack function
@@ -1686,7 +1676,7 @@ function mob_class:general_attack()
 
 	-- return if already attacking, passive or docile during day
 	if self.passive or self.state == "runaway" or self.state == "attack"
-	or self:day_docile() then
+	or self.state == "flop" or self:day_docile() then
 		return
 	end
 
@@ -1779,7 +1769,7 @@ function mob_class:do_runaway_from()
 
 			pname = objs[n]:get_player_name()
 
-			if is_invisible(self, pname) or self.owner == pname then
+			if self.owner == pname or is_invisible(self, pname) then
 				name = ""
 			else
 				player = objs[n] ; name = "player"
@@ -1979,7 +1969,12 @@ function mob_class:do_states(dtime)
 			self.pause_timer = 3
 			self.following = nil
 			self:set_velocity(self.run_velocity)
-			self:set_animation("walk")
+
+			if self.animation and self.animation.run_end then
+				self:set_animation("run")
+			else
+				self:set_animation("walk")
+			end
 
 			return
 		end
@@ -2431,7 +2426,7 @@ function mob_class:falling(pos)
 
 		local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
-		self.object:set_velocity({x = v.x, y = 0.4, z = v.z})
+		self.object:set_velocity({x = v.x, y = 0.4, z = v.z}) -- slow ascent in water
 
 		fall_speed = -1.2 / visc
 	else
@@ -2735,11 +2730,9 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	local hitter_name = hitter:get_player_name() or ""
 
 	-- call for help and attack puncher
-	if not self.passive and self.state ~= "flop"
-	and not self.child --and self.attack_players
+	if not self.passive and self.state ~= "flop" and not self.child
 	and not (is_player(hitter) and hitter_name == self.owner)
-	and not is_invisible(self, hitter_name)
-	and self.object ~= hitter then
+	and not is_invisible(self, hitter_name) and self.object ~= hitter then
 
 		self.state = ""
 		self:do_attack(hitter) -- attack whoever punched mob
@@ -3102,7 +3095,7 @@ function mob_class:on_step(dtime, moveresult)
 	end
 
 	-- environmental damage timer (every 1 second)
-	self.env_damage_timer = self.env_damage_timer + dtime
+	self.env_damage_timer = (self.env_damage_timer or 0) + dtime
 
 	if self.env_damage_timer > 1 then
 
@@ -3146,6 +3139,8 @@ function mob_class:on_step(dtime, moveresult)
 
 	if self.timer1 >= main_timer_interval then
 
+		self.timer1 = 0
+
 		-- random mob sound
 		if random(100) == 1 then self:mob_sound(self.sounds.random) end
 
@@ -3160,8 +3155,6 @@ function mob_class:on_step(dtime, moveresult)
 
 		self:do_runaway_from()
 		self:do_stay_near()
-
-		self.timer1 = 0
 	end
 end
 
