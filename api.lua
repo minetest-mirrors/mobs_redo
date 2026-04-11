@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260409",
+	mod = "redo", version = "20260411",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -652,7 +652,7 @@ function mob_class:update_tag(newname)
 
 	self.infotext = S("Entity: @1", self.name) .. " | " .. S("Type: @1", self.type)
 		.. ("\n" .. S("Health: @1", self.health) .. " / " .. prop.hp_max)
-		.. (self.owner == "" and "" or "\n" .. S("Owner: @1", self.owner)) .. text
+		.. (self.owner == "" and "" or "\n" .. S("Owner: @1", self.owner or "")) .. text
 
 	if self.infotext ~= prop.infotext then
 		self.object:set_properties({infotext = self.infotext})
