@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260411",
+	mod = "redo", version = "20260414",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -532,7 +532,7 @@ function mob_class:yaw_to_pos(target, rot)
 
 	if target.x > pos.x then yaw = yaw + pi end
 
-	return self:set_yaw(yaw, rot)
+	return self:set_yaw(yaw, 4)
 end
 
 -- look for stay_near nodes and move towards them
@@ -1804,7 +1804,7 @@ function mob_class:do_runaway_from()
 
 	if min_player then
 
-		self:yaw_to_pos(min_player:get_pos(), 3)
+		self:yaw_to_pos(min_player:get_pos(), 3) -- opposite dir
 
 		self.state = "runaway"
 		self.runaway_timer = 3
@@ -1818,7 +1818,7 @@ function mob_class:do_runaway_from()
 
 	if objs then
 
-		self:yaw_to_pos(objs, 3)
+		self:yaw_to_pos(objs, 3) -- opposite dir
 		self.state = "runaway"
 		self.runaway_timer = 3
 		self.following = nil
@@ -2720,7 +2720,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		local lp = hitter:get_pos()
 
-		self:yaw_to_pos(lp, 3)
+		self:yaw_to_pos(lp, 3) -- opposite dir
 
 		self.state = "runaway"
 		self.runaway_timer = 3
