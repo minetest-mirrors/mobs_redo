@@ -524,14 +524,9 @@ end
 
 function mob_class:yaw_to_pos(target, rot)
 
-	rot = rot or 0
-
 	local pos = self.object:get_pos()
-	local vec = {x = target.x - pos.x, z = target.z - pos.z}
-	local yaw = (atan(vec.z / vec.x) + rot + pi / 2) - self.rotate
-
-	if target.x > pos.x then yaw = yaw + pi end
-
+	local vec = vector.subtract(target, pos)
+	local yaw = core.dir_to_yaw(vec) + (rot or 0) - self.rotate
 	return self:set_yaw(yaw, 4)
 end
 
