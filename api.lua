@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260414",
+	mod = "redo", version = "20260415",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -160,7 +160,6 @@ mobs.mob_class = {
 	reach = 3,
 	docile_by_day = false,
 	time_of_day = 0.5,
---	fear_height = 0,
 	runaway_timer = 0,
 	immune_to = {},
 	explosion_timer = 3,
@@ -375,9 +374,14 @@ function mob_class:set_yaw(yaw, delay)
 
 	delay = mob_smooth_rotate and delay or 0
 
-	yaw = yaw % (2 * pi) -- simplified yaw range 0 to 2pi
+	yaw = yaw % (2 * pi) -- simplified yaw clamp
 
-	if delay == 0 then self.object:set_yaw(yaw) ; return yaw ; end
+if delay == 0 then
+	local rot = self.object:get_rotation()
+	rot.y = yaw
+	self.object:set_rotation(rot)
+end
+--	if delay == 0 then self.object:set_yaw(yaw) return yaw end
 
 	self.target_yaw = yaw
 	self.delay = delay
@@ -658,7 +662,6 @@ end
 
 function mob_class:item_drop()
 
-	-- no drops if disabled by setting or mob is child
 	if not mobs_drop_items or self.child then return end
 
 	local pos = self.object:get_pos()
@@ -739,6 +742,7 @@ function mobs:remove(self, decrease)
 end
 
 -- death animation
+
 function mob_class:death_anim()
 
 	if self.animation and self.animation.die_start and self.animation.die_end then
@@ -2929,7 +2933,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 
 	self.object:set_texture_mod(self.texture_mods) -- apply texture mods
 
-	-- set 5.x flag to remove monsters when map area unloaded
+	-- set flag to remove monsters when map area unloaded
 	if remove_far and self.type == "monster" and not self.tamed then
 		self.object:set_properties({static_save = false})
 	end
@@ -3011,8 +3015,7 @@ function mob_class:get_nodes()
 
 	-- are we facing a fence or wall
 	self.facing_fence = self.looking_at:find("fence")
-			or self.looking_at:find("gate")
-			or self.looking_at:find("wall")
+			or self.looking_at:find("gate") or self.looking_at:find("wall")
 --[[
 print("on: " .. self.standing_on
 	.. ", front: " .. self.looking_at
@@ -3086,7 +3089,8 @@ function mob_class:on_step(dtime, moveresult)
 		end
 
 		self.delay = self.delay - 1
-		self.object:set_yaw(yaw)
+		--self.object:set_yaw(yaw)
+		self:set_yaw(yaw)
 	end
 
 	-- environmental damage timer (every 1 second)
