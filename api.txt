@@ -457,6 +457,8 @@ mob_class:collision() -- checks for player collision with mob and returns {x, z}
 mob_class:set_velocity(velocity) -- move at velocity in the facing direction
 mob_class:get_velocity() -- returns mob speed value
 mob_class:set_yaw(yaw, delay) -- change mob yaw, delay is for smooth rotation (default:0)
+mob:class_set_pitch(pitch) -- change mob pitch in radians
+mob:class_set_roll(roll) -- change mob roll in radians
 mob_class:yaw_to_pos(pos, delay) -- rotates mod to look at position and returns new yaw
 mob_class:set_animation(animation, force) -- set mob animation
 mob_class:line_of_sight(pos1, pos2) -- internal line of sight function

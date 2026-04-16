@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260415",
+	mod = "redo", version = "20260416",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -366,7 +366,7 @@ function mob_class:get_velocity()
 	return (v.x * v.x + v.z * v.z) ^ 0.5
 end
 
--- set and return valid yaw
+-- set and return valid yaw, pitch or roll
 
 function mob_class:set_yaw(yaw, delay)
 
@@ -376,17 +376,35 @@ function mob_class:set_yaw(yaw, delay)
 
 	yaw = yaw % (2 * pi) -- simplified yaw clamp
 
-if delay == 0 then
-	local rot = self.object:get_rotation()
-	rot.y = yaw
-	self.object:set_rotation(rot)
-end
---	if delay == 0 then self.object:set_yaw(yaw) return yaw end
+	if delay == 0 then
+
+		local rot = self.object:get_rotation() ; rot.y = yaw ; self.object:set_rotation(rot)
+
+		return yaw
+	end
 
 	self.target_yaw = yaw
 	self.delay = delay
 
 	return self.target_yaw
+end
+
+function mob_class:set_pitch(pitch)
+
+	pitch = pitch or 0
+
+	local rot = self.object:get_rotation() ; rot.x = pitch ; self.object:set_rotation(rot)
+
+	return pitch
+end
+
+function mob_class:set_roll(roll)
+
+	roll = roll or 0
+
+	local rot = self.object:get_rotation() ; rot.z = roll ; self.object:set_rotation(rot)
+
+	return roll
 end
 
 -- set defined animation
