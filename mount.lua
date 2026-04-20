@@ -394,7 +394,7 @@ function mobs.fly(entity, dtime, speed, shoots, arrow, moving_anim, stand_anim)
 					ent.switch = 1 -- for mob specific arrows
 					ent.owner_id = tostring(entity.object) -- so arrows dont hurt mob
 
-					local vec = {x = dir.x * 6, y = dir.y * 6, z = dir.z * 6}
+					local vec = {x = dir.x * 12, y = dir.y * 12, z = dir.z * 12}
 
 					yaw = entity.driver:get_look_horizontal()
 

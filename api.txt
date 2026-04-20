@@ -772,8 +772,8 @@ controls.
    'self'            mob information
    'dtime'           tick time used inside fly function
    'speed'           speed of flight
-   'can_shoot'       true if mob can fire arrow (sneak and left mouse button
-                     fires)
+   'can_shoot'       true if mob can fire an arrow (sneak and left mouse button
+                     fires) which is limited to 1 per second.
    'arrow_entity'    name of arrow entity used for firing
    'move_animation'  string containing name of pre-defined animation e.g. "walk"
                      or "fly" etc.
