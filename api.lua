@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260416",
+	mod = "redo", version = "20260420",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -549,7 +549,7 @@ function mob_class:yaw_to_pos(target, rot)
 	local pos = self.object:get_pos()
 	local vec = vector.subtract(target, pos)
 	local yaw = core.dir_to_yaw(vec) + (rot or 0) - self.rotate
-	return self:set_yaw(yaw, 4)
+	return self:set_yaw(yaw)
 end
 
 -- look for stay_near nodes and move towards them
