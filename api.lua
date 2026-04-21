@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260420",
+	mod = "redo", version = "20260421",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -667,9 +667,11 @@ function mob_class:update_tag(newname)
 		end
 	end
 
-	self.infotext = S("Entity: @1", self.name) .. " | " .. S("Type: @1", self.type)
-		.. ("\n" .. S("Health: @1", self.health) .. " / " .. prop.hp_max)
-		.. (self.owner == "" and "" or "\n" .. S("Owner: @1", self.owner or "")) .. text
+	self.infotext = (self.description and (self.description .. "\n") or "")
+		.. S("Health: @1", self.health) .. " / " .. prop.hp_max
+		.. ("\n\n" .. S("Entity: @1", self.name))
+		.. ("\n" .. S("Type: @1", self.type))
+		.. (self.owner == "" and "" or "\n" .. S("Owner: @1", self.owner)) .. text
 
 	if self.infotext ~= prop.infotext then
 		self.object:set_properties({infotext = self.infotext})
@@ -3212,6 +3214,8 @@ function mobs:register_mob(name, def)
 			visual_size = def.visual_size or {x = 1, y = 1},
 			mesh = def.mesh,
 			textures = "",
+			use_texture_alpha = def.use_texture_alpha,
+			backface_culling = def.backface_culling,
 			makes_footstep_sound = def.makes_footstep_sound,
 			stepheight = def.stepheight or 1.1,
 			glow = def.glow,
@@ -3219,6 +3223,7 @@ function mobs:register_mob(name, def)
 		},
 
 		name = name,
+		description = def.description or name,
 		type = def.type,
 		_nametag = def.nametag,
 		attack_type = def.attack_type,
