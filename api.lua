@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260426",
+	mod = "redo", version = "20260501",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -4109,20 +4109,16 @@ end
 function mobs:capture_mob(
 		self, clicker, chance_hand, chance_net, chance_lasso, force_take, replacewith)
 
-	if not self or not is_player(clicker) or not clicker:get_inventory() then
-		return
-	end
+	local inv = is_player(clicker) and clicker:get_inventory()
 
-	local mobname = self.name -- get name of mob
+	if not inv then return end
 
-	-- if not nil change what will be added to inventory
-	if replacewith then mobname = replacewith end
-
+	local mobname = replacewith or self.name-- get name of mob
 	local name = clicker:get_player_name()
 	local tool = clicker:get_wielded_item()
+	local item = tool:get_name() -- empty item is hand
 
-	if tool:get_name() ~= "" -- hand
-	and tool:get_name() ~= "mobs:net" and tool:get_name() ~= "mobs:lasso" then
+	if item ~= "" and item ~= "mobs:net" and item ~= "mobs:lasso" then
 		return
 	end
 
@@ -4131,81 +4127,65 @@ function mobs:capture_mob(
 		core.chat_send_player(name, S("Not tamed!")) ; return
 	end
 
-	-- cannot pick up if not owner (unless player has protection_bypass priv)
+	-- cannot pick up if not owner, unless admin
 	if not core.check_player_privs(name, "protection_bypass")
 	and self.owner ~= name and not force_take then
 		core.chat_send_player(name, S("@1 is owner!", self.owner)) ; return
 	end
 
-	if clicker:get_inventory():room_for_item("main", mobname) then
+	local chance, wear
 
-		-- was mob clicked with hand, net, or lasso?
-		local chance = 0
+	if item == "" and chance_hand and chance_hand > 0 then
 
-		if tool:get_name() == "" then
-			chance = chance_hand
+	chance = chance_hand
 
-		elseif tool:get_name() == "mobs:net" then
+	elseif item == "mobs:net" and chance_net and chance_net > 0 then
 
-			chance = chance_net
+		chance = chance_net ; wear = 4000 -- 17 uses
 
-			tool:add_wear(4000) -- 17 uses
+	elseif item == "mobs:lasso" and chance_lasso and chance_lasso > 0 then
 
-			clicker:set_wielded_item(tool)
-
-		elseif tool:get_name() == "mobs:lasso" then
-
-			chance = chance_lasso
-
-			tool:add_wear(650) -- 100 uses
-
-			clicker:set_wielded_item(tool)
-		end
-
-		-- calculate chance, add to inventory if successful?
-		if chance and chance > 0 and random(100) <= chance then
-
-			local new_stack = ItemStack(mobname)
-
-			-- add special mob egg with all mob information
-			-- unless 'replacewith' contains new item to use
-			if not replacewith then
-
-				new_stack = ItemStack(mobname .. "_set")
-
-				local data_str = core.serialize(clean_staticdata(self))
-
-				new_stack:get_meta():set_string("", data_str)
-			end
-
-			local inv = clicker:get_inventory()
-
-			if inv:room_for_item("main", new_stack) then
-				inv:add_item("main", new_stack)
-			else
-				core.add_item(clicker:get_pos(), new_stack)
-			end
-
-			self:mob_sound("default_place_node_hard")
-
-			remove_mob(self, true)
-
-			return new_stack
-
-		-- when chance above fails
-		elseif chance and chance ~= 0 then
-
-			core.chat_send_player(name, S("Missed!"))
-
-			self:mob_sound("mobs_swing")
-
-			return
-
-		-- when chance is nil always return a miss (used for npc walk/follow)
-		elseif not chance then
-			return
-		end
+		chance = chance_lasso ; wear = 650 -- 100 uses
 	end
+
+	if not chance or chance == 0 then return end
+
+	if wear then
+		tool:add_wear(wear) ; clicker:set_wielded_item(tool)
+	end
+
+	-- calculate chance, add to inventory if successful?
+	if random(100) > chance then
+
+		core.chat_send_player(name, S("Missed!"))
+
+		self:mob_sound("mobs_swing") ; return
+	end
+
+	local new_stack = ItemStack(mobname)
+
+	-- add special mob egg with all mob information
+	-- unless 'replacewith' contains new item to use
+	if not replacewith and core.registered_items[mobname .. "_set"] then
+
+		new_stack = ItemStack(mobname .. "_set")
+
+		local data_str = core.serialize(clean_staticdata(self))
+
+		new_stack:get_meta():set_string("", data_str)
+	end
+
+	if inv:room_for_item("main", new_stack) then
+		inv:add_item("main", new_stack)
+	else
+		local pos = self.object:get_pos() or clicker:get_pos() ; pos.y = pos.y + 0.5
+
+		core.add_item(pos, new_stack)
+	end
+
+	self:mob_sound("default_place_node_hard")
+
+	remove_mob(self, true)
 
 	return true
 end
