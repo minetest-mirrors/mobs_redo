@@ -3780,6 +3780,7 @@ function mobs:register_arrow(name, def)
 		lifetime = def.lifetime or 4.5,
 		owner_id = def.owner_id,
 		rotate = def.rotate,
+		do_custom = def.do_custom,
 
 		on_activate = def.on_activate,
 
@@ -3812,6 +3813,10 @@ function mobs:register_arrow(name, def)
 					size = def.tail_size or 5,
 					glow = def.glow or 0
 				})
+			end
+
+			if self.do_custom and self:do_custom(dtime, moveresult) == false then
+				return
 			end
 
 			-- make homing arrows follow target when in view
