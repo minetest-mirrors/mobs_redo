@@ -98,26 +98,21 @@ end)
 
 -- find free position to detach player
 
-local function find_free_pos(pos)
+local check = {
+	{x = 1,  y = 0, z =  0}, {x = 1,  y = 1, z =  0}, {x = -1, y = 0, z =  0},
+	{x = -1, y = 1, z =  0}, {x = 0,  y = 0, z =  1}, {x = 0,  y = 1, z =  1},
+	{x = 0,  y = 0, z = -1}, {x = 0,  y = 1, z = -1}
+}
 
-	local check = {
-		{x = 1,  y = 0, z =  0}, {x = 1,  y = 1, z =  0}, {x = -1, y = 0, z =  0},
-		{x = -1, y = 1, z =  0}, {x = 0,  y = 0, z =  1}, {x = 0,  y = 1, z =  1},
-		{x = 0,  y = 0, z = -1}, {x = 0,  y = 1, z = -1}
-	}
+local function find_free_pos(pos)
 
 	for _, c in pairs(check) do
 
 		local npos = {x = pos.x + c.x, y = pos.y + c.y, z = pos.z + c.z}
-		local node = core.get_node_or_nil(npos)
+		local def = core.registered_nodes[core.get_node(npos).name] or {}
 
-		if node and node.name then
-
-			local def = core.registered_nodes[node.name]
-
-			if def and not def.walkable and def.liquidtype == "none" then
-				return npos
-			end
+		if def.liquidtype == "none" and not def.walkable and def.name ~= "ignore" then
+			return npos
 		end
 	end
 
