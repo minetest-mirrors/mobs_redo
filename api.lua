@@ -2723,8 +2723,9 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 		self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
 
-		-- turn mob on knockback
-		self:set_yaw((random(0, 360) - 180) / 180 * pi, 6)
+		local yaw = self.object:get_yaw() or 0
+
+		self:set_yaw(yaw - random(-0.9, 0.9), 6) -- turn mob on knockback
 
 		if self.animation and self.animation.injured_end and damage >= 1 then
 			self:set_animation("injured")
