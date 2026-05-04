@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260501",
+	mod = "redo", version = "20260504",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -419,32 +419,27 @@ function mob_class:set_animation(anim, force)
 	if not force and anim ~= "punch" and anim ~= "shoot"
 	and string.find(self.animation_current, anim) then return end
 
-	local num = 0
+	local num, anims = 0, self.animation
 
-	-- check for more than one animation (max 4)
-	for n = 1, 4 do
+	for n = 1, 4 do -- check for more than one animation (max 4)
 
-		if self.animation[anim .. n .. "_start"]
-		and self.animation[anim .. n .. "_end"] then num = n end
+		if anims[anim .. n .. "_start"] and anims[anim .. n .. "_end"] then num = n end
 	end
 
-	-- choose random animation from set
-	if num > 0 then
+	if num > 0 then -- choose random animation from set
 		num = random(0, num)
 		anim = anim .. (num ~= 0 and num or "")
 	end
 
 	if (anim == self.animation_current and not force)
-	or not self.animation[anim .. "_start"]
-	or not self.animation[anim .. "_end"] then return end
+	or not anims[anim .. "_start"] or not anims[anim .. "_end"] then return end
 
 	self.animation_current = anim
 
-	self.object:set_animation({
-		x = self.animation[anim .. "_start"],
-		y = self.animation[anim .. "_end"]},
-		self.animation[anim .. "_speed"] or self.animation.speed_normal or 15,
-		0, self.animation[anim .. "_loop"] ~= false)
+	self.object:set_animation(
+			{x = anims[anim .. "_start"], y = anims[anim .. "_end"]},
+			anims[anim .. "_speed"] or anims.speed_normal or 15, anims.frame_blend,
+			anims[anim .. "_loop"] ~= false)
 end
 
 -- use new functions if available
@@ -544,12 +539,13 @@ end
 
 -- turn to face position
 
-function mob_class:yaw_to_pos(target, rot)
+function mob_class:yaw_to_pos(target, rot, delay)
 
 	local pos = self.object:get_pos()
 	local vec = vector.subtract(target, pos)
 	local yaw = core.dir_to_yaw(vec) + (rot or 0) - self.rotate
-	return self:set_yaw(yaw)
+
+	return self:set_yaw(yaw, delay)
 end
 
 -- look for stay_near nodes and move towards them
@@ -1889,22 +1885,26 @@ function mob_class:follow_flop()
 		if is_player(self.following) then p = self.following:get_pos()
 		elseif self.following.object then p = self.following.object:get_pos() end
 
-		if p then
+		if p and self.state ~= "attack" then
 
 			local dist = get_distance(p, s)
 
 			-- dont follow if out of range
-			if dist > self.view_range then self.following = nil
+			if dist > self.view_range then
+				self.following = nil ; self.state = "stand"
 			else
-				self:yaw_to_pos(p)
+				self:yaw_to_pos(p, 0, 2)
 
-				-- anyone but standing npc's can move along
+				-- dont move if ordered to stand
 				if dist >= self.reach and self.order ~= "stand" then
 
-					self:set_velocity(self.walk_velocity)
+					self:set_velocity(self.walk_velocity) ; self.state = "walk"
 
 					if self.walk_chance ~= 0 then self:set_animation("walk") end
-				else
+
+				elseif self.state ~= "attack" then
+
+					self.state = "standing" -- fake state to pause mob within reach
 					self:set_velocity(0)
 					self:set_animation("stand")
 				end
@@ -1912,6 +1912,7 @@ function mob_class:follow_flop()
 				return
 			end
 		end
+	elseif self.state == "standing" then self.state = "stand" -- end fake state
 	end
 
 	-- swimmers flop when out of their element, and swim again when back in
@@ -2051,7 +2052,7 @@ function mob_class:do_states(dtime)
 
 			yaw = yaw + random() - 0.5
 
-			self:set_yaw(yaw, 8)
+			self:set_yaw(yaw, 4)
 
 			-- for flying/swimming mobs randomly move up and down also
 			if self.fly_in and not self.following then
@@ -2723,7 +2724,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
 
 		-- turn mob on knockback
-		self:set_yaw((random(0, 360) - 180) / 180 * pi, 12)
+		self:set_yaw((random(0, 360) - 180) / 180 * pi, 6)
 
 		if self.animation and self.animation.injured_end and damage >= 1 then
 			self:set_animation("injured")
@@ -3109,7 +3110,7 @@ function mob_class:on_step(dtime, moveresult)
 		end
 
 		self.delay = self.delay - 1
-		--self.object:set_yaw(yaw)
+
 		self:set_yaw(yaw)
 	end
 
