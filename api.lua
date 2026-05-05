@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260504",
+	mod = "redo", version = "20260505",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -134,7 +134,6 @@ mobs.mob_class = {
 	node_damage = true,
 	suffocation = 2,
 	fall_damage = true,
-	fall_speed = -10, -- must be lower than -2
 	drops = {},
 	armor = 100,
 	sounds = {},
@@ -879,7 +878,7 @@ local function is_node_dangerous(self, nodename)
 	or (self.lava_damage and self.lava_damage > 0 and def.groups.lava)
 	or (self.fire_damage and self.fire_damage > 0 and def.groups.fire) then return true end
 
-	if self.node_damage and def.damage_per_second > 0 then
+	if self.node_damage and def.damage_per_second and def.damage_per_second > 0 then
 
 		local damage = def.damage_per_second
 
@@ -2446,35 +2445,31 @@ function mob_class:falling(pos)
 
 		local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
-		self.object:set_velocity({x = v.x, y = 0.4, z = v.z}) -- slow ascent in water
+		self.object:set_velocity({x = v.x, y = 0.45, z = v.z}) -- slow ascent in water
 
 		fall_speed = -1.2 / visc
-	else
 
-		-- fall damage onto solid ground
-		if self.fall_damage and self.object:get_velocity().y == 0 then
+	elseif self.fall_damage and v.y == 0 then
 
-			local d = (self.old_y or self.object:get_pos().y) - self.object:get_pos().y
+		local d = (self.old_y or v.y) - self.object:get_pos().y
 
-			if d > 5 then
+		if d > 5 then
 
-				local damage = d - 5
-				local add = core.get_item_group(
-						self.standing_on, "fall_damage_add_percent")
+			local damage = d - 5
+			local add = core.get_item_group(self.standing_on, "fall_damage_add_percent")
 
-				if add ~= 0 then
-					damage = damage + damage * (add / 100)
-				end
-
-				self.health = self.health - floor(damage)
-
-				effect(pos, 5, "mobs_tnt_smoke.png", 1, 2, 2, nil)
-
-				if self:check_for_death({type = "fall"}) then return true end
+			if add ~= 0 then
+				damage = damage + damage * (add / 100)
 			end
 
-			self.old_y = self.object:get_pos().y
+			self.health = self.health - floor(damage)
+
+			effect(pos, 5, "mobs_tnt_smoke.png", 1, 2, 2, nil)
+
+			if self:check_for_death({type = "fall"}) then return true end
 		end
+
+		self.old_y = self.object:get_pos().y
 	end
 
 	self.object:set_acceleration({x = 0, y = fall_speed, z = 0}) -- fall at set speed
@@ -3262,7 +3257,7 @@ function mobs:register_mob(name, def)
 		node_damage = def.node_damage,
 		suffocation = def.suffocation,
 		fall_damage = def.fall_damage,
-		fall_speed = def.fall_speed,
+		fall_speed = def.fall_speed or -gravity,
 		drops = def.drops,
 		armor = def.armor,
 		arrow = def.arrow,
