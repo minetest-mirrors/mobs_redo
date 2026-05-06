@@ -2496,11 +2496,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 			local ent = hitter and hitter:get_luaentity()
 
-			if ent and ent._is_arrow then
-				return true -- arrow entity
-			elseif not ent then
-				return true -- non entity
-			end
+			if not ent or ent._is_arrow then return true end
 		end
 	end
 
@@ -2685,44 +2681,46 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 	-- knock back effect (only on full punch)
 	if self.knock_back and tflp >= punch_interval then
 
-		local v = self.object:get_velocity() ; if not v then return true end
-		local kb = dis_damage_kb and 1 or (damage or 1)
-		local up = 2
+		local v = self.object:get_velocity()
 
-		-- if already in air then dont go up anymore when hit
-		if v.y > 0 or self.fly then up = 0 end
+		if v then
 
-		dir = dir or {x = 0, y = 0, z = 0} -- nil check
+			local kb = dis_damage_kb and 1 or (damage or 1)
+			local up = 2
 
-		-- use tool knockback value or default
-		kb = tool_capabilities.damage_groups["knockback"] or kb
+			-- if already in air then dont go up anymore when hit
+			if v.y > 0 or self.fly then up = 0 end
 
-		-- check for knockback enchantment
-		if use_mc2 and enchants.knockback then
-			kb = kb + (3 * enchants.knockback)
+			dir = dir or {x = 0, y = 0, z = 0} -- nil check
+
+			-- use tool knockback value or default
+			kb = tool_capabilities.damage_groups["knockback"] or kb
+
+			-- check for knockback enchantment
+			if use_mc2 and enchants.knockback then
+				kb = kb + (3 * enchants.knockback)
+			end
+
+			self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
+
+			local yaw = self.object:get_yaw() or 0
+
+			self:set_yaw(yaw - random(-0.9, 0.9), 6) -- turn mob on knockback
+
+			if self.animation and self.animation.injured_end and damage >= 1 then
+				self:set_animation("injured")
+			else
+				self:set_animation("walk")
+			end
+
+			self.pause_timer = 0.25
 		end
-
-		self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
-
-		local yaw = self.object:get_yaw() or 0
-
-		self:set_yaw(yaw - random(-0.9, 0.9), 6) -- turn mob on knockback
-
-		if self.animation and self.animation.injured_end and damage >= 1 then
-			self:set_animation("injured")
-		else
-			self:set_animation("walk")
-		end
-
-		self.pause_timer = 0.25
 	end
 
 	-- if skittish then run away
 	if self.runaway and self.order ~= "stand" then
 
-		local lp = hitter:get_pos()
-
-		self:yaw_to_pos(lp, 3) -- opposite dir
+		self:yaw_to_pos(hitter:get_pos(), 3, 4) -- opposite dir
 
 		self.state = "runaway"
 		self.runaway_timer = 3
@@ -3337,7 +3335,7 @@ end
 
 -- return <number of mobs of same type in area>, <player found>
 
-local function count_mobs(pos, type)
+local function count_mobs(pos, mob_name)
 
 	local total = 0
 	local objs = core.get_objects_inside_radius(pos, aoc_range * 2)
@@ -3345,13 +3343,11 @@ local function count_mobs(pos, type)
 
 	for n = 1, #objs do
 
-		if not is_player(objs[n]) then
-
+		if is_player(objs[n]) then players = true
+		else
 			ent = objs[n]:get_luaentity()
 
-			if ent and ent.name and ent.name == type then total = total + 1 end
-		else
-			players = true
+			if ent and ent.name and ent.name == mob_name then total = total + 1 end
 		end
 	end
 
@@ -3907,6 +3903,8 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 				explode_center = true,
 				tiles = texture
 			})
+		else
+			mobs:safe_boom(self, pos, node_damage_radius, texture)
 		end
 	else
 		mobs:safe_boom(self, pos, node_damage_radius, texture)
