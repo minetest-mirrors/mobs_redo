@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260505",
+	mod = "redo", version = "20260506",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1422,20 +1422,16 @@ local function can_dig_drop(pos)
 	local node = node_ok(pos, "air").name
 	local ndef = core.registered_nodes[node]
 
-	if node == "ignore" or not ndef or ndef.drawtype == "airlike" or ndef.groups.level
+	if not ndef or node == "ignore" or ndef.drawtype == "airlike" or ndef.groups.level
 	or ndef.groups.unbreakable or ndef.groups.liquid then return end
 
 	local drops = core.get_node_drops(node)
 
-	for _, item in ipairs(drops) do
-
-		core.add_item({
-			x = pos.x - 0.5 + random(),
-			y = pos.y - 0.5 + random(),
-			z = pos.z - 0.5 + random()}, item)
-	end
-
 	core.remove_node(pos)
+
+	for n = 1, #drops do
+		core.add_item(pos, drops[n])
+	end
 
 	return true
 end
@@ -1697,6 +1693,8 @@ function mob_class:general_attack()
 	local s = self.object:get_pos() ; if not s then return end
 	local objs = core.get_objects_inside_radius(s, self.view_range)
 
+	if not objs or #objs == 0 then return end
+
 	-- remove entities we aren't interested in
 	for n = 1, #objs do
 
@@ -1706,8 +1704,7 @@ function mob_class:general_attack()
 
 			-- remove player if owner, invisible or just not interesting enough to attack
 			if not self.attack_players or self.owner == objs[n]:get_player_name()
-			-- tame npcs and animals will not attack players unless provoked
-			or (self.type ~= "monster" and self.tamed)
+			or (self.type ~= "monster" and self.tamed) -- tamed animals must be provoked
 			or is_invisible(self, objs[n]:get_player_name())
 			or is_peaceful_player(objs[n])
 			or (self.specific_attack and not check_for("player", self.specific_attack)) then
@@ -1969,11 +1966,10 @@ end
 function mob_class:do_states(dtime)
 
 	local yaw = self.object:get_yaw() ; if not yaw then return end
+	local s = self.object:get_pos()
 
 	-- are we standing in something that hurts?  Try to get out
 	if is_node_dangerous(self, self.standing_in) then
-
-		local s = self.object:get_pos()
 
 		local lp = core.find_nodes_in_area_under_air(
 				{x = s.x - 7, y = s.y - 2, z = s.z - 7},
@@ -2004,7 +2000,6 @@ function mob_class:do_states(dtime)
 		if self.randomly_turn and random(4) == 1 then
 
 			local lp
-			local s = self.object:get_pos()
 
 			for _,player in pairs(core.get_connected_players()) do
 
@@ -2024,7 +2019,7 @@ function mob_class:do_states(dtime)
 		self:set_velocity(0)
 		self:set_animation("stand")
 
-		-- mobs ordered to stand stay standing
+		-- are we able to walk
 		if self.order ~= "stand" and self.walk_chance ~= 0
 		and not self.facing_fence and not self.at_cliff
 		and random(100) <= self.walk_chance then
@@ -2032,10 +2027,9 @@ function mob_class:do_states(dtime)
 			self:set_velocity(self.walk_velocity)
 			self.state = "walk"
 			self:set_animation("walk")
-		end
 
-		-- mobs who cant walk but jump around
-		if self.walk_chance == 0 and not self.at_cliff
+		-- or are we able to jump
+		elseif self.walk_chance == 0 and not self.at_cliff
 		and self.jump_chance and random(100) <= self.jump_chance then
 			self:set_velocity(self.walk_velocity)
 			self.state = "jump"
@@ -2112,8 +2106,7 @@ function mob_class:do_states(dtime)
 	-- attack routines (explode, dogfight, shoot, dogshoot)
 	elseif self.state == "attack" then
 
-		-- get mob and enemy positions and distance between
-		local s = self.object:get_pos()
+		-- get enemy position and distance between mob
 		local p = self.attack and self.attack:get_pos()
 		local dist = p and get_distance(p, s) or 500
 
@@ -2151,9 +2144,6 @@ function mob_class:do_states(dtime)
 			local node_break_radius = self.explosion_radius or 1
 			local entity_damage_radius = self.explosion_damage_radius
 					or (node_break_radius * 2)
-
-			-- look a little higher to fix raycast
-			s.y = s.y + 0.5 ; p.y = p.y + 0.5
 
 			-- start timer when in reach and line of sight
 			if not self.v_start and dist <= self.reach and in_sight then
@@ -2216,17 +2206,15 @@ function mob_class:do_states(dtime)
 
 				if self.timer > self.explosion_timer then
 
-					local pos = self.object:get_pos()
-
 					-- dont damage anything if area protected or near water
-					if core.find_node_near(pos, 1, {"group:water"})
-					or core.is_protected(pos, "") then
+					if core.find_node_near(s, 1, {"group:water"})
+					or core.is_protected(s, "") then
 						node_break_radius = 1
 					end
 
 					remove_mob(self, true)
 
-					mobs:boom(self, pos, node_break_radius, entity_damage_radius)
+					mobs:boom(self, s, node_break_radius, entity_damage_radius)
 
 					return true
 				end
@@ -2343,8 +2331,6 @@ function mob_class:do_states(dtime)
 				if self.punch_timer >= self.punch_interval then
 
 					self.punch_timer = 0
-
---					self.timer = 0
 
 					-- no custom attack or custom attack returns true to continue
 					if not self.custom_attack or self:custom_attack(self, p) then
