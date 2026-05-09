@@ -3354,50 +3354,51 @@ local function count_mobs(pos, mob_name)
 	return total, players
 end
 
--- do we have enough space to spawn mob? (thx wuzzy)
+-- helper function for can_spawn
+
+local function get_range(width)
+
+	if width % 2 == 0 then -- even widths are slightly offset
+		local max_offset = width / 2 ; return -max_offset + 1, max_offset
+	end
+
+	local max_offset = floor(width / 2) ; return -max_offset, max_offset
+end
+
+-- check if we have enough room to spawn a mob
 
 local function can_spawn(pos, name)
 
-	local ent = core.registered_entities[name]
-	local width_x = max(1, ceil(ent.base_colbox[4] - ent.base_colbox[1]))
-	local min_x, max_x
+	local ent = core.registered_entities[name] ; if not ent then return end
+	local box = ent.base_colbox
 
-	if width_x % 2 == 0 then
-		max_x = floor(width_x / 2) ; min_x = -(max_x - 1)
-	else
-		max_x = floor(width_x / 2) ; min_x = -max_x
-	end
+	local width_x = max(1, ceil(box[4] - box[1]))
+	local width_z = max(1, ceil(box[6] - box[3]))
+	local height  = max(0, ceil(box[5] - box[2]) - 1)
 
-	local width_z = max(1, ceil(ent.base_colbox[6] - ent.base_colbox[3]))
-	local min_z, max_z
+	local min_x, max_x = get_range(width_x)
+	local min_z, max_z = get_range(width_z)
 
-	if width_z % 2 == 0 then
-		max_z = floor(width_z / 2) ; min_z = -(max_z - 1)
-	else
-		max_z = floor(width_z / 2) ; min_z = -max_z
-	end
+	for y = 0, height do
+		for x = min_x, max_x do
+			for z = min_z, max_z do
 
-	local max_y = max(0, ceil(ent.base_colbox[5] - ent.base_colbox[2]) - 1)
-	local pos2
+				local def  = core.registered_nodes[node_ok(
+						{x = pos.x + x, y = pos.y + y, z = pos.z + z}).name]
 
-	for y = 0, max_y do
-	for x = min_x, max_x do
-	for z = min_z, max_z do
-
-		pos2 = {x = pos.x + x, y = pos.y + y, z = pos.z + z}
-
-		if core.registered_nodes[node_ok(pos2).name].walkable then
-			return
+				if def and def.walkable then
+					return -- blocked by solid node
+				end
+			end
 		end
 	end
-	end
-	end
 
-	-- tweak X/Z spawn pos
-	if width_x % 2 == 0 then pos.x = pos.x + 0.5 end
-	if width_z % 2 == 0 then pos.z = pos.z + 0.5 end
+	local pos2 = {x = pos.x, y = pos.y, z = pos.z}
 
-	return pos
+	if width_x % 2 == 0 then pos2.x = pos2.x + 0.5 end -- centre even sized mobs
+	if width_z % 2 == 0 then pos2.z = pos2.z + 0.5 end
+
+	return pos2
 end
 
 function mobs:can_spawn(pos, name)
@@ -3760,24 +3761,18 @@ function mobs:register_arrow(name, def)
 		owner_id = def.owner_id,
 		rotate = def.rotate,
 		do_custom = def.do_custom,
-
 		on_activate = def.on_activate,
-
-		on_punch = def.on_punch or function(self, hitter, tflp, tool_capabilities, dir)
-		end,
+		on_punch = def.on_punch,
 
 		on_step = def.on_step or function(self, dtime, moveresult)
 
 			self.timer = self.timer + dtime
 
-			local pos = self.object:get_pos() ; self.lastpos = pos
-
 			if self.timer > self.lifetime then
-
-				self.object:remove() ; -- print("-- removed arrow")
-
-				return
+				self.object:remove() ; return -- remove arrow
 			end
+
+			local pos = self.object:get_pos() ; self.lastpos = pos
 
 			-- does arrow have a tail?
 			if def.tail and def.tail == 1 and def.tail_texture then
@@ -3790,7 +3785,7 @@ function mobs:register_arrow(name, def)
 					collisiondetection = false,
 					texture = def.tail_texture,
 					size = def.tail_size or 5,
-					glow = def.glow or 0
+					glow = def.glow
 				})
 			end
 
@@ -3798,18 +3793,14 @@ function mobs:register_arrow(name, def)
 				return
 			end
 
-			-- make homing arrows follow target when in view
-			if self._homing_target then
+			if self._homing_target then -- follow target when in view
 
 				local p = self._homing_target:get_pos()
 
-				if p then
+				if p and core.line_of_sight(self.object:get_pos(), p) then
 
-					if core.line_of_sight(self.object:get_pos(), p) then
-
-						self.object:set_velocity(vector.direction(
-								self.object:get_pos(), p) * self.velocity)
-					end
+					self.object:set_velocity(vector.direction(
+							self.object:get_pos(), p) * self.velocity)
 				else
 					self._homing_target = nil
 				end
@@ -3822,7 +3813,6 @@ function mobs:register_arrow(name, def)
 
 				self.moveresult = moveresult -- pass moveresult into arrow entity
 
-				-- hit node
 				if def.type == "node" and self.hit_node then
 
 					local node = get_node(def.node_pos) ; self.node_pos = def.node_pos
@@ -3844,19 +3834,19 @@ function mobs:register_arrow(name, def)
 
 					if is_player(obj) and self.hit_player then
 						self:hit_player(obj) ; --print("-- hit player", obj:get_player_name())
-					end
+					else
+						local entity = obj:get_luaentity()
 
-					local entity = obj:get_luaentity()
+						if entity then
 
-					if entity then
+							if entity._cmi_is_mob and self.hit_mob then
 
-						if entity._cmi_is_mob and self.hit_mob then
+								self:hit_mob(obj) ; --print("-- hit mob", entity.name)
 
-							self:hit_mob(obj) ; --print("-- hit mob", entity.name)
+							elseif self.hit_object then
 
-						elseif self.hit_object then
-
-							self:hit_object(obj) ; --print("-- hit object", entity.name)
+								self:hit_object(obj) ; --print("-- hit object", entity.name)
+							end
 						end
 					end
 				end
