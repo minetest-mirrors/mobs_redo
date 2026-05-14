@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260509",
+	mod = "redo", version = "20260514",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2312,7 +2312,9 @@ function mob_class:do_states(dtime)
 						self:set_velocity(self.run_velocity)
 					end
 
-					if self.animation and self.animation.run_start then
+					if self.order == "stand" then
+						self:set_animation("stand")
+					elseif self.animation and self.animation.run_start then
 						self:set_animation("run")
 					else
 						self:set_animation("walk")
@@ -2703,9 +2705,8 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 			self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
 
-			local yaw = self.object:get_yaw() or 0
-
-			self:set_yaw(yaw - random(-0.9, 0.9), 6) -- turn mob on knockback
+			-- turn mob on knockback
+			self:set_yaw((self.object:get_yaw() or 0) - random(-0.9, 0.9), 6)
 
 			if self.animation and self.animation.injured_end and damage >= 1 then
 				self:set_animation("injured")
