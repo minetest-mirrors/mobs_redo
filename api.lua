@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260514",
+	mod = "redo", version = "20260518",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -515,9 +515,7 @@ function mob_class:attempt_flight_correction(override)
 			self.fly_in) == 0 then escape_target.y = pos.y
 	end
 
-	local escape_direction = vdirection(pos, escape_target)
-
-	self.object:set_velocity(vmultiply(escape_direction, 1))
+	self.object:set_velocity(vdirection(pos, escape_target))
 
 	return true
 end
@@ -554,9 +552,8 @@ function mob_class:do_stay_near()
 	if not self.stay_near then return end
 
 	local pos = self.object:get_pos()
-	local chance = self.stay_near[2] or 10
 
-	if not pos or random(chance) > 1 then return end
+	if not pos or random(self.stay_near[2] or 10) > 1 then return end
 
 	local r = self.view_range
 	local nearby_nodes = core.find_nodes_in_area(
@@ -829,10 +826,10 @@ function mob_class:check_for_death(cmi_cause)
 	self.state = "die"
 	self.fly = false
 
-	local pos = self.object:get_pos()
+	local pos = self.object:get_pos() ; if not pos then return end
 
 	-- execute mob api custom death function first for any special features
-	if pos and self.on_die then
+	if self.on_die then
 
 		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
 
@@ -855,8 +852,7 @@ function mob_class:check_for_death(cmi_cause)
 
 	-- did we find a death animation
 	if self:death_anim() then return true
-
-	elseif pos then -- otherwise remove mob and show particle effect
+	else -- otherwise remove mob and show particle effect
 
 		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
 
@@ -1046,11 +1042,11 @@ function mob_class:do_env_damage()
 	end
 
 	--- suffocation
-	if (self.suffocation and self.suffocation ~= 0) and self.protected ~= 2
-	and (nodef.walkable == nil or nodef.walkable)
+	if self.suffocation and self.suffocation ~= 0 and self.protected ~= 2
+	and nodef.walkable ~= false
 	and (nodef.collision_box == nil or nodef.collision_box.type == "regular")
 	and (nodef.node_box == nil or nodef.node_box.type == "regular")
-	and (nodef.groups.disable_suffocation ~= 1) then
+	and nodef.groups.disable_suffocation ~= 1 then
 
 		local damage = type(self.suffocation) == "number" and self.suffocation or 2
 
@@ -1198,7 +1194,7 @@ function mob_class:breed()
 				local pos = self.object:get_pos() ; if not pos then return end
 				local prop = self.object:get_properties()
 
-				pos.y = pos.y + (prop.collisionbox[2] * -1) + 0.1
+				pos.y = pos.y - prop.collisionbox[2] + 0.1
 
 				self.object:set_pos(pos)
 
@@ -1224,97 +1220,96 @@ function mob_class:breed()
 		self:update_tag()
 	end
 
+	if not (self.horny and self.hornytimer <= HORNY_TIME) then return end
+
 	-- find similar animal who is horny and mate if nearby
-	if self.horny and self.hornytimer <= HORNY_TIME then
+	local pos = self.object:get_pos()
+	local prop = self.object:get_properties().collisionbox
 
-		local pos = self.object:get_pos()
-		local prop = self.object:get_properties().collisionbox
+	effect({x = pos.x, y = pos.y + prop[5], z = pos.z}, 8,
+			"mobs_heart_particle.png", 3, 4, 1, 0.1, 1, true)
 
-		effect({x = pos.x, y = pos.y + prop[5], z = pos.z}, 8,
-				"mobs_heart_particle.png", 3, 4, 1, 0.1, 1, true)
+	local objs = core.get_objects_inside_radius(pos, 3)
+	local ent
 
-		local objs = core.get_objects_inside_radius(pos, 3)
-		local ent
+	for n = 1, #objs do
 
-		for n = 1, #objs do
+		ent = objs[n]:get_luaentity()
 
-			ent = objs[n]:get_luaentity()
+		-- check for same animal with different colour
+		local canmate = false
 
-			-- check for same animal with different colour
-			local canmate = false
+		if ent then
 
-			if ent then
+			if ent.name == self.name then canmate = true
+			else
+				local entname = ent.name:split(":")
+				local selfname = self.name:split(":")
 
-				if ent.name == self.name then canmate = true
-				else
-					local entname = ent.name:split(":")
-					local selfname = self.name:split(":")
+				if entname[1] == selfname[1] then
 
-					if entname[1] == selfname[1] then
+					entname = entname[2]:split("_")
+					selfname = selfname[2]:split("_")
 
-						entname = entname[2]:split("_")
-						selfname = selfname[2]:split("_")
-
-						if entname[1] == selfname[1] then canmate = true end
-					end
+					if entname[1] == selfname[1] then canmate = true end
 				end
 			end
+		end
 
-			-- found another similar horny?
-			if ent and ent.object ~= self.object and canmate
-			and ent.horny and ent.hornytimer <= HORNY_TIME then
+		-- found another similar horny?
+		if canmate and ent and ent.object ~= self.object
+		and ent.horny and ent.hornytimer <= HORNY_TIME then
 
-				local pos2 = ent.object:get_pos()
+			local pos2 = ent.object:get_pos()
 
-				-- have mobs face one another
-				self:yaw_to_pos(pos2)
-				ent:yaw_to_pos(self.object:get_pos())
+			-- have mobs face one another
+			self:yaw_to_pos(pos2)
+			ent:yaw_to_pos(self.object:get_pos())
 
-				self.hornytimer = HORNY_TIME + 1
-				ent.hornytimer = HORNY_TIME + 1
+			self.hornytimer = HORNY_TIME + 1
+			ent.hornytimer = HORNY_TIME + 1
 
-				self:update_tag()
+			self:update_tag()
 
-				-- have we reached active mob limit
-				if at_limit() then
+			-- have we reached active mob limit
+			if at_limit() then
 
-					core.chat_send_player(self.owner, S("Active Mob Limit Reached!")
-							.. "  (" .. active_mobs .. " / " .. active_limit .. ")")
-					return
-				end
-
-				-- spawn baby
-				core.after(5, function(self, ent)
-
-					if not self.object:get_luaentity() then return end
-
-					-- custom breed function
-					if self.on_breed and self:on_breed(ent) == false then return end
-
-					-- add baby
-					local ent2 = mobs:add_mob(pos, {
-						name = self.name, child = true, owner = self.owner,
-						ignore_count = true
-					})
-
-					-- set baby textures
-					if ent2 then
-
-						local textures = self.base_texture
-
-						if self.child_texture then -- use custom texture if found
-							textures = self.child_texture[1]
-						end
-
-						ent2.mommy_tex = self.base_texture -- when grown
-						ent2.object:set_properties({textures = textures})
-						ent2.base_texture = textures
-						mobs:scale_mob(ent2, .5, .5)
-					end
-				end, self, ent)
-
-				break
+				core.chat_send_player(self.owner, S("Active Mob Limit Reached!")
+						.. "  (" .. active_mobs .. " / " .. active_limit .. ")")
+				return
 			end
+
+			-- spawn baby
+			core.after(5, function(self, ent)
+
+				if not self.object:get_luaentity() then return end
+
+				-- custom breed function
+				if self.on_breed and self:on_breed(ent) == false then return end
+
+				-- add baby
+				local ent2 = mobs:add_mob(pos, {
+					name = self.name, child = true, owner = self.owner,
+					ignore_count = true
+				})
+
+				-- set baby textures
+				if ent2 then
+
+					local textures = self.base_texture
+
+					if self.child_texture then -- use custom texture if found
+						textures = self.child_texture[1]
+					end
+
+					ent2.mommy_tex = self.base_texture -- when grown
+					ent2.object:set_properties({textures = textures})
+					ent2.base_texture = textures
+					mobs:scale_mob(ent2, .5, .5)
+				end
+			end, self, ent)
+
+			break
 		end
 	end
 end
@@ -1332,12 +1327,12 @@ function mob_class:replace(pos)
 
 	if type(self.replace_what[1]) == "table" then
 
-		local num = random(#self.replace_what)
+		local replacement = self.replace_what[random(#self.replace_what)]
 
-		what = self.replace_what[num][1] or ""
-		with = self.replace_what[num][2] or ""
-		y_offset = self.replace_what[num][3] or 0
-		reach = self.replace_what[num][4] or 0
+		what = replacement[1] or ""
+		with = replacement[2] or ""
+		y_offset = replacement[3] or 0
+		reach = replacement[4] or 0
 	else
 		what = self.replace_what
 		with = self.replace_with or ""
@@ -1600,19 +1595,15 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 					local sheight = ceil(prop.collisionbox[5]) + 1
 
-					s.y = s.y + sheight -- assume mob is 2 blocks high to dig above head
-
-					can_dig_drop(s) -- remove one block from above to make room to jump
-
-					s.y = s.y - sheight
+					-- can we dig block above head so we can jump
+					can_dig_drop({x = s.x, y = s.y + sheight, z = s.z})
 
 					self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
 
 				elseif p1.y < (s.y - 1) then -- is player move than 1 block lower
 
-					s.y = s.y - prop.collisionbox[4] - 0.2 -- dig down
-
-					can_dig_drop(s)
+					-- dig down
+					can_dig_drop({x = s.x, y = s.y - prop.collisionbox[4] - 0.2, z = s.z})
 
 				else -- dig 2 blocks to make door toward player direction
 
@@ -1627,15 +1618,11 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			-- will try again in 2 second
 			self.path.stuck_timer = pathfinding_stuck_timeout - 2
 
-		elseif s.y < p1.y and (not self.fly) then
-			self:do_jump() --add jump to pathfinding
+		elseif s.y < p1.y and not self.fly then
+			self:do_jump()
 			self.path.following = true
 		else -- yay i found path
-			if self.attack then
-				self:mob_sound(self.sounds.war_cry)
-			else
-				self:mob_sound(self.sounds.random)
-			end
+			self:mob_sound(self.attack and self.sounds.war_cry or self.sounds.random)
 
 			self:set_velocity(self.walk_velocity)
 
