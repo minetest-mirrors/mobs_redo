@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260523",
+	mod = "redo", version = "20260528",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1428,9 +1428,76 @@ local function can_dig_drop(pos)
 	return true
 end
 
--- pathfinder mod check
+-- process found path (nil if not found) way leading to target_pos
+-- if add_jump is true, add jump if below target_pos
+-- if set_velocity is true and path found, start moving at self.walk_velocity
 
-local pathfinder_mod = core.get_modpath("pathfinder")
+function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
+
+	local s = self.object:get_pos()
+	local p1 = target_pos; if not s or not p1 then return end
+
+	self.path.way = way
+
+	if self.attack then self:do_attack(self.attack) end
+
+	if not self.path.way then -- no path found
+
+		self.path.following = false
+
+		 -- lets make a way by digging/building
+		if self.pathfinding == 2 and mobs_griefing then
+			local prop = self.object:get_properties()
+
+			-- is player more than 1 block higher than mob?
+			if p1.y > (s.y + 1) then
+
+				if not core.is_protected(s, "") then -- build upwards
+
+					local ndef1 = core.registered_nodes[self.standing_in]
+
+					if ndef1 and (ndef1.buildable_to or ndef1.groups.liquid) then
+						core.set_node(s, {name = mobs.fallback_node})
+					end
+				end
+
+				local sheight = ceil(prop.collisionbox[5]) + 1
+
+				-- can we dig block above head so we can jump
+				can_dig_drop({x = s.x, y = s.y + sheight, z = s.z})
+
+				self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
+
+			elseif p1.y < (s.y - 1) then -- is player move than 1 block lower
+
+				-- dig down
+				can_dig_drop({x = s.x, y = s.y - prop.collisionbox[4] - 0.2, z = s.z})
+
+			else -- dig 2 blocks to make door toward player direction
+
+				local yaw1 = self.object:get_yaw() + pi / 2
+				local p1 = {x = s.x + cos(yaw1), y = s.y, z = s.z + sin(yaw1)}
+
+				-- dig bottom node first incase of door
+				can_dig_drop(p1) ; p1.y = p1.y + 1 ; can_dig_drop(p1)
+			end
+		end
+
+		-- will try again in 2 second
+		self.path.stuck_timer = pathfinding_stuck_timeout - 2
+
+	elseif add_jump and s.y < p1.y and not self.fly then
+		self:do_jump() --add jump to pathfinding
+		self.path.following = true
+	else -- yay i found path
+		self:mob_sound(self.attack and self.sounds.war_cry or self.sounds.random)
+
+		if set_velocity then
+			self:set_velocity(self.walk_velocity)
+		end
+		self.path.following = true -- now follow path
+	end
+end
 
 -- path finding and smart mob routine by rnd, line_of_sight and other edits by Elkien3
 
@@ -1540,12 +1607,8 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		elseif prop.stepheight > 0.5 then jumpheight = 1 end
 
-		if pathfinder_mod then
-			self.path.way = pathfinder.find_path(s, p1, self, dtime)
-		else
-			self.path.way = core.find_path(s, p1, pathfinding_searchdistance,
-					jumpheight, dropheight, pathfinding_algorithm)
-		end
+		self.path.way = core.find_path(s, p1, pathfinding_searchdistance,
+				jumpheight, dropheight, pathfinding_algorithm)
 
 		--[[ show path using particles
 		if self.path.way and #self.path.way > 0 then
@@ -1569,62 +1632,8 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 		self.state = ""
 
-		if self.attack then self:do_attack(self.attack) end
-
-		if not self.path.way then -- no path found
-
-			self.path.following = false
-
-			 -- lets make a way by digging/building
-			if self.pathfinding == 2 and mobs_griefing then
-
-				-- is player more than 1 block higher than mob?
-				if p1.y > (s.y + 1) then
-
-					if not core.is_protected(s, "") then -- build upwards
-
-						local ndef1 = core.registered_nodes[self.standing_in]
-
-						if ndef1 and (ndef1.buildable_to or ndef1.groups.liquid) then
-							core.set_node(s, {name = mobs.fallback_node})
-						end
-					end
-
-					local sheight = ceil(prop.collisionbox[5]) + 1
-
-					-- can we dig block above head so we can jump
-					can_dig_drop({x = s.x, y = s.y + sheight, z = s.z})
-
-					self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
-
-				elseif p1.y < (s.y - 1) then -- is player move than 1 block lower
-
-					-- dig down
-					can_dig_drop({x = s.x, y = s.y - prop.collisionbox[4] - 0.2, z = s.z})
-
-				else -- dig 2 blocks to make door toward player direction
-
-					local yaw1 = self.object:get_yaw() + pi / 2
-					local p1 = {x = s.x + cos(yaw1), y = s.y, z = s.z + sin(yaw1)}
-
-					-- dig bottom node first incase of door
-					can_dig_drop(p1) ; p1.y = p1.y + 1 ; can_dig_drop(p1)
-				end
-			end
-
-			-- will try again in 2 second
-			self.path.stuck_timer = pathfinding_stuck_timeout - 2
-
-		elseif s.y < p1.y and not self.fly then
-			self:do_jump()
-			self.path.following = true
-		else -- yay i found path
-			self:mob_sound(self.attack and self.sounds.war_cry or self.sounds.random)
-
-			self:set_velocity(self.walk_velocity)
-
-			self.path.following = true -- now follow path
-		end
+		 -- factored out for reuse / possible override
+		self:apply_path(self.path.way, target_pos, true, true)
 	end
 end
 
@@ -1820,9 +1829,39 @@ function mob_class:do_runaway_from()
 	end
 end
 
+-- follow a target located at pos p starting from our current pos s
+
+function mob_class:follow_target(s, p, dtime)
+
+	local dist = get_distance(p, s)
+
+	-- dont follow if out of range
+	if dist > self.view_range then
+		self.following = nil ; self.state = "stand" ; return
+	else
+		self:yaw_to_pos(p, 0, 2)
+
+		-- dont move if ordered to stand
+		if dist >= self.reach and self.order ~= "stand" then
+
+			self:set_velocity(self.walk_velocity) ; self.state = "walk"
+
+			if self.walk_chance ~= 0 then self:set_animation("walk") end
+
+		elseif self.state ~= "attack" then
+
+			self.state = "standing" -- fake state to pause mob within reach
+			self:set_velocity(0)
+			self:set_animation("stand")
+		end
+
+		return true
+	end
+end
+
 -- follow player if owner or holding item, if fish outta water then flop
 
-function mob_class:follow_flop()
+function mob_class:follow_flop(dtime)
 
 	-- find player to follow
 	if (self.follow ~= "" or self.order == "follow") and not self.following
@@ -1865,33 +1904,8 @@ function mob_class:follow_flop()
 		if is_player(self.following) then p = self.following:get_pos()
 		elseif self.following.object then p = self.following.object:get_pos() end
 
-		if p and self.state ~= "attack" then
+		if p and self.state ~= "attack" and self:follow_target(s, p, dtime) then return end
 
-			local dist = get_distance(p, s)
-
-			-- dont follow if out of range
-			if dist > self.view_range then
-				self.following = nil ; self.state = "stand"
-			else
-				self:yaw_to_pos(p, 0, 2)
-
-				-- dont move if ordered to stand
-				if dist >= self.reach and self.order ~= "stand" then
-
-					self:set_velocity(self.walk_velocity) ; self.state = "walk"
-
-					if self.walk_chance ~= 0 then self:set_animation("walk") end
-
-				elseif self.state ~= "attack" then
-
-					self.state = "standing" -- fake state to pause mob within reach
-					self:set_velocity(0)
-					self:set_animation("stand")
-				end
-
-				return
-			end
-		end
 	elseif self.state == "standing" then self.state = "stand" -- end fake state
 	end
 
@@ -3131,7 +3145,7 @@ function mob_class:on_step(dtime, moveresult)
 
 		self:general_attack()
 		self:breed()
-		self:follow_flop()
+		self:follow_flop(dtime)
 
 		-- when not attacking call do_states every second (return if dead)
 		if self.state ~= "attack" then
