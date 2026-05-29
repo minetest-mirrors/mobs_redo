@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260528",
+	mod = "redo", version = "20260529",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -365,15 +365,30 @@ function mob_class:get_velocity()
 	return (v.x * v.x + v.z * v.z) ^ 0.5
 end
 
+-- helper functions for smooth rotation
+
+local function clamp_yaw(yaw)
+	return yaw % (2 * pi)
+end
+
+local function shortest_rotation(from, to)
+
+	local diff = to - from
+
+	if diff > pi then return diff - 2 * pi
+	elseif diff < -pi then return diff + 2 * pi
+	end
+
+	return diff
+end
+
 -- set and return valid yaw, pitch or roll
 
 function mob_class:set_yaw(yaw, delay)
 
-	yaw = yaw or 0
+	yaw = clamp_yaw(yaw or 0)
 
-	delay = mob_smooth_rotate and delay or 0
-
-	yaw = yaw % (2 * pi) -- simplified yaw clamp
+	delay = (mob_smooth_rotate and delay) or 0
 
 	if delay == 0 then
 
@@ -725,11 +740,12 @@ function mob_class:item_drop()
 
 			-- only drop rare items (drops.min = 0) if killed by player
 			if death_by_player or self.drops[n].min ~= 0 then
-				obj = core.add_item(pos, ItemStack(item .. " " .. num))
-			end
 
-			if obj and obj:get_luaentity() then
-				obj:set_velocity({x = random() - 0.5, y = 4, z = random() - 0.5})
+				obj = core.add_item(pos, ItemStack(item .. " " .. num))
+
+				if obj then
+					obj:set_velocity({x = random() - 0.5, y = 4, z = random() - 0.5})
+				end
 			end
 		end
 	end
@@ -1997,21 +2013,23 @@ function mob_class:do_states(dtime)
 
 		if self.randomly_turn and random(4) == 1 then
 
-			local lp
+			local objs = core.get_objects_inside_radius(s, 3)
+			local obj_pos
 
-			for _,player in pairs(core.get_connected_players()) do
+			for _,obj in pairs(objs) do
 
-				local player_pos = player:get_pos()
-
-				if get_distance(player_pos, s) <= 3 then
-					lp = player_pos ; break
+				if obj:is_player() then
+					obj_pos = obj:get_pos() ; break
 				end
 			end
 
-			-- look at any players nearby, otherwise turn randomly
-			yaw = lp and self:yaw_to_pos(lp) or yaw + random() - 0.5
+			if obj_pos then
+				self:yaw_to_pos(obj_pos, 0, 8) -- look at player
+			else
+				yaw = yaw + random() - 0.5
 
-			self:set_yaw(yaw, 8)
+				self:set_yaw(yaw, 8) -- random turn
+			end
 		end
 
 		self:set_velocity(0)
@@ -3058,39 +3076,18 @@ function mob_class:on_step(dtime, moveresult)
 	-- falling check, return if dead
 	if self:falling(pos) then return end
 
-	-- smooth rotation by ThomasMonroe314
+	-- smooth rotation
 	if self.delay and self.delay > 0 then
 
-		if self.delay == 1 then yaw = self.target_yaw
-		else
-			local dif = abs(yaw - self.target_yaw)
+		local rot = self.object:get_rotation()
+		local yaw = rot.y
+		local rotation = shortest_rotation(yaw, self.target_yaw) / self.delay
 
-			if yaw > self.target_yaw then
-
-				if dif > pi then
-					dif = 2 * pi - dif
-					yaw = yaw + dif / self.delay -- add
-				else
-					yaw = yaw - dif / self.delay -- subtract
-				end
-
-			elseif yaw < self.target_yaw then
-
-				if dif > pi then
-					dif = 2 * pi - dif
-					yaw = yaw - dif / self.delay -- subtract
-				else
-					yaw = yaw + dif / self.delay -- add
-				end
-			end
-
-			if yaw > (pi * 2) then yaw = yaw - (pi * 2) end
-			if yaw < 0 then yaw = yaw + (pi * 2) end
-		end
+		yaw = clamp_yaw(yaw + rotation)
 
 		self.delay = self.delay - 1
 
-		self:set_yaw(yaw)
+		self:set_yaw(yaw, 0)
 	end
 
 	-- environmental damage timer (every 1 second)
