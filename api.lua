@@ -365,11 +365,7 @@ function mob_class:get_velocity()
 	return (v.x * v.x + v.z * v.z) ^ 0.5
 end
 
--- helper functions for smooth rotation
-
-local function clamp_yaw(yaw)
-	return yaw % (2 * pi)
-end
+-- helper function for smooth rotation
 
 local function shortest_rotation(from, to)
 
@@ -386,7 +382,7 @@ end
 
 function mob_class:set_yaw(yaw, delay)
 
-	yaw = clamp_yaw(yaw or 0)
+	yaw = (yaw or 0) % (2 * pi) -- clamp yaw
 
 	delay = (mob_smooth_rotate and delay) or 0
 
@@ -3050,8 +3046,7 @@ function mob_class:on_step(dtime, moveresult)
 
 	if use_cmi then cmi.notify_step(self.object, dtime) end
 
-	local pos = self.object:get_pos()
-	local yaw = self.object:get_yaw() ; if not yaw then return end
+	local pos = self.object:get_pos() ; if not pos then return end
 
 	self.node_timer = (self.node_timer or 0) + dtime
 
@@ -3083,11 +3078,9 @@ function mob_class:on_step(dtime, moveresult)
 		local yaw = rot.y
 		local rotation = shortest_rotation(yaw, self.target_yaw) / self.delay
 
-		yaw = clamp_yaw(yaw + rotation)
-
 		self.delay = self.delay - 1
 
-		self:set_yaw(yaw, 0)
+		self:set_yaw(yaw + rotation, 0)
 	end
 
 	-- environmental damage timer (every 1 second)
