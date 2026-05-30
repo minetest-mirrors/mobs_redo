@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260529",
+	mod = "redo", version = "20260530",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2357,7 +2357,9 @@ function mob_class:do_states(dtime)
 
 						if self:line_of_sight(p2, s2) then
 
-							self:mob_sound(self.sounds.attack) -- attack sound
+							if random(self.sounds.attack_chance or 1) == 1 then
+								self:mob_sound(self.sounds.attack) -- attack sound
+							end
 
 							-- punch player (or what player is attached to)
 							local attached = self.attack:get_attach()
@@ -3112,9 +3114,7 @@ function mob_class:on_step(dtime, moveresult)
 	end
 
 	-- run custom function (defined in mob lua file) - when false skip going any further
-	if self.do_custom and self:do_custom(dtime, moveresult) == false then
-		return
-	end
+	if self.do_custom and self:do_custom(dtime, moveresult) == false then return end
 
 	self.timer = self.timer + dtime
 
