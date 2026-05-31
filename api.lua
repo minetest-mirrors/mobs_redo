@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260530",
+	mod = "redo", version = "20260531",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1853,10 +1853,10 @@ function mob_class:follow_target(s, p, dtime)
 	else
 		self:yaw_to_pos(p, 0, 2)
 
-		-- dont move if ordered to stand
+		-- only move if not ordered to stand
 		if dist >= self.reach and self.order ~= "stand" then
 
-			self:set_velocity(self.walk_velocity) ; self.state = "walk"
+			self:set_velocity(self.walk_velocity)
 
 			if self.walk_chance ~= 0 then self:set_animation("walk") end
 
@@ -2051,7 +2051,7 @@ function mob_class:do_states(dtime)
 
 		self.state = "stand" -- we jump for one cycle before standing again
 
-	elseif self.state == "walk" then
+	elseif self.state == "walk" and not self.following then
 
 		if self.randomly_turn and random(100) <= 30 then
 
