@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260531",
+	mod = "redo", version = "20260602",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2349,16 +2349,29 @@ function mob_class:do_states(dtime)
 					-- no custom attack or custom attack returns true to continue
 					if not self.custom_attack or self:custom_attack(self, p) then
 
-						self:set_animation("punch")
-
 						local p2, s2 = p, s
 
-						p2.y = p2.y + .5 ; s2.y = s2.y + .5
+						-- approximate mob eye level
+						local prop = self.object:get_properties()
+						local cbox = prop.collisionbox
+						local height = cbox[5] - cbox[2]
+						local offset = cbox[2] + (height * 0.9)
+						s2.y = s2.y + offset
 
+						-- approximate victim eye level
+						prop = self.attack:get_properties()
+						cbox = prop.collisionbox
+						height = cbox[5] - cbox[2]
+						offset = cbox[2] + (height * 0.9)
+						p2.y = p2.y + offset
+
+						-- if we can see who we attack, then do so
 						if self:line_of_sight(p2, s2) then
 
+							self:set_animation("punch")
+
 							if random(self.sounds.attack_chance or 1) == 1 then
-								self:mob_sound(self.sounds.attack) -- attack sound
+								self:mob_sound(self.sounds.attack)
 							end
 
 							-- punch player (or what player is attached to)
