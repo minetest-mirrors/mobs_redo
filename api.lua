@@ -1552,7 +1552,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		end -- can see target!
 	end
 
-	if self.path.stuck_timer > pathfinding_stuck_timeout and not self.path.following then
+	if self.path.stuck_timer > pathfinding_stuck_timeout then
 
 		use_pathfind = true
 		self.path.stuck_timer = 0
@@ -1565,18 +1565,6 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		end, self)
 	end
 
-	if self.path.stuck_timer > pathfinding_stuck_path_timeout and self.path.following then
-
-		use_pathfind = true
-		self.path.stuck_timer = 0
-
-		core.after(1, function(self)
-
-			if not self.object:get_luaentity() then return end
-
-			if has_lineofsight then self.path.following = false end
-		end, self)
-	end
 --[[
 	local prop = self.object:get_properties()
 
