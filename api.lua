@@ -1577,7 +1577,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			if has_lineofsight then self.path.following = false end
 		end, self)
 	end
-
+--[[
 	local prop = self.object:get_properties()
 
 	if abs(s.y - target_pos.y) > prop.stepheight then
@@ -1588,7 +1588,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		if not self.path.height_switcher then
 				use_pathfind = false ; self.path.height_switcher = true end
 	end
-
+]]
 	-- try to find a path
 	if use_pathfind then
 
