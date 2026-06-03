@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260602",
+	mod = "redo", version = "20260603",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2352,17 +2352,13 @@ function mob_class:do_states(dtime)
 						local p2, s2 = p, s
 
 						-- approximate mob eye level
-						local prop = self.object:get_properties()
-						local cbox = prop.collisionbox
-						local height = cbox[5] - cbox[2]
-						local offset = cbox[2] + (height * 0.9)
+						local cbox = self.object:get_properties().collisionbox
+						local offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
 						s2.y = s2.y + offset
 
 						-- approximate victim eye level
-						prop = self.attack:get_properties()
-						cbox = prop.collisionbox
-						height = cbox[5] - cbox[2]
-						offset = cbox[2] + (height * 0.9)
+						cbox = self.attack:get_properties().collisionbox
+						offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
 						p2.y = p2.y + offset
 
 						-- if we can see who we attack, then do so
@@ -2375,15 +2371,11 @@ function mob_class:do_states(dtime)
 							end
 
 							-- punch player (or what player is attached to)
-							local attached = self.attack:get_attach()
-
-							if attached then
-								self.attack = attached
-							end
+							local target = self.attack:get_attach() or self.attack
 
 							local dgroup = self.damage_group or "fleshy"
 
-							self.attack:punch(self.object, 1.0, {
+							target:punch(self.object, 1.0, {
 								full_punch_interval = 1.0,
 								damage_groups = {[dgroup] = self.damage}
 							}, nil)
