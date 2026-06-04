@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260603",
+	mod = "redo", version = "20260604",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1519,7 +1519,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 	local target_pos = p
 
 	-- are we stuck?
-	if abs(s1.x - s.x) + abs(s1.z - s.z) < .5 then
+	if (abs(s1.x - s.x) + abs(s1.z - s.z)) / dtime < 0.5 then
 		self.path.stuck_timer = self.path.stuck_timer + dtime
 	else
 		self.path.stuck_timer = 0
@@ -1531,7 +1531,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 	local has_lineofsight = core.line_of_sight(
 			{x = s.x, y = (s.y) + .5, z = s.z},
 			{x = target_pos.x, y = (target_pos.y) + 1.5, z = target_pos.z}, .2)
-
+--[[
 	-- im stuck, search for path
 	if not has_lineofsight then
 
@@ -1551,7 +1551,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 			end, self)
 		end -- can see target!
 	end
-
+]]
 	if self.path.stuck_timer > pathfinding_stuck_timeout then
 
 		use_pathfind = true
@@ -1565,9 +1565,8 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		end, self)
 	end
 
---[[
 	local prop = self.object:get_properties()
-
+--[[
 	if abs(s.y - target_pos.y) > prop.stepheight then
 
 		if self.path.height_switcher then
