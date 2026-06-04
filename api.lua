@@ -2247,7 +2247,7 @@ function mob_class:do_states(dtime)
 					table_remove(self.path.way, 1) -- remove waypoint once reached
 				end
 
-				p = {x = p1.x, y = p1.y, z = p1.z} -- set new temp target
+				p = self.path.way[1] or p1
 			end
 
 			self:yaw_to_pos(p)
@@ -2263,15 +2263,13 @@ function mob_class:do_states(dtime)
 				-- distance padding to stop mob spinning
 				local pad = abs(p.x - s.x) + abs(p.z - s.z)
 
-				self.reach_ext = 0 -- extended ready off by default
-
 				if self.at_cliff or pad < 0.2 then
 
-					-- extend reach slightly when on top of player
-					self.reach_ext = 0.8
+					self.reach_ext = 0.8 -- extend reach when on top of player
 					self:set_velocity(0)
 					self:set_animation("stand")
 				else
+					self.reach_ext = 0 -- reset
 
 					if self.path.stuck then
 						self:set_velocity(self.walk_velocity)
@@ -2279,13 +2277,13 @@ function mob_class:do_states(dtime)
 						self:set_velocity(self.run_velocity)
 					end
 
-					if self.order == "stand" then
-						self:set_animation("stand")
-					elseif self.animation and self.animation.run_start then
-						self:set_animation("run")
-					else
-						self:set_animation("walk")
+					local anim = "walk"
+
+					if self.order == "stand" then anim = "stand"
+					elseif self.animation and self.animation.run_start then anim = "run"
 					end
+
+					self:set_animation(anim)
 				end
 			else -- rnd: if inside reach range
 
