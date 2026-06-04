@@ -1555,11 +1555,6 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 	-- determine node above ground (adjust height for player models)
 	if not ssight then s.y = sground.y + 1 end
 
-	local p1 = {
-		x = floor(target_pos.x + 0.5),
-		y = floor(target_pos.y + 0.5),
-		z = floor(target_pos.z + 0.5)}
-
 	local dropheight = self.fear_height ~= 0 and self.fear_height or pathfinding_max_drop
 	local jumpheight = 0
 	local prop = self.object:get_properties()
