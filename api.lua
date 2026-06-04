@@ -141,7 +141,7 @@ mobs.mob_class = {
 	walk_chance = 50,
 	stand_chance = 30,
 	attack_chance = 5,
-	attack_patience = 11,
+	attack_patience = 18,
 	passive = false,
 	blood_amount = 5, blood_texture = "mobs_blood.png",
 	shoot_offset = 0,
@@ -1459,6 +1459,7 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 
 		 -- lets make a way by digging/building
 		if self.pathfinding == 2 and mobs_griefing then
+
 			local prop = self.object:get_properties()
 
 			-- is player more than 1 block higher than mob?
@@ -1468,27 +1469,31 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 
 					local ndef1 = core.registered_nodes[self.standing_in]
 
+					s.y = s.y + (prop.collisionbox[2] + 0.25)
+
 					if ndef1 and (ndef1.buildable_to or ndef1.groups.liquid) then
 						core.set_node(s, {name = mobs.fallback_node})
 					end
 				end
 
+				-- can we dig block above head so we can jump
 				local sheight = ceil(prop.collisionbox[5]) + 1
 
-				-- can we dig block above head so we can jump
 				can_dig_drop({x = s.x, y = s.y + sheight, z = s.z})
 
 				self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
 
-			elseif p1.y < (s.y - 1) then -- is player move than 1 block lower
+			elseif p1.y < (s.y - 1.1) then -- is player move than 1 block lower
 
-				-- dig down
-				can_dig_drop({x = s.x, y = s.y - prop.collisionbox[4] - 0.2, z = s.z})
+				s.y = s.y + (prop.collisionbox[2] - 0.25)
+
+				can_dig_drop({x = s.x, y = s.y, z = s.z}) -- try to dig down
 
 			else -- dig 2 blocks to make door toward player direction
 
 				local yaw1 = self.object:get_yaw() + pi / 2
-				local p1 = {x = s.x + cos(yaw1), y = s.y, z = s.z + sin(yaw1)}
+
+				p1 = {x = s.x + cos(yaw1), y = floor(s.y), z = s.z + sin(yaw1)}
 
 				-- dig bottom node first incase of door
 				can_dig_drop(p1) ; p1.y = p1.y + 1 ; can_dig_drop(p1)
