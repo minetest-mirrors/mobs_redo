@@ -1446,8 +1446,7 @@ end
 
 function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 
-	local s = self.object:get_pos()
-	local p1 = target_pos; if not s or not p1 then return end
+	local s = self.object:get_pos() ; if not s or not target_pos then return end
 
 	self.path.way = way
 
@@ -1461,39 +1460,37 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 		if self.pathfinding == 2 and mobs_griefing then
 
 			local prop = self.object:get_properties()
+			local height_diff = target_pos.y - s.y
 
 			-- is player more than 1 block higher than mob?
-			if p1.y > (s.y + 1) then
+			if height_diff > 1.1 then
 
 				if not core.is_protected(s, "") then -- build upwards
 
 					local ndef1 = core.registered_nodes[self.standing_in]
 
-					s.y = s.y + (prop.collisionbox[2] + 0.25)
-
 					if ndef1 and (ndef1.buildable_to or ndef1.groups.liquid) then
+
+						s.y = s.y + (prop.collisionbox[2] + 0.25)
+
 						core.set_node(s, {name = mobs.fallback_node})
 					end
 				end
 
 				-- can we dig block above head so we can jump
-				local sheight = ceil(prop.collisionbox[5]) + 1
-
-				can_dig_drop({x = s.x, y = s.y + sheight, z = s.z})
+				can_dig_drop({x = s.x, y = s.y + ceil(prop.collisionbox[5]) + 1, z = s.z})
 
 				self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
 
-			elseif p1.y < (s.y - 1.1) then -- is player move than 1 block lower
+			elseif height_diff < -1.1 then -- is player move than 1 block lower
 
-				s.y = s.y + (prop.collisionbox[2] - 0.25)
-
-				can_dig_drop({x = s.x, y = s.y, z = s.z}) -- try to dig down
+				 -- try to dig down
+				can_dig_drop({x = s.x, y = s.y + (prop.collisionbox[2] - 0.25), z = s.z})
 
 			else -- dig 2 blocks to make door toward player direction
 
 				local yaw1 = self.object:get_yaw() + pi / 2
-
-				p1 = {x = s.x + cos(yaw1), y = floor(s.y), z = s.z + sin(yaw1)}
+				local p1 = {x = s.x + cos(yaw1), y = floor(s.y), z = s.z + sin(yaw1)}
 
 				-- dig bottom node first incase of door
 				can_dig_drop(p1) ; p1.y = p1.y + 1 ; can_dig_drop(p1)
@@ -1503,7 +1500,7 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 		-- will try again in 2 second
 		self.path.stuck_timer = pathfinding_stuck_timeout - 2
 
-	elseif add_jump and s.y < p1.y and not self.fly then
+	elseif add_jump and s.y < target_pos.y and not self.fly then
 		self:do_jump() --add jump to pathfinding
 		self.path.following = true
 	else -- yay i found path
