@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260604",
+	mod = "redo", version = "20260605",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1517,6 +1517,17 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 	end
 end
 
+-- path height checker
+
+local function path_height_blocked(self)
+
+	for _,pos in pairs(self.path.way) do
+		if get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name ~= "air" then
+			return true
+		end
+	end
+end
+
 -- path finding and smart mob routine by rnd, line_of_sight and other edits by Elkien3
 
 function mob_class:smart_mobs(s, p, dist, dtime)
@@ -1565,31 +1576,44 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 	elseif prop.stepheight > 0.5 then jumpheight = 1 end
 
-		local p1 = {
-			x = floor(target_pos.x + 0.5),
-			y = floor(target_pos.y + 0.5),
-			z = floor(target_pos.z + 0.5)}
+	local p1 = {
+		x = floor(target_pos.x + 0.5),
+		y = floor(target_pos.y + 0.5),
+		z = floor(target_pos.z + 0.5)}
 
-		self.path.way = core.find_path(s, p1, pathfinding_searchdistance,
-				jumpheight, dropheight, pathfinding_algorithm)
+	self.path.way = core.find_path(s, p1, pathfinding_searchdistance,
+			jumpheight, dropheight, pathfinding_algorithm)
 
-	--[[ show path using particles
+	local height = prop.collisionbox[5] - prop.collisionbox[2]
+
+	-- since we have a path, double check clearance height for 2x node high mobs
 	if self.path.way and #self.path.way > 0 then
 
+		if height > 1 then
+			if path_height_blocked(self) then -- make sure 2 high mobs can get access
+				self.path.way = nil
+			end
+		end
+	end
+
+	--[[ do we still have a path after check
+	if self.path.way and #self.path.way > 0 then
+
+		-- show path length and particle trail
 		print("-- path length:" .. tonumber(#self.path.way))
 
 		for _,pos in pairs(self.path.way) do
 
-			core.add_particle({
-				pos = pos,
-				velocity = {x = 0, y = 0, z = 0},
-				acceleration = {x = 0, y = 0, z = 0},
-				expirationtime = 2,
-				size = 4,
-				collisiondetection = false,
-				vertical = false,
-				texture = "mobs_heart_particle.png",
-			})
+			core.add_particle({pos = pos, texture = "mobs_heart_particle.png",
+					expirationtime = 2, size = 4, collisiondetection = false,
+					vertical = false})
+
+			if height > 1 then
+				pos.y = pos.y + 1
+				core.add_particle({pos = pos, texture = "mobs_heart_particle.png",
+					expirationtime = 2, size = 4, collisiondetection = false,
+					vertical = false})
+			end
 		end
 	end]]
 
@@ -2242,7 +2266,7 @@ function mob_class:do_states(dtime)
 					table_remove(self.path.way, 1) -- remove waypoint once reached
 				end
 
-				p = self.path.way[1] or p1
+				p = self.path.way[1] or p1 -- set to next position with fallback
 			end
 
 			self:yaw_to_pos(p)
@@ -2961,9 +2985,7 @@ function mob_class:get_nodes()
 	local pos = self.object:get_pos()
 	local yaw = self.object:get_yaw()
 	local prop = self.object:get_properties()
-
-	-- child mobs have a lower y_level
-	local y_level = self.child and prop.collisionbox[2] * 0.5 or prop.collisionbox[2]
+	local y_level = prop.collisionbox[2]
 
 	self.standing_in = node_ok(
 			{x = pos.x, y = pos.y + y_level + 0.25, z = pos.z}, "air").name
