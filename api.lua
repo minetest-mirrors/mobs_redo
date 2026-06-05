@@ -1521,10 +1521,13 @@ end
 
 local function path_height_blocked(self)
 
+	local node
+
 	for _,pos in pairs(self.path.way) do
-		if get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name ~= "air" then
-			return true
-		end
+
+		node = get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
+
+		if core.registered_nodes[node].walkable then return true end
 	end
 end
 
