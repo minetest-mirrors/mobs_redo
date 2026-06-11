@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260605",
+	mod = "redo", version = "20260611",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -240,7 +240,7 @@ local function is_player(player)
 	end
 end
 
--- collision function based on jordan4ibanez' open_ai mod
+-- collision function
 
 function mob_class:collision()
 
@@ -248,17 +248,22 @@ function mob_class:collision()
 	local x, z = 0, 0
 	local prop = self.object:get_properties()
 	local width = -prop.collisionbox[1] + prop.collisionbox[4] + 0.5
+	local width_sq = width * width
+	local players = core.get_objects_inside_radius(pos, width)
 
-	for _,object in pairs(core.get_objects_inside_radius(pos, width)) do
+	for i = 1, #players do
 
-		if object:is_player() then
+		if players[i]:is_player() then
 
-			local pos2 = object:get_pos()
-			local vx, vz  = pos.x - pos2.x, pos.z - pos2.z
-			local force = width - (vx * vx + vz * vz) ^ 0.5
+			local pos2 = players[i]:get_pos()
+			local vx, vz = pos.x - pos2.x, pos.z - pos2.z
+			local dist_sq = vx * vx + vz * vz
 
-			if force > 0 then
-				force = force * 2 ; x = x + vx * force ; z = z + vz * force
+			if dist_sq < width_sq then
+
+				local force = (width - dist_sq ^ 0.5) * 2
+
+				x = x + vx * force ; z = z + vz * force
 			end
 		end
 	end
