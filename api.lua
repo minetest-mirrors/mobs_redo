@@ -2440,14 +2440,14 @@ function mob_class:falling(pos)
 
 		if d > 6 then -- stay consistent with player fall damage
 
-			local damage = d - 5
+			local damage = d - 6
 			local add = core.get_item_group(self.standing_on, "fall_damage_add_percent")
 
 			if add ~= 0 then
 				damage = damage + damage * (add / 100)
 			end
 
-			self.health = self.health - floor(damage)
+			self.health = self.health - ceil(damage)
 
 			effect(pos, 5, "mobs_tnt_smoke.png", 1, 2, 2, nil)
 
@@ -2685,10 +2685,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 		if v then
 
 			local kb = dis_damage_kb and 1 or (damage or 1)
-			local up = 2
-
-			-- if already in air then dont go up anymore when hit
-			if v.y > 0 or self.fly then up = 0 end
+			local up = (v.y > 0 or self.fly) and 0 or 2
 
 			dir = dir or {x = 0, y = 0, z = 0} -- nil check
 
@@ -2697,7 +2694,7 @@ function mob_class:on_punch(hitter, tflp, tool_capabilities, dir, damage)
 
 			-- check for knockback enchantment
 			if use_mc2 and enchants.knockback then
-				kb = kb + (3 * enchants.knockback)
+				kb = kb + 3 * enchants.knockback
 			end
 
 			self.object:set_velocity({x = dir.x * kb, y = up, z = dir.z * kb})
@@ -2959,29 +2956,26 @@ end
 
 function mob_class:mob_expire(pos, dtime)
 
-	-- when lifetimer expires remove mob (except npc and tamed)
-	if self.type ~= "npc" and not self.tamed and self.state ~= "attack"
-	and not remove_far and self.lifetimer < 20000 then
+	if self.type == "npc" or self.tamed or self.state == "attack"
+	or remove_far or self.lifetimer >= 20000 then return end
 
-		self.lifetimer = self.lifetimer - dtime
+	self.lifetimer = self.lifetimer - dtime
 
-		if self.lifetimer <= 0 then
+	if self.lifetimer > 0 then return end
 
-			-- only despawn away from player
-			for _,player in pairs(core.get_connected_players()) do
+	-- only despawn away from player
+	for _,player in pairs(core.get_connected_players()) do
 
-				if get_distance(player:get_pos(), pos) <= 15 then
-					self.lifetimer = 20 ; return
-				end
-			end
-
---			core.log("action", "lifetimer expired, removed " .. self.name)
-
-			effect(pos, 15, "mobs_tnt_smoke.png", 2, 4, 2, 0)
-
-			remove_mob(self, true) ; return true
+		if get_distance(player:get_pos(), pos) <= 15 then
+			self.lifetimer = 20 ; return
 		end
 	end
+
+--	core.log("action", "lifetimer expired, removed " .. self.name)
+
+	effect(pos, 15, "mobs_tnt_smoke.png", 2, 4, 2, 0)
+
+	remove_mob(self, true) ; return true
 end
 
 -- get nodes mob is standing on, in, facing, facing above
@@ -3057,8 +3051,7 @@ function mob_class:on_step(dtime, moveresult)
 	-- smooth rotation
 	if self.delay and self.delay > 0 then
 
-		local rot = self.object:get_rotation()
-		local yaw = rot.y
+		local yaw = self.object:get_rotation().y or 0
 		local rotation = shortest_rotation(yaw, self.target_yaw) / self.delay
 
 		self.delay = self.delay - 1
@@ -3852,7 +3845,7 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 
 		if core.get_modpath("mcl_explosions") then
 
-			mcl_explosions.explode(pos, node_damage_radius)
+			mcl_explosions.explode(pos, node_damage_radius) ; return
 
 		elseif core.get_modpath("tnt") and tnt and tnt.boom then
 
@@ -3862,13 +3855,11 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 				sound = self and self.sounds and self.sounds.explode or "tnt_explode",
 				explode_center = true,
 				tiles = texture
-			})
-		else
-			mobs:safe_boom(self, pos, node_damage_radius, texture)
+			}) ; return
 		end
-	else
-		mobs:safe_boom(self, pos, node_damage_radius, texture)
 	end
+
+	mobs:safe_boom(self, pos, node_damage_radius, texture)
 end
 
 -- Register spawn eggs - This also introduces the “spawn_egg” group:
@@ -4187,11 +4178,13 @@ local mob_obj, mob_sta = {}, {}
 
 function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
+	local name = clicker:get_player_name()
+
 	-- can eat/tame with item in hand
 	if self.follow and self:follow_holding(clicker) then
 
 		-- take item when not using creative
-		if not mobs.is_creative(clicker:get_player_name()) then
+		if not mobs.is_creative(name) then
 
 			local item = clicker:get_wielded_item()
 
@@ -4231,16 +4224,15 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 				if not self.tamed then
 
-					core.chat_send_player(clicker:get_player_name(),
-						S("@1 has been tamed!",
-						self.name:split(":")[2]))
+					core.chat_send_player(name, S("@1 has been tamed!",
+							self.name:split(":")[2]))
 				end
 
 				self.tamed = true
 				self.static_save = true
 
 				if not self.owner or self.owner == "" then
-					self.owner = clicker:get_player_name()
+					self.owner = name
 				end
 			end
 
@@ -4251,7 +4243,6 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 	end
 
 	local item = clicker:get_wielded_item()
-	local name = clicker:get_player_name()
 
 	-- only tames mobs can be named with nametag
 	if item:get_name() == "mobs:nametag"
@@ -4271,17 +4262,15 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 		return true
 	end
 
-	if self.follow then -- sneak & right-click mob to show what it eats/follows
+	-- sneak & right-click mob to show what it eats/follows
+	if self.follow and clicker:get_player_control().sneak then
 
-		if clicker:get_player_control().sneak then
-
-			if type(self.follow) == "string" then
-				self.follow = {self.follow}
-			end
-
-			core.chat_send_player(clicker:get_player_name(), S("@1 follows:",
-				self.name:split(":")[2]) .. "\n- " .. table.concat(self.follow, "\n- "))
+		if type(self.follow) == "string" then
+			self.follow = {self.follow}
 		end
+
+		core.chat_send_player(name, S("@1 follows:", self.name:split(":")[2])
+			.. "\n- " .. table.concat(self.follow, "\n- "))
 	end
 end
 
@@ -4393,7 +4382,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 	core.sound_play = function(spec, param, eph)
 
-		if type(spec) == "table" then return old_sound_play(spec, param, eph) end
+--		if type(spec) == "table" then return old_sound_play(spec, param, eph) end
 
 		local def = {} ; param = param or {}
 
@@ -4460,16 +4449,16 @@ if settings:get_bool("mobs_can_hear") ~= false then
 					vector.subtract(def.pos, dist),
 					vector.add(def.pos, dist), {"group:on_sound"})
 
-			if #ps > 0 then
+			for n = 1, #ps do
 
-				for n = 1, #ps do
+				local ndef = core.registered_nodes[get_node(ps[n]).name]
 
-					local ndef = core.registered_nodes[get_node(ps[n]).name]
+				if ndef and ndef.on_sound then
 
 					def.distance = get_distance(def.pos, ps[n])
 					def.loudness = def.gain - (bit * def.distance)
 
-					if def.loudness > 0 and ndef and ndef.on_sound then
+					if def.loudness > 0 then
 						ndef.on_sound(ps[n], def)
 					end
 				end
