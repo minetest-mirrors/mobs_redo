@@ -305,20 +305,19 @@ end
 
 local function check_for(look_for, look_inside)
 
-	if look_inside == look_for then return true
+	if look_inside == look_for then return true end
 
-	elseif type(look_inside) == "table" then
+	if type(look_inside) ~= "table" then return end
 
-		for _, str in pairs(look_inside) do
+	for _, str in pairs(look_inside) do
 
-			if str == look_for then return true
+		if str == look_for then return true end
 
-			elseif str and str:find("group:") then
+		if type(str) == "string" and str:sub(1, 6) == "group:" then
 
-				local group = str:split(":")[2] or ""
+			local group = str:match("^group:(.*)$") or ""
 
-				if core.get_item_group(look_for, group) ~= 0 then return true end
-			end
+			if core.get_item_group(look_for, group) ~= 0 then return true end
 		end
 	end
 end
