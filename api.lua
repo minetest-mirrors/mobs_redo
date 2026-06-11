@@ -2216,9 +2216,8 @@ function mob_class:do_states(dtime)
 			end
 
 		elseif self.attack_type == "dogfight"
-		or (self.attack_type == "dogshoot" and self:dogswitch(dtime) == 2)
-		or (self.attack_type == "dogshoot" and dist <= self.reach
-		and self:dogswitch() == 0) then
+		or (self.attack_type == "dogshoot" and (self:dogswitch(dtime) == 2
+		or (dist <= self.reach and self:dogswitch() == 0))) then
 
 			-- make sure flying mobs are inside proper medium
 			if self.fly and dist > self.reach and self:flight_check() then
@@ -2366,11 +2365,10 @@ function mob_class:do_states(dtime)
 			end
 
 		elseif self.attack_type == "shoot"
-		or (self.attack_type == "dogshoot" and self:dogswitch(dtime) == 1)
-		or (self.attack_type == "dogshoot" and dist > self.reach and
-		self:dogswitch() == 0) then
+		or (self.attack_type == "dogshoot" and (self:dogswitch(dtime) == 1
+		or (dist > self.reach and self:dogswitch() == 0))) then
 
-			p.y = p.y - .5 ; s.y = s.y + .5
+			p.y = p.y - 0.5 ; s.y = s.y + 0.5
 
 			local vec = {x = p.x - s.x, y = p.y - s.y, z = p.z - s.z}
 
@@ -2405,13 +2403,13 @@ function mob_class:do_states(dtime)
 						ent._homing_target = self.attack
 					end
 
-					 -- offset makes shoot aim accurate
-					vec.y = vec.y + self.shoot_offset
-					vec.x = vec.x * (v / amount)
-					vec.y = vec.y * (v / amount)
-					vec.z = vec.z * (v / amount)
+					local scale = v / amount
 
-					obj:set_velocity(vec)
+					obj:set_velocity({
+						x = vec.x * scale,
+						y =  (vec.y + self.shoot_offset) * scale,
+						z = vec.z * scale
+					})
 				end
 			end
 		end
@@ -2428,8 +2426,7 @@ function mob_class:falling(pos)
 	local fall_speed = self.fall_speed
 
 	-- use liquid viscosity for float/sink speed when in water
-	if self.floats and self.standing_in
-	and core.registered_nodes[self.standing_in].groups.liquid then
+	if self.floats and core.registered_nodes[self.standing_in].groups.liquid then
 
 		local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
@@ -2441,7 +2438,7 @@ function mob_class:falling(pos)
 
 		local d = (self.old_y or v.y) - self.object:get_pos().y
 
-		if d > 5 then
+		if d > 6 then -- stay consistent with player fall damage
 
 			local damage = d - 5
 			local add = core.get_item_group(self.standing_on, "fall_damage_add_percent")
