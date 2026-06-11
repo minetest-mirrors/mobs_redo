@@ -346,11 +346,11 @@ function mob_class:set_velocity(v)
 	local yaw = (self.object:get_yaw() or 0) + self.rotate
 
 	-- is mob standing in liquid?
-	local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7)
+	local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity or 0, 7)
 
 	-- only slow moving mobs when inside a viscous fluid they cannot swim in
 	-- e.g. fish in water, spiders in cobweb
-	if v > 0 and visc and visc > 0 and not check_for(self.standing_in, self.fly_in) then
+	if v > 0 and visc > 0 and not check_for(self.standing_in, self.fly_in) then
 		v = v / (visc + 1)
 	end
 
@@ -427,13 +427,14 @@ function mob_class:set_animation(anim, force)
 
 	if not self.animation or not anim then return end
 
-	self.animation_current = self.animation_current or ""
+	local current = self.animation_current or ""
+	local anims = self.animation
 
 	-- only use different animation for attacks when using same set
 	if not force and anim ~= "punch" and anim ~= "shoot"
-	and string.find(self.animation_current, anim) then return end
+	and current:find(anim, 1, true) then return end
 
-	local num, anims = 0, self.animation
+	local num = 0
 
 	for n = 1, 4 do -- check for more than one animation (max 4)
 
@@ -445,7 +446,7 @@ function mob_class:set_animation(anim, force)
 		anim = anim .. (num ~= 0 and num or "")
 	end
 
-	if (anim == self.animation_current and not force)
+	if (anim == current and not force)
 	or not anims[anim .. "_start"] or not anims[anim .. "_end"] then return end
 
 	self.animation_current = anim
@@ -489,20 +490,17 @@ end
 
 function mob_class:line_of_sight(pos1, pos2)
 
-	local ray = core.raycast(pos1, pos2, true, false) -- ignore entities
-	local thing = ray:next()
-	local nodedef
+	local rays = core.raycast(pos1, pos2, true, false) -- ignore entities
+	local next_ray = rays.next
 
-	while thing do
+	for thing in next_ray, rays do
 
 		if thing.type == "node" then
 
-			nodedef = core.registered_items[get_node(thing.under).name]
+			local nodedef = core.registered_items[get_node(thing.under).name]
 
 			if nodedef and nodedef.walkable then return end
 		end
-
-		thing = ray:next()
 	end
 
 	return true
@@ -512,7 +510,7 @@ end
 
 function mob_class:attempt_flight_correction(override)
 
-	if self:flight_check() and not override then return true end
+	if not override and self:flight_check() then return true end
 
 	local pos = self.object:get_pos() ; if not pos then return true end
 	local flyable_nodes = core.find_nodes_in_area(
@@ -773,33 +771,34 @@ end
 
 function mob_class:death_anim()
 
-	if self.animation and self.animation.die_start and self.animation.die_end then
-
-		local frames = self.animation.die_end - self.animation.die_start
-		local speed = self.animation.die_speed or 15
-		local length = max(frames / speed, 0)
-		local rot = self.animation.die_rotate and 5
-
-		self.object:set_properties({
-			pointable = false, collide_with_objects = false,
-			automatic_rotate = rot, static_save = false
-		})
-
-		self:set_velocity(0)
-		self:set_animation("die")
-
-		core.after(length, function()
-
-			if self.object:get_luaentity() then
-
-				if use_cmi then cmi.notify_die(self.object, cmi_cause) end
-
-				remove_mob(self, true)
-			end
-		end)
-
-		return true
+	if not (self.animation and self.animation.die_start and self.animation.die_end) then
+		return
 	end
+
+	local frames = self.animation.die_end - self.animation.die_start
+	local speed = self.animation.die_speed or 15
+	local length = max(frames / speed, 0)
+	local rot = self.animation.die_rotate and 5
+
+	self.object:set_properties({
+		pointable = false, collide_with_objects = false,
+		automatic_rotate = rot, static_save = false
+	})
+
+	self:set_velocity(0)
+	self:set_animation("die")
+
+	core.after(length, function()
+
+		if self.object:get_luaentity() then
+
+			if use_cmi then cmi.notify_die(self.object, cmi_cause) end
+
+			remove_mob(self, true)
+		end
+	end)
+
+	return true
 end
 
 -- check if dead
@@ -886,22 +885,25 @@ local function is_node_dangerous(self, nodename)
 
 	local def = core.registered_nodes[nodename] ; if not def then return end
 
-	if (self.water_damage and self.water_damage > 0 and def.groups.water)
-	or (self.lava_damage and self.lava_damage > 0 and def.groups.lava)
-	or (self.fire_damage and self.fire_damage > 0 and def.groups.fire) then return true end
+	if (self.water_damage > 0 and def.groups.water)
+	or (self.lava_damage > 0 and def.groups.lava)
+	or (self.fire_damage > 0 and def.groups.fire) then return true end
 
-	if self.node_damage and def.damage_per_second and def.damage_per_second > 0 then
+	local dmg = self.node_damage and def.damage_per_second and def.damage_per_second > 0
 
-		local damage = def.damage_per_second
+	if dmg then
 
-		for n = 1, #self.immune_to do
+		if self.immune_to then
 
-			if self.immune_to[n][1] == nodename then
-				damage = self.immune_to[n][2] or 0 ; break
+			for n = 1, #self.immune_to do
+
+				if self.immune_to[n][1] == nodename then
+					return (self.immune_to[n][2] or 0) > 0
+				end
 			end
 		end
 
-		return damage > 0
+		return true
 	end
 end
 
