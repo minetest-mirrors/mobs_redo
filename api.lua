@@ -1969,7 +1969,7 @@ function mob_class:do_states(dtime)
 				{x = s.x + 7, y = s.y + 0, z = s.z + 7},
 				{"group:cracky", "group:crumbly", "group:choppy", "group:solid"})
 
-		if #lp > 0 then -- if we found land try to climb out
+		if lp and #lp > 0 then -- if we found land try to climb out
 
 			yaw = self:yaw_to_pos( lp[random(#lp)] )
 
