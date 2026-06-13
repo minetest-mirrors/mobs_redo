@@ -693,7 +693,7 @@ function mob_class:item_drop()
 	local drops = self.drops
 
 	-- check for drops function
-	if type(self.drops) == "function" then drops =  self.drops(pos) end
+	if type(drops) == "function" then drops = self.drops(pos) end
 
 	if not drops or #drops == 0 then return end
 
@@ -1495,7 +1495,11 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 			else -- dig 2 blocks to make door toward player direction
 
 				local yaw1 = self.object:get_yaw() + pi / 2
-				local p1 = {x = s.x + cos(yaw1), y = floor(s.y), z = s.z + sin(yaw1)}
+				local p1 = {
+					x = s.x + cos(yaw1),
+					y = s.y + (prop.collisionbox[2] + 0.25),
+					z = s.z + sin(yaw1)
+				}
 
 				-- dig bottom node first incase of door
 				can_dig_drop(p1) ; p1.y = p1.y + 1 ; can_dig_drop(p1)
