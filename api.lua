@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260612",
+	mod = "redo", version = "20260613",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -690,11 +690,12 @@ function mob_class:item_drop()
 	if not mobs_drop_items or self.child then return end
 
 	local pos = self.object:get_pos()
+	local drops = self.drops
 
 	-- check for drops function
-	self.drops = type(self.drops) == "function" and self.drops(pos) or self.drops
+	if type(self.drops) == "function" then drops =  self.drops(pos) end
 
-	if not self.drops or #self.drops == 0 then return end
+	if not drops or #drops == 0 then return end
 
 	-- was mob killed by player?
 	local death_by_player = self.cause_of_death and self.cause_of_death.puncher
@@ -716,14 +717,12 @@ function mob_class:item_drop()
 		looting = min(looting, 3)
 	end
 
-	local obj, item, num
+	for n = 1, #drops do
 
-	for n = 1, #self.drops do
+		if random(drops[n].chance) == 1 then
 
-		if random(self.drops[n].chance) == 1 then
-
-			num = random(self.drops[n].min or 0, self.drops[n].max or 1) + looting
-			item = self.drops[n].name
+			local num = random(drops[n].min or 1, drops[n].max or 1) + looting
+			local item = drops[n].name
 
 			-- cook items for a hot death
 			if self.cause_of_death.hot then
@@ -737,12 +736,12 @@ function mob_class:item_drop()
 			end
 
 			-- only drop rare items (drops.min = 0) if killed by player
-			if death_by_player or self.drops[n].min ~= 0 then
+			if death_by_player or drops[n].min ~= 0 then
 
-				obj = core.add_item(pos, ItemStack(item .. " " .. num))
+				local obj = core.add_item(pos, ItemStack(item .. " " .. num))
 
 				if obj then
-					obj:set_velocity({x = random() - 0.5, y = 4, z = random() - 0.5})
+					obj:set_velocity({x = random() - 0.5, y = 5, z = random() - 0.5})
 				end
 			end
 		end
