@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260613",
+	mod = "redo", version = "20260616",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1974,7 +1974,8 @@ function mob_class:do_states(dtime)
 
 		if lp and #lp > 0 then -- if we found land try to climb out
 
-			yaw = self:yaw_to_pos( lp[random(#lp)] )
+			yaw = self:yaw_to_pos( lp[random(#lp)], 0, 1 )
+			self:set_yaw(yaw, 0)
 
 			self.state = "walk"
 			self.pause_timer = 3
