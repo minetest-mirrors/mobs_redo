@@ -575,7 +575,9 @@ function mob_class:do_stay_near()
 
 	if #nearby_nodes == 0 then return end
 
-	self:yaw_to_pos(nearby_nodes[random(#nearby_nodes)])
+	local yaw = self:yaw_to_pos(nearby_nodes[random(#nearby_nodes)], 0, 1)
+
+	self:set_yaw(yaw, 0)
 	self:set_animation("walk")
 	self:set_velocity(self.walk_velocity)
 
