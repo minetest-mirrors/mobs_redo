@@ -3611,7 +3611,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		if mob_area_spawn ~= true then
+		if mob_area_spawn ~= true and ent.base_colbox then
 
 			-- do we have enough height clearance to spawn mob?
 			local height = max(0, ent.base_colbox[5] - ent.base_colbox[2])
