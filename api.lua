@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260629",
+	mod = "redo", version = "20260707",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -838,7 +838,7 @@ function mob_class:check_for_death(cmi_cause)
 	-- reset vars
 	self.attack = nil
 	self.following = nil
-	self.v_start = false ; self.timer = 0 ; self.blinktimer = 0
+	self.v_start = false ; self.blinktimer = 0
 	self.passive = true
 	self.state = "die"
 	self.fly = false
@@ -1953,7 +1953,7 @@ function mob_class:stop_attack()
 
 	self.attack = nil
 	self.following = nil
-	self.v_start = false ; self.timer = 0 ; self.blinktimer = 0
+	self.v_start = false ; self.blinktimer = 0
 	self.path.way = nil
 	self:set_velocity(0)
 	self.state = "stand"
@@ -2157,7 +2157,7 @@ function mob_class:do_states(dtime)
 			if not self.v_start and dist <= self.reach and in_sight then
 
 				self.v_start = true
-				self.timer = 0
+				self.explode_timer = 0
 				self.blinktimer = 0
 				self:mob_sound(self.sounds.fuse)
 
@@ -2170,7 +2170,7 @@ function mob_class:do_states(dtime)
 --print("=== explosion timer stopped")
 
 				self.v_start = false
-				self.timer = 0
+				self.explode_timer = 0
 				self.blinktimer = 0
 				self.blinkstatus = false
 				self.object:set_texture_mod("")
@@ -2192,7 +2192,7 @@ function mob_class:do_states(dtime)
 
 			if self.v_start then
 
-				self.timer = self.timer + dtime
+				self.explode_timer = (self.explode_timer or 0) + dtime
 				self.blinktimer = (self.blinktimer or 0) + dtime
 
 				if self.blinktimer > 0.2 then
@@ -2210,9 +2210,9 @@ function mob_class:do_states(dtime)
 					self.blinkstatus = not self.blinkstatus
 				end
 
---print("=== explosion timer", self.timer)
+--print("=== explosion timer", self.explode_timer)
 
-				if self.timer > self.explosion_timer then
+				if self.explode_timer > self.explosion_timer then
 
 					-- dont damage anything if area protected or near water
 					if core.find_node_near(s, 1, {"group:water"})
@@ -2385,10 +2385,12 @@ function mob_class:do_states(dtime)
 
 			self:yaw_to_pos(p) ; self:set_velocity(0)
 
-			if self.shoot_interval and self.timer > self.shoot_interval
+			self.shoot_timer = (self.shoot_timer or 0) + dtime
+
+			if self.shoot_interval and self.shoot_timer > self.shoot_interval
 			and random(100) <= 60 then
 
-				self.timer = 0
+				self.shoot_timer = 0
 				self:set_animation("shoot")
 				self:mob_sound(self.sounds.shoot_attack) -- attack sound
 
@@ -3101,7 +3103,6 @@ function mob_class:on_step(dtime, moveresult)
 
 		if self.pause_timer <= 0 and (self.order == "stand" or self.state == "stand") then
 
-			self.pause_timer = 0
 			self:set_velocity(0)
 			self:set_animation("stand", true)
 		end
@@ -3112,6 +3113,7 @@ function mob_class:on_step(dtime, moveresult)
 	-- run custom function (defined in mob lua file) - when false skip going any further
 	if self.do_custom and self:do_custom(dtime, moveresult) == false then return end
 
+	-- has no real use but kept for backwards compatibility
 	self.timer = self.timer + dtime
 
 	if self.timer > 100 then self.timer = 1 end -- never go over 100
