@@ -2387,8 +2387,8 @@ function mob_class:do_states(dtime)
 
 			self.shoot_timer = (self.shoot_timer or 0) + dtime
 
-			if self.shoot_interval and self.shoot_timer > self.shoot_interval
-			and random(100) <= 60 then
+			if self.shoot_timer > self.shoot_interval
+			and random(100) <= self.shoot_chance then
 
 				self.shoot_timer = 0
 				self:set_animation("shoot")
@@ -3233,7 +3233,8 @@ function mobs:register_mob(name, def)
 		armor = def.armor,
 		arrow = def.arrow,
 		arrow_override = def.arrow_override,
-		shoot_interval = def.shoot_interval,
+		shoot_interval = def.shoot_interval or 2,
+		shoot_chance = def.shoot_chance or 80,
 		homing = def.homing,
 		sounds = def.sounds,
 		animation = def.animation,
