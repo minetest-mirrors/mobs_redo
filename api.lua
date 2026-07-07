@@ -4190,14 +4190,47 @@ end
 
 -- feeding, taming, breeding and naming (thx blert2112)
 
-local mob_obj, mob_sta = {}, {}
+local mob_nametag = {}
 
 function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 	local name = clicker:get_player_name()
+	local item = clicker:get_wielded_item()
+
+	-- rename tamed mob with nametag
+	if item:get_name() == "mobs:nametag"
+	and (name == self.owner or core.check_player_privs(name, "protection_bypass")) then
+
+		-- store mob and nametag itemstack in external table
+		mob_nametag[name] = {object = self, itemstack = item}
+
+		local tag = self._nametag or ""
+		local esc = core.formspec_escape
+
+		core.show_formspec(name, "mobs_nametag", "size[8,4]"
+			.. "field[0.5,1;7.5,0;name;" .. esc(FS("Enter name:")) .. ";" .. esc(tag) .. "]"
+			.. "button_exit[2.5,3.5;3,1;mob_rename;" .. esc(FS("Rename")) .. "]")
+
+		return true
+	end
+
+	if not self.follow then return end
+
+	-- sneak & right-click mob to show what it eats/follows
+	if clicker:get_player_control().sneak then
+
+		if type(self.follow) == "string" then
+			self.follow = {self.follow}
+		end
+
+		core.chat_send_player(name, S("@1 follows:", self.name:split(":")[2])
+			.. "\n- " .. table.concat(self.follow, "\n- "))
+
+		return
+	end
 
 	-- can eat/tame with item in hand
-	if self.follow and self:follow_holding(clicker) then
+	if self:follow_holding(clicker) then
 
 		-- take item when not using creative
 		if not mobs.is_creative(name) then
@@ -4215,12 +4248,11 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 		self.object:set_hp(self.health)
 
-		if self.child then -- make children grow quicker
+		if self.child then -- make children grow quicker, deduct 10% of time to adulthood
 
-			-- deduct 10% of the time to adulthood
 			self.hornytimer = floor(self.hornytimer + (
 					(CHILD_GROW_TIME - self.hornytimer) * 0.1))
---print ("====", self.hornytimer)
+
 			return true
 		end
 
@@ -4240,8 +4272,8 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 				if not self.tamed then
 
-					core.chat_send_player(name, S("@1 has been tamed!",
-							self.name:split(":")[2]))
+					core.chat_send_player(name,
+							S("@1 has been tamed!", self.name:split(":")[2]))
 				end
 
 				self.tamed = true
@@ -4257,71 +4289,36 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 
 		self:update_tag() ; return true
 	end
-
-	local item = clicker:get_wielded_item()
-
-	-- only tames mobs can be named with nametag
-	if item:get_name() == "mobs:nametag"
-	and (name == self.owner or core.check_player_privs(name, "protection_bypass")) then
-
-		-- store mob and nametag stack in external variables
-		mob_obj[name] = self ; mob_sta[name] = item
-
-		local prop = self.object:get_properties()
-		local tag = self._nametag or ""
-		local esc = core.formspec_escape
-
-		core.show_formspec(name, "mobs_nametag", "size[8,4]"
-			.. "field[0.5,1;7.5,0;name;" .. esc(FS("Enter name:")) .. ";" .. esc(tag) .. "]"
-			.. "button_exit[2.5,3.5;3,1;mob_rename;" .. esc(FS("Rename")) .. "]")
-
-		return true
-	end
-
-	-- sneak & right-click mob to show what it eats/follows
-	if self.follow and clicker:get_player_control().sneak then
-
-		if type(self.follow) == "string" then
-			self.follow = {self.follow}
-		end
-
-		core.chat_send_player(name, S("@1 follows:", self.name:split(":")[2])
-			.. "\n- " .. table.concat(self.follow, "\n- "))
-	end
 end
 
 -- inspired by blockmen's nametag mod
 
 core.register_on_player_receive_fields(function(player, formname, fields)
 
-	-- right-clicked with nametag and name entered?
-	if formname == "mobs_nametag" and fields.name and fields.name ~= "" then
+	local name = player:get_player_name()
 
-		local name = player:get_player_name()
+	if not mob_nametag[name] then return end
 
-		if not mob_obj[name] or not mob_obj[name].object then return end
-
-		local item = player:get_wielded_item() -- make sure nametag is being used
-
-		if item:get_name() ~= "mobs:nametag" then return end
-
-		-- limit name entered to 64 characters
-		if fields.name:len() > 64 then fields.name = fields.name:sub(1, 64) end
-
-		mob_obj[name]:update_tag(fields.name) -- update nametag
-
-		if not mobs.is_creative(name) then -- take nametag if not using creative
-
-			mob_sta[name]:take_item()
-
-			player:set_wielded_item(mob_sta[name])
-		end
-
-		mob_obj[name] = nil ; mob_sta[name] = nil -- reset external vars
+	if formname ~= "mobs_nametag" or not fields.name then
+		mob_nametag[name] = nil ; return
 	end
+
+	-- limit name entered to 64 characters
+	if fields.name:len() > 64 then fields.name = fields.name:sub(1, 64) end
+
+	mob_nametag[name].object:update_tag(fields.name) -- update nametag
+
+	if not mobs.is_creative(name) then -- take nametag if not using creative
+
+		mob_nametag[name].itemstack:take_item()
+
+		player:set_wielded_item(mob_nametag[name].itemstack)
+	end
+
+	mob_nametag[name] = nil
 end)
 
--- compatibility function for old mobs entities to new mobs_redo modpack
+-- compatibility function for mobs that have been renamed
 
 function mobs:alias_mob(old_name, new_name)
 
