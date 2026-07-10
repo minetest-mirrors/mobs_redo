@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260709",
+	mod = "redo", version = "20260710",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -315,7 +315,7 @@ local function check_for(look_for, look_inside)
 
 		if type(str) == "string" and str:sub(1, 6) == "group:" then
 
-			local group = str:match("^group:(.*)$") or ""
+			local group = str:sub(7)
 			local def = core.registered_items[look_for]
 
 			if def and def.groups[group] and def.groups[group] ~= 0 then return true end
@@ -868,15 +868,14 @@ function mob_class:check_for_death(cmi_cause)
 	end
 
 	-- did we find a death animation
-	if self:death_anim() then return true
-	else -- otherwise remove mob and show particle effect
+	if self:death_anim() then return true end
 
-		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
+	-- otherwise remove mob and show particle effect
+	if use_cmi then cmi.notify_die(self.object, cmi_cause) end
 
-		remove_mob(self, true)
+	remove_mob(self, true)
 
-		effect(pos, 20, "mobs_tnt_smoke.png")
-	end
+	effect(pos, 20, "mobs_tnt_smoke.png")
 
 	return true
 end
@@ -939,7 +938,7 @@ function mob_class:is_at_cliff()
 
 	local def = core.registered_nodes[bnode.name]
 
-	return (not def and def.walkable)
+	return (def and not def.walkable)
 end
 
 -- check for nodes or groups inside mob collision area
@@ -2377,12 +2376,12 @@ function mob_class:do_states(dtime)
 
 			self.shoot_timer = (self.shoot_timer or 0) + dtime
 
-			if self.shoot_timer > self.shoot_interval
-			and random(100) <= self.shoot_chance then
+			if self.shoot_timer > self.shoot_interval then
 
 				self.shoot_timer = 0
 
-				if core.registered_entities[self.arrow] then
+				if core.registered_entities[self.arrow]
+				and random(100) <= self.shoot_chance then
 
 					self:set_animation("shoot")
 					self:mob_sound(self.sounds.shoot_attack)
