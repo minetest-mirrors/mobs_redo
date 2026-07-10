@@ -835,13 +835,12 @@ function mob_class:check_for_death(cmi_cause)
 	self:item_drop() -- drop items
 	self:mob_sound(self.sounds.death) -- play death sound
 
-	-- reset vars
+	-- reset vars and fall
 	self.attack = nil
 	self.following = nil
 	self.v_start = false ; self.blinktimer = 0
-	self.passive = true
 	self.state = "die"
-	self.fly = false
+	self.object:set_acceleration({x = 0, y = -9.5, z = 0})
 
 	local pos = self.object:get_pos() ; if not pos then return end
 
