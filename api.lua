@@ -275,9 +275,7 @@ end
 
 function mobs:scale_mob(self, w, h, perma)
 
-	local prop = self and self.object:get_properties()
-
-	if not prop or not w or not h then return end
+	if not w or not h then return end
 
 	local vis_size = {x = self.base_size.x * w, y = self.base_size.y * h}
 
@@ -507,6 +505,20 @@ function mob_class:line_of_sight(pos1, pos2)
 	return true
 end
 
+-- are we flying in what we are suppose to? (taikedz)
+
+function mob_class:flight_check()
+
+	local def = core.registered_nodes[self.standing_in] ; if not def then return end
+
+	-- are we standing inside what we should be to fly/swim ?
+	if check_for(self.standing_in, self.fly_in) then return true end
+
+	-- stops mobs getting stuck inside stairs or plantlike nodes
+	return def.drawtype ~= "airlike" and def.drawtype ~= "liquid"
+			and def.drawtype ~= "flowingliquid"
+end
+
 -- if not flying in set medium, find some nearby to move to
 
 function mob_class:attempt_flight_correction(override)
@@ -532,20 +544,6 @@ function mob_class:attempt_flight_correction(override)
 	self.object:set_velocity(vdirection(pos, escape_target))
 
 	return true
-end
-
--- are we flying in what we are suppose to? (taikedz)
-
-function mob_class:flight_check()
-
-	local def = core.registered_nodes[self.standing_in] ; if not def then return end
-
-	-- are we standing inside what we should be to fly/swim ?
-	if check_for(self.standing_in, self.fly_in) then return true end
-
-	-- stops mobs getting stuck inside stairs or plantlike nodes
-	return def.drawtype ~= "airlike" and def.drawtype ~= "liquid"
-			and def.drawtype ~= "flowingliquid"
 end
 
 -- turn to face position
