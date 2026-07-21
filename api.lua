@@ -917,10 +917,9 @@ function mob_class:is_at_cliff()
 
 	local yaw = self.object:get_yaw() ; if not yaw then return end
 	local cb = self.object:get_properties().collisionbox
-	local dir_x = -sin(yaw) * (cb[4] + 0.5)
-	local dir_z = cos(yaw) * (cb[4] + 0.5)
+	local dir_x, dir_z = -sin(yaw) * (cb[4] + 0.5), cos(yaw) * (cb[4] + 0.5)
 	local pos = self.object:get_pos()
-	local ypos = pos.y + cb[2] -- just above floor
+	local ypos = pos.y + cb[2] -- foot level
 
 	for i = 1, self.fear_height do -- check each node going down
 
