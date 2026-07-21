@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260717",
+	mod = "redo", version = "20260721",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -935,7 +935,7 @@ function mob_class:is_at_cliff()
 
 	local def = core.registered_nodes[bnode.name]
 
-	return (def and not def.walkable)
+	return (not def and def.walkable)
 end
 
 -- check for nodes or groups inside mob collision area
