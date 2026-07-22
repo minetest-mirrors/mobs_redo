@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260721",
+	mod = "redo", version = "20260722",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -919,7 +919,7 @@ function mob_class:is_at_cliff()
 	local cb = self.object:get_properties().collisionbox
 	local dir_x, dir_z = -sin(yaw) * (cb[4] + 0.5), cos(yaw) * (cb[4] + 0.5)
 	local pos = self.object:get_pos()
-	local ypos = pos.y + cb[2] -- foot level
+	local ypos = pos.y + cb[2] + 0.25-- foot level
 
 	for i = 1, self.fear_height do -- check each node going down
 
