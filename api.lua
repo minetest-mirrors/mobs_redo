@@ -3105,6 +3105,33 @@ function mob_class:on_step(dtime, moveresult)
 
 		self:do_runaway_from()
 		self:do_stay_near()
+		self:follow_teleport()
+	end
+end
+
+-- when mob ordered to follow player who is out of range, teleport to if not attacking
+
+function mob_class:follow_teleport()
+
+	if self.order == "follow" and self.state ~= "attack" and not self.following then
+
+		if self.owner and self.owner ~= "" then
+
+			local player = core.get_player_by_name(self.owner)
+
+			if player then
+
+				local pos = player:get_pos()
+
+				if get_distance(self.object:get_pos(), pos) > (self.view_range * 2) then
+
+					pos.y = pos.y - self.base_colbox[2] -- dont teleport into the ground
+
+					self.object:move_to(pos, true)
+					self:mob_sound("default_dirt_footstep")
+				end
+			end
+		end
 	end
 end
 
