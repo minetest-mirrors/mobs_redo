@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260725",
+	mod = "redo", version = "20260729",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2980,10 +2980,10 @@ function mob_class:get_nodes()
 	local y_level = prop.collisionbox[2]
 
 	self.standing_in = node_ok(
-			{x = pos.x, y = pos.y + y_level + 0.25, z = pos.z}, "air").name
+			{x = pos.x, y = pos.y + y_level + 0.1, z = pos.z}, "air").name
 
 	self.standing_on = node_ok(
-			{x = pos.x, y = pos.y + y_level - 0.25, z = pos.z}, "air").name
+			{x = pos.x, y = pos.y + y_level - 0.1, z = pos.z}, "air").name
 
 	-- find front position
 	local dir_x = -sin(yaw) * (prop.collisionbox[4] + 0.5)
@@ -2991,10 +2991,10 @@ function mob_class:get_nodes()
 
 	-- nodes in front of mob and front/above
 	self.looking_at = node_ok(
-			{x = pos.x + dir_x, y = pos.y + y_level + 0.25, z = pos.z + dir_z}).name
+			{x = pos.x + dir_x, y = pos.y + y_level + 0.1, z = pos.z + dir_z}).name
 
 	self.looking_above = node_ok(
-			{x = pos.x + dir_x, y = pos.y + y_level + 1.25, z = pos.z + dir_z}).name
+			{x = pos.x + dir_x, y = pos.y + y_level + 1.1, z = pos.z + dir_z}).name
 
 	-- are we facing a fence or wall
 	self.facing_fence = self.looking_at:find("fence")
