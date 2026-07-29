@@ -246,8 +246,7 @@ function mob_class:collision()
 
 	local pos = self.object:get_pos() ; if not pos then return 0, 0 end
 	local x, z = 0, 0
-	local prop = self.object:get_properties()
-	local width = -prop.collisionbox[1] + prop.collisionbox[4] + 0.5
+	local width = -self.prop.collisionbox[1] + self.prop.collisionbox[4] + 0.5
 	local width_sq = width * width
 	local players = core.get_objects_inside_radius(pos, width)
 
@@ -626,9 +625,10 @@ local CHILD_GROW_TIME = 60 * 20 -- 20 minutes
 
 function mob_class:update_tag(newname)
 
-	local prop = self.object:get_properties() ; if not prop then return end
-	local qua = prop.hp_max / 6
-	local old_nametag = prop.nametag
+	if not self.object then return end
+
+	local qua = self.prop.hp_max / 6
+	local old_nametag = self.prop.nametag
 	local old_nametag_color = self.nametag_col
 
 	-- backwards compatibility
@@ -680,12 +680,12 @@ function mob_class:update_tag(newname)
 	end
 
 	self.infotext = (self.description and (self.description .. "\n") or "")
-		.. S("Health: @1", self.health) .. " / " .. prop.hp_max
+		.. S("Health: @1", self.health) .. " / " .. self.prop.hp_max
 		.. ("\n" .. S("Entity: @1", self.name))
 		.. ("\n" .. S("Type: @1", self.type))
 		.. (self.owner == "" and "" or "\n" .. S("Owner: @1", self.owner)) .. text
 
-	if self.infotext ~= prop.infotext then
+	if self.infotext ~= self.prop.infotext then
 		self.object:set_properties({infotext = self.infotext})
 	end
 end
@@ -827,9 +827,7 @@ function mob_class:check_for_death(cmi_cause)
 		if damaged then self:mob_sound(self.sounds.damage) end
 
 		-- make sure health isn't higher than max
-		local prop = self.object:get_properties()
-
-		if self.health > prop.hp_max then self.health = prop.hp_max end
+		if self.health > self.prop.hp_max then self.health = self.prop.hp_max end
 
 		self:update_tag() ; return
 	end
@@ -927,7 +925,7 @@ function mob_class:is_at_cliff()
 	end
 
 	local yaw = self.object:get_yaw() ; if not yaw then return end
-	local cb = self.object:get_properties().collisionbox
+	local cb = self.prop.collisionbox
 	local dir_x, dir_z = -sin(yaw) * (cb[4] + 0.5), cos(yaw) * (cb[4] + 0.5)
 	local pos = self.object:get_pos()
 	local ypos = pos.y + cb[2] + 0.25-- foot level
@@ -950,7 +948,7 @@ end
 
 function mob_class:is_inside(itemtable)
 
-	local cb = self.object:get_properties().collisionbox
+	local cb = self.prop.collisionbox
 	local pos = self.object:get_pos()
 
 	return #core.find_nodes_in_area(
@@ -973,8 +971,7 @@ function mob_class:do_env_damage()
 		self.object:set_velocity({x = 0, y = 0, z = 0}) ; return true
 	end
 
-	local prop = self.object:get_properties()
-	local py = {x = pos.x, y = pos.y + prop.collisionbox[5], z = pos.z}
+	local py = {x = pos.x, y = pos.y + self.prop.collisionbox[5], z = pos.z}
 	local nodef = core.registered_nodes[self.standing_in]
 
 	-- water damage
@@ -1216,9 +1213,8 @@ function mob_class:breed()
 			if self.on_grown then self.on_grown(self)
 			else
 				local pos = self.object:get_pos() ; if not pos then return end
-				local prop = self.object:get_properties()
 
-				pos.y = pos.y - prop.collisionbox[2] + 0.1
+				pos.y = pos.y - self.prop.collisionbox[2] + 0.1
 
 				self.object:set_pos(pos)
 
@@ -1248,9 +1244,8 @@ function mob_class:breed()
 
 	-- find similar animal who is horny and mate if nearby
 	local pos = self.object:get_pos()
-	local prop = self.object:get_properties().collisionbox
 
-	effect({x = pos.x, y = pos.y + prop[5], z = pos.z}, 8,
+	effect({x = pos.x, y = pos.y + self.prop.collisionbox[5], z = pos.z}, 8,
 			"mobs_heart_particle.png", 3, 4, 1, 0.1, 1, true)
 
 	local objs = core.get_objects_inside_radius(pos, 3)
@@ -1471,7 +1466,7 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 		 -- lets make a way by digging/building
 		if self.pathfinding == 2 and mobs_griefing then
 
-			local prop = self.object:get_properties()
+			local cb = self.prop.collisionbox
 			local height_diff = target_pos.y - s.y
 
 			-- is player more than 1 block higher than mob?
@@ -1483,28 +1478,28 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 
 					if ndef1 and (ndef1.buildable_to or ndef1.groups.liquid) then
 
-						s.y = s.y + (prop.collisionbox[2] + 0.25)
+						s.y = s.y + (cb[2] + 0.25)
 
 						core.set_node(s, {name = mobs.fallback_node})
 					end
 				end
 
 				-- can we dig block above head so we can jump
-				can_dig_drop({x = s.x, y = s.y + ceil(prop.collisionbox[5]) + 1, z = s.z})
+				can_dig_drop({x = s.x, y = s.y + ceil(cb[5]) + 1, z = s.z})
 
 				self.object:set_pos({x = s.x, y = s.y + 2, z = s.z})
 
 			elseif height_diff < -1.1 then -- is player move than 1 block lower
 
 				 -- try to dig down
-				can_dig_drop({x = s.x, y = s.y + (prop.collisionbox[2] - 0.25), z = s.z})
+				can_dig_drop({x = s.x, y = s.y + (cb[2] - 0.25), z = s.z})
 
 			else -- dig 2 blocks to make door toward player direction
 
 				local yaw1 = self.object:get_yaw() + pi / 2
 				local p1 = {
 					x = s.x + cos(yaw1),
-					y = s.y + (prop.collisionbox[2] + 0.25),
+					y = s.y + (cb[2] + 0.25),
 					z = s.z + sin(yaw1)
 				}
 
@@ -1575,8 +1570,6 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		self.path.following = false ; return
 	end
 
-	local prop = self.object:get_properties()
-
 	-- round position to avoid getting stuck in walls
 	local sx, sz = floor(s.x + 0.5), floor(s.z + 0.5)
 
@@ -1587,13 +1580,12 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 
 	local dropheight = self.fear_height ~= 0 and self.fear_height or pathfinding_max_drop
 	local jumpheight = 0
-	local prop = self.object:get_properties()
 
 	if self.jump_height >= pathfinding_max_jump then
 
 		jumpheight = min(ceil(self.jump_height / pathfinding_max_jump), pathfinding_max_jump)
 
-	elseif prop.stepheight > 0.5 then jumpheight = 1 end
+	elseif self.prop.stepheight > 0.5 then jumpheight = 1 end
 
 	local p1 = {
 		x = floor(target_pos.x + 0.5),
@@ -1603,7 +1595,7 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 	self.path.way = core.find_path(s, p1, pathfinding_searchdistance,
 			jumpheight, dropheight, pathfinding_algorithm)
 
-	local height = prop.collisionbox[5] - prop.collisionbox[2]
+	local height = self.prop.collisionbox[5] - self.prop.collisionbox[2]
 
 	-- since we have a path, double check clearance height for 2x node high mobs
 	if self.path.way and #self.path.way > 0 then
@@ -2329,7 +2321,7 @@ function mob_class:do_states(dtime)
 						local p2, s2 = p, s
 
 						-- approximate mob eye level
-						local cbox = self.object:get_properties().collisionbox
+						local cbox = self.prop.collisionbox
 						local offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
 						s2.y = s2.y + offset
 
@@ -2383,9 +2375,9 @@ function mob_class:do_states(dtime)
 					self:mob_sound(self.sounds.shoot_attack)
 
 					local p = self.object:get_pos()
-					local prop = self.object:get_properties()
+					local cb = self.prop.collisionbox
 
-					p.y = p.y + (prop.collisionbox[2] + prop.collisionbox[5]) / 2
+					p.y = p.y + (cb[2] + cb[5]) / 2
 
 					local obj = core.add_entity(p, self.arrow)
 					local ent = obj:get_luaentity()
@@ -2440,8 +2432,7 @@ function mob_class:falling(pos)
 		if d > 6 then -- stay consistent with player fall damage
 
 			local damage = d - 6
-			local prop = self.object:get_properties()
-			local y_level = prop.collisionbox[2]
+			local y_level = self.prop.collisionbox[2]
 			local pos = self.object:get_pos()
 
 			-- get current block below mob to check for fall damage modifier
@@ -2613,8 +2604,6 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, damage)
 
 		core.sound_play(snd, {object = self.object, max_hear_distance = 8}, true)
 
-		local prop = self.object:get_properties()
-
 		-- blood_particles
 		if not disable_blood and self.blood_amount > 0 then
 
@@ -2622,7 +2611,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, damage)
 			local blood = self.blood_texture
 			local amount = damage > 10 and self.blood_amount * 2 or self.blood_amount
 
-			bpos.y = bpos.y + (-prop.collisionbox[2] + prop.collisionbox[5]) * .5
+			bpos.y = bpos.y + (-self.prop.collisionbox[2] + self.prop.collisionbox[5]) * .5
 
 			-- select blood texture
 			if type(self.blood_texture) == "table" then
@@ -2637,7 +2626,8 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, damage)
 
 			self.old_texture_mods = self.texture_mods
 
-			self.object:set_texture_mod(self.texture_mods .. prop.damage_texture_modifier)
+			self.object:set_texture_mod(self.texture_mods
+					.. self.prop.damage_texture_modifier)
 
 			core.after(0.3, function()
 
@@ -2852,7 +2842,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 
 	self.temp = {} -- temporary values stored here are never saved with mob
 
-	local prop = self.object:get_properties()
+	self.prop = self.object:get_properties()
 
 	if not self.base_texture then -- select random texture
 
@@ -2870,8 +2860,8 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	local mesh, vis_size = self.base_mesh, self.base_size
 	local colbox, selbox = self.base_colbox, self.base_selbox
 
-	self.object:set_properties({visual_size = vis_size,
-			collisionbox = colbox, selectionbox = selbox})
+	self.object:set_properties(
+			{visual_size = vis_size, collisionbox = colbox, selectionbox = selbox})
 
 	if self.gotten then
 		textures = def.gotten_texture or textures
@@ -2889,7 +2879,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	-- set mob size and textures
 	self.object:set_properties({textures = textures})
 
-	if self.health == 0 then self.health = random(self.hp_min, prop.hp_max) end
+	if self.health == 0 then self.health = random(self.hp_min, self.prop.hp_max) end
 
 	self.path = { -- pathfinding init
 		way = {}, -- path to follow, table of positions
@@ -2976,8 +2966,7 @@ function mob_class:get_nodes()
 
 	local pos = self.object:get_pos()
 	local yaw = self.object:get_yaw()
-	local prop = self.object:get_properties()
-	local y_level = prop.collisionbox[2]
+	local y_level = self.prop.collisionbox[2]
 
 	self.standing_in = node_ok(
 			{x = pos.x, y = pos.y + y_level + 0.1, z = pos.z}, "air").name
@@ -2986,8 +2975,8 @@ function mob_class:get_nodes()
 			{x = pos.x, y = pos.y + y_level - 0.1, z = pos.z}, "air").name
 
 	-- find front position
-	local dir_x = -sin(yaw) * (prop.collisionbox[4] + 0.5)
-	local dir_z = cos(yaw) * (prop.collisionbox[4] + 0.5)
+	local dir_x = -sin(yaw) * (self.prop.collisionbox[4] + 0.5)
+	local dir_z = cos(yaw) * (self.prop.collisionbox[4] + 0.5)
 
 	-- nodes in front of mob and front/above
 	self.looking_at = node_ok(
@@ -3095,6 +3084,9 @@ function mob_class:on_step(dtime, moveresult)
 	if self.timer1 >= main_timer_interval then
 
 		self.timer1 = 0
+
+		-- store get_properties() each second to save getting them every instance
+		self.prop = self.object:get_properties()
 
 		-- random mob sound
 		if random(100) == 1 then self:mob_sound(self.sounds.random) end
@@ -4175,9 +4167,8 @@ function mobs:protect(self, clicker)
 	end
 
 	local pos = self.object:get_pos()
-	local prop = self.object:get_properties()
 
-	pos.y = pos.y + prop.collisionbox[5]
+	pos.y = pos.y + self.prop.collisionbox[5]
 
 	effect(pos, 25, "mobs_protect_particle.png", 0.5, 4, 2, 15)
 
@@ -4240,9 +4231,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			clicker:set_wielded_item(item)
 		end
 
-		local prop = self.object:get_properties()
-
-		self.health = min(self.health + 4, prop.hp_max) -- increase health
+		self.health = min(self.health + 4, self.prop.hp_max) -- increase health
 
 		self.object:set_hp(self.health)
 
