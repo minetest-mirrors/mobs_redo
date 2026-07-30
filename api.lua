@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260729",
+	mod = "redo", version = "20260730",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -535,8 +535,8 @@ function mob_class:attempt_flight_correction(override)
 
 	-- stop swimming mobs moving above water surface
 	if escape_target.y > pos.y and #core.find_nodes_in_area(
-			{x = escape_target.x, y = escape_target.y + 1, z = escape_target.z},
-			{x = escape_target.x, y = escape_target.y + 1, z = escape_target.z},
+			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
+			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
 			self.fly_in) == 0 then escape_target.y = pos.y
 	end
 
@@ -567,6 +567,9 @@ function mob_class:do_stay_near()
 	if not pos or random(self.stay_near[2] or 10) > 1 then return end
 
 	local r = self.view_range
+
+	if core.find_node_near(pos, 3, self.stay_near[1], true) then return end
+
 	local nearby_nodes = core.find_nodes_in_area(
 			{x = pos.x - r, y = pos.y - 1, z = pos.z - r},
 			{x = pos.x + r, y = pos.y + 1, z = pos.z + r}, self.stay_near[1])
@@ -1782,10 +1785,12 @@ function mob_class:do_runaway_from()
 
 			local p = target and target:get_pos() or s
 			local dist = get_distance(p, s)
+			local ey = self.base_colbox[5] * 0.9 -- mob eye level
 
 			-- choose closest entity to runaway from
 			if dist < min_dist and self:line_of_sight(
-					{x = s.x, y = s.y + 1, z = s.z}, {x = p.x, y = p.y + 1, z = p.z}) then
+					{x = s.x, y = s.y + ey, z = s.z},
+					{x = p.x, y = p.y + .5, z = p.z}) then
 
 				min_dist = dist
 				min_target = target
@@ -1806,9 +1811,10 @@ function mob_class:do_runaway_from()
 
 	-- check for nodes to runaway from when seen
 	local p = core.find_node_near(s, self.view_range, self.runaway_from, true)
+	local ey = self.base_colbox[5] * 0.9 -- mob eye level
 
-	if p and self:line_of_sight(
-			{x = s.x, y = s.y + 1, z = s.z}, {x = p.x, y = p.y + 1, z = p.z}) then
+	if p and core.line_of_sight(
+			{x = s.x, y = s.y + ey, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z}) then
 
 		self:yaw_to_pos(p, 3) -- opposite dir
 		self.state = "runaway"
@@ -1958,8 +1964,8 @@ function mob_class:do_states(dtime)
 	if is_node_dangerous(self, self.standing_in) then
 
 		local lp = core.find_nodes_in_area_under_air(
-				{x = s.x - 7, y = s.y - 2, z = s.z - 7},
-				{x = s.x + 7, y = s.y + 0, z = s.z + 7},
+				{x = s.x - 6, y = s.y - 2, z = s.z - 6},
+				{x = s.x + 6, y = s.y + 0, z = s.z + 6},
 				{"group:cracky", "group:crumbly", "group:choppy", "group:solid"})
 
 		if lp and #lp > 0 then -- if we found land try to climb out
