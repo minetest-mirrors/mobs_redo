@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260730",
+	mod = "redo", version = "20260731",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -537,6 +537,12 @@ function mob_class:attempt_flight_correction(override)
 	if escape_target.y > pos.y and #core.find_nodes_in_area(
 			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
 			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
+			self.fly_in) == 0 then escape_target.y = pos.y
+
+	-- and flying mobs diving into the water
+	elseif escape_target.y < pos.y and #core.find_nodes_in_area(
+			{x = escape_target.x, y = escape_target.y - 2, z = escape_target.z},
+			{x = escape_target.x, y = escape_target.y - 2, z = escape_target.z},
 			self.fly_in) == 0 then escape_target.y = pos.y
 	end
 
@@ -2112,8 +2118,9 @@ function mob_class:do_states(dtime)
 		end
 
 		-- check enemy is in sight
+		local ey = self.base_colbox[5] * 0.9 -- mob eye level
 		local in_sight = self:line_of_sight(
-				{x = s.x, y = s.y + 0.5, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z})
+				{x = s.x, y = s.y + ey, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z})
 
 		-- stop attacking when enemy not seen for 11 seconds
 		if not in_sight then
