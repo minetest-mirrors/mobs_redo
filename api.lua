@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260731",
+	mod = "redo", version = "20260801",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -534,16 +534,14 @@ function mob_class:attempt_flight_correction(override)
 	local escape_target = flyable_nodes[random(#flyable_nodes)]
 
 	-- stop swimming mobs moving above water surface
-	if escape_target.y > pos.y and #core.find_nodes_in_area(
+	if escape_target.y > pos.y and not core.find_node_near(
 			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
-			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
-			self.fly_in) == 0 then escape_target.y = pos.y
+			0, self.fly_in, true) then escape_target.y = pos.y
 
 	-- and flying mobs diving into the water
-	elseif escape_target.y < pos.y and #core.find_nodes_in_area(
+	elseif escape_target.y < pos.y and not core.find_node_near(
 			{x = escape_target.x, y = escape_target.y - 2, z = escape_target.z},
-			{x = escape_target.x, y = escape_target.y - 2, z = escape_target.z},
-			self.fly_in) == 0 then escape_target.y = pos.y
+			0, self.fly_in, true) then escape_target.y = pos.y
 	end
 
 	self.object:set_velocity(vdirection(pos, escape_target))
@@ -2231,9 +2229,8 @@ function mob_class:do_states(dtime)
 				if s_y < p_y then
 
 					-- if correct medium above then move up
-					if #core.find_nodes_in_area(
-							{x = s.x, y = s.y + 1, z = s.z},
-							{x = s.x, y = s.y + 1, z = s.z}, self.fly_in) > 0 then
+					if core.find_node_near({x = s.x, y = s.y + 1, z = s.z},
+							0, self.fly_in, true) then
 
 						self.object:set_velocity({
 								x = v.x, y = self.walk_velocity, z = v.z})
@@ -2245,9 +2242,8 @@ function mob_class:do_states(dtime)
 				elseif s_y > p_y then
 
 					-- if correct medium below then move down
-					if #core.find_nodes_in_area(
-							{x = s.x, y = s.y - 1, z = s.z},
-							{x = s.x, y = s.y - 1, z = s.z}, self.fly_in) > 0 then
+					if core.find_node_near({x = s.x, y = s.y - 1, z = s.z},
+						0, self.fly_in, true) then
 
 						self.object:set_velocity({
 								x = v.x, y = -self.walk_velocity, z = v.z})
