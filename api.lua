@@ -924,7 +924,8 @@ end
 
 function mob_class:is_at_cliff()
 
-	if self.driver or self.fear_height == 0 then return end -- 0 for no fear of heights
+	if self.driver or self.fear_height == 0
+	or self.disable_falling then return end -- 0 for no fear of heights
 
 	-- if path already blocked, dont check for cliff
 	if core.registered_nodes[self.looking_at].walkable or self.facing_fence then
