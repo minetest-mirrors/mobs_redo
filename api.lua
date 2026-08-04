@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260801",
+	mod = "redo", version = "20260804",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -128,6 +128,7 @@ mobs.mob_class = {
 	lifetimer = 180, -- 3 minutes
 	texture_mods = "",
 	view_range = 5,
+	view_range_attacking = 6,
 	walk_velocity = 1, run_velocity = 2,
 	light_damage = 0, light_damage_min = 14, light_damage_max = 15,
 	water_damage = 0, lava_damage = 4, fire_damage = 4, air_damage = 0,
@@ -2106,12 +2107,12 @@ function mob_class:do_states(dtime)
 		local dist = p and get_distance(p, s) or 500
 
 		-- stop attacking if player out of range or invisible
-		if dist > self.view_range
+		if dist > self.view_range_attacking
 		or not self.attack or not self.attack:get_pos() or self.attack:get_hp() <= 0
 		or (is_player(self.attack)
 		and is_invisible(self, self.attack:get_player_name())) then
 
---print(" ** stop attacking **", self.name, self.health, dist, self.view_range)
+--print(" ** stop attacking **", self.name, self.health, dist, self.view_range_attacking)
 
 			self:stop_attack() ; return
 		end
@@ -3211,6 +3212,7 @@ function mobs:register_mob(name, def)
 		base_size = def.visual_size or {x = 1, y = 1},
 
 		view_range = def.view_range,
+		view_range_attacking = def.view_range_attacking,
 		walk_velocity = def.walk_velocity,
 		run_velocity = def.run_velocity,
 		damage = max(0, (def.damage or 0) * difficulty),
