@@ -127,8 +127,6 @@ mobs.mob_class = {
 	jump_height = 4,
 	lifetimer = 180, -- 3 minutes
 	texture_mods = "",
-	view_range = 5,
-	view_range_attacking = 6,
 	walk_velocity = 1, run_velocity = 2,
 	light_damage = 0, light_damage_min = 14, light_damage_max = 15,
 	water_damage = 0, lava_damage = 4, fire_damage = 4, air_damage = 0,
@@ -3211,8 +3209,8 @@ function mobs:register_mob(name, def)
 		base_selbox = def.selectionbox or collisionbox,
 		base_size = def.visual_size or {x = 1, y = 1},
 
-		view_range = def.view_range,
-		view_range_attacking = def.view_range_attacking,
+		view_range = def.view_range or 5,
+		view_range_attacking = def.view_range_attacking or def.view_range or 6,
 		walk_velocity = def.walk_velocity,
 		run_velocity = def.run_velocity,
 		damage = max(0, (def.damage or 0) * difficulty),
