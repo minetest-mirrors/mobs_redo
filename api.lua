@@ -117,35 +117,16 @@ local aoc_range = (tonumber(settings:get("active_block_range")) or 4) * 16
 local creatura = core.get_modpath("creatura") and
 		settings:get_bool("mobs_attack_creatura") == true
 
--- default mob settings
+-- default settings
 
 mobs.mob_class = {
 	state = "stand",
-	fly_in = "air",
-	owner = "",
-	order = "",
-	jump_height = 4,
-	lifetimer = 180, -- 3 minutes
 	texture_mods = "",
-	walk_velocity = 1, run_velocity = 2,
-	light_damage = 0, light_damage_min = 14, light_damage_max = 15,
-	water_damage = 0, lava_damage = 4, fire_damage = 4, air_damage = 0,
 	node_damage = true,
-	suffocation = 2,
 	fall_damage = true,
-	drops = {},
-	armor = 100,
-	sounds = {},
 	knock_back = true,
-	walk_chance = 50,
-	stand_chance = 30,
-	attack_chance = 5,
-	attack_patience = 18,
 	passive = false,
-	blood_amount = 5, blood_texture = "mobs_blood.png",
-	shoot_offset = 0,
 	floats = true, -- floats in water
-	replace_offset = 0,
 	timer = 0,
 	env_damage_timer = 0,
 	tamed = false,
@@ -155,15 +136,12 @@ mobs.mob_class = {
 	child = false,
 	gotten = false,
 	health = 0,
-	reach = 3,
 	docile_by_day = false,
 	time_of_day = 0.5,
 	runaway_timer = 0,
-	immune_to = {},
-	explosion_timer = 3,
 	allow_fuse_reset = true,
 	stop_to_explode = true,
-	dogshoot_count = 0, dogshoot_count_max = 5, dogshoot_count2_max = 5,
+	dogshoot_count = 0,
 	group_attack = false,
 	attack_monsters = false,
 	attack_animals = false,
@@ -3185,90 +3163,98 @@ function mobs:register_mob(name, def)
 			glow = def.glow,
 			damage_texture_modifier = def.damage_texture_modifier or "^[colorize:#c9900070",
 		},
-
+-- basics
 		name = name,
 		description = def.description or name,
 		type = def.type,
 		_nametag = def.nametag,
-		attack_type = def.attack_type,
-		fly = def.fly,
-		fly_in = def.fly_in,
-		keep_flying = def.keep_flying,
-		owner = def.owner,
-		order = def.order,
-		jump_height = def.jump_height,
-		jump_chance = def.jump_chance,
-		can_leap = def.can_leap,
-		drawtype = def.drawtype, -- DEPRECATED, use rotate
-		rotate = rad(def.rotate or 0), -- 0=front 90=side 180=back 270=side2
-		lifetimer = def.lifetimer,
+		owner = def.owner or "",
+		order = def.order or "",
+		lifetimer = def.lifetimer or 180, -- 3 minutes
 		hp_min = max(1, (def.hp_min or 5) * difficulty),
-
+		drops = def.drops or {},
+-- model
+		drawtype = def.drawtype, -- DEPRECATED, use rotate
+		rotate = rad(def.rotate or 0), -- 0 = front 90, = side, 180 = back, 270 = side2
 		base_mesh = def.mesh, -- backup entity model and size
 		base_colbox = collisionbox,
 		base_selbox = def.selectionbox or collisionbox,
 		base_size = def.visual_size or {x = 1, y = 1},
-
+		animation = def.animation,
+		texture_list = def.textures,
+		texture_mods = def.texture_mods or "",
+		child_texture = def.child_texture,
+-- behaviour
+		jump_height = def.jump_height or 4,
+		jump_chance = def.jump_chance,
+		fly = def.fly,
+		fly_in = def.fly_in or "air",
+		keep_flying = def.keep_flying,
+		can_leap = def.can_leap,
 		view_range = def.view_range or 5,
 		view_range_attacking = def.view_range_attacking or def.view_range or 6,
-		walk_velocity = def.walk_velocity,
-		run_velocity = def.run_velocity,
+		walk_velocity = def.walk_velocity or 1,
+		run_velocity = def.run_velocity or 2,
+		sounds = def.sounds or {},
+		replace_rate = def.replace_rate,
+		replace_what = def.replace_what,
+		replace_with = def.replace_with,
+		replace_offset = def.replace_offset or 0,
+		pick_up = def.pick_up,
+		on_pick_up = def.on_pick_up,
+		reach = def.reach or 3,
+		docile_by_day = def.docile_by_day,
+		fear_height = def.fear_height or def.fly and 0 or 2,
+		runaway = def.runaway,
+		follow = def.follow,
+		floats = def.floats,
+		pathfinding = def.pathfinding,
+		runaway_from = def.runaway_from,
+		pushable = def.pushable,
+		stay_near = def.stay_near,
+		randomly_turn = def.randomly_turn ~= false,
+		ignore_invisibility = def.ignore_invisibility,
+-- health
+		armor = def.armor or 100,
 		damage = max(0, (def.damage or 0) * difficulty),
 		damage_group = def.damage_group,
-		light_damage = def.light_damage,
-		light_damage_min = def.light_damage_min,
-		light_damage_max = def.light_damage_max,
-		water_damage = def.water_damage,
-		lava_damage = def.lava_damage,
-		fire_damage = def.fire_damage,
-		air_damage = def.air_damage,
+		light_damage = def.light_damage or 0,
+		light_damage_min = def.light_damage_min or 14,
+		light_damage_max = def.light_damage_max or 15,
+		water_damage = def.water_damage or 0,
+		lava_damage = def.lava_damage or 4,
+		fire_damage = def.fire_damage or 4,
+		air_damage = def.air_damage or 0,
 		node_damage = def.node_damage,
-		suffocation = def.suffocation,
+		suffocation = def.suffocation or 2,
 		fall_damage = def.fall_damage,
 		fall_speed = def.fall_speed or -gravity,
-		drops = def.drops,
-		armor = def.armor,
+-- attack
+		attack_type = def.attack_type,
+		punch_interval = def.punch_interval or 1,
 		arrow = def.arrow,
 		arrow_override = def.arrow_override,
 		shoot_interval = def.shoot_interval or 2,
 		shoot_chance = def.shoot_chance or 80,
+		shoot_offset = def.shoot_offset or 0,
 		homing = def.homing,
-		sounds = def.sounds,
-		animation = def.animation,
-		follow = def.follow,
-		walk_chance = def.walk_chance,
-		stand_chance = def.stand_chance,
-		attack_chance = def.attack_chance,
-		attack_patience = def.attack_patience,
+		walk_chance = def.walk_chance or 50,
+		stand_chance = def.stand_chance or 30,
+		attack_chance = def.attack_chance or 5,
+		attack_patience = def.attack_patience or 18,
 		passive = def.passive,
 		knock_back = def.knock_back,
-		blood_amount = def.blood_amount,
-		blood_texture = def.blood_texture,
-		shoot_offset = def.shoot_offset,
-		floats = def.floats,
-		replace_rate = def.replace_rate,
-		replace_what = def.replace_what,
-		replace_with = def.replace_with,
-		replace_offset = def.replace_offset,
-		pick_up = def.pick_up,
-		on_pick_up = def.on_pick_up,
-		reach = def.reach,
-		texture_list = def.textures,
-		texture_mods = def.texture_mods or "",
-		child_texture = def.child_texture,
-		docile_by_day = def.docile_by_day,
-		fear_height = def.fear_height or def.fly and 0 or 2,
-		runaway = def.runaway,
-		pathfinding = def.pathfinding,
-		immune_to = def.immune_to,
+		blood_amount = def.blood_amount or 5,
+		blood_texture = def.blood_texture or "mobs_blood.png",
+		immune_to = def.immune_to or {},
 		explosion_radius = def.explosion_radius,
 		explosion_damage_radius = def.explosion_damage_radius,
-		explosion_timer = def.explosion_timer,
+		explosion_timer = def.explosion_timer or 3,
 		allow_fuse_reset = def.allow_fuse_reset,
 		stop_to_explode = def.stop_to_explode,
 		dogshoot_switch = def.dogshoot_switch,
-		dogshoot_count_max = def.dogshoot_count_max,
-		dogshoot_count2_max = def.dogshoot_count2_max or def.dogshoot_count_max,
+		dogshoot_count_max = def.dogshoot_count_max or 5,
+		dogshoot_count2_max = def.dogshoot_count2_max or def.dogshoot_count_max or 5,
 		group_attack = def.group_attack,
 		group_helper = def.group_helper,
 		attack_monsters = def.attacks_monsters or def.attack_monsters,
@@ -3278,15 +3264,8 @@ function mobs:register_mob(name, def)
 		attack_ignore = def.attack_ignore,
 		specific_attack = def.specific_attack,
 		friendly_fire = def.friendly_fire,
-		runaway_from = def.runaway_from,
 		owner_loyal = def.owner_loyal,
-		pushable = def.pushable,
-		stay_near = def.stay_near,
-		randomly_turn = def.randomly_turn ~= false,
-		ignore_invisibility = def.ignore_invisibility,
-		messages = def.messages,
-		punch_interval = def.punch_interval or 1,
-
+-- functions
 		on_rightclick = def.on_rightclick,
 		on_die = def.on_die,
 		on_death = def.on_death, -- engine function for entity death
@@ -3301,21 +3280,18 @@ function mobs:register_mob(name, def)
 		on_breed = def.on_breed,
 		on_grown = def.on_grown,
 		on_sound = def.on_sound,
-
---		is_mob = true, _hittable_by_projectile = true, -- mineclone thing
-
 		on_activate = function(self, staticdata, dtime)
 			return self:mob_activate(staticdata, def, dtime)
 		end,
-
 		get_staticdata = function(self)
 			return self:mob_staticdata(self)
 		end
 
+--		is_mob = true, _hittable_by_projectile = true, -- mineclone thing
 	}, mob_class_meta))
 
-	local self = core.registered_entities[name]
-	mobs.compatibility_check(self) -- older setting check for compatibility
+	-- older setting check for compatibility
+	mobs.compatibility_check(core.registered_entities[name])
 end
 
 -- return <number of mobs of same type in area>, <player found>
