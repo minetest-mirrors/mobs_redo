@@ -1663,7 +1663,7 @@ function mob_class:general_attack()
 	local s = self.object:get_pos() ; if not s then return end
 	local objs = core.get_objects_inside_radius(s, self.view_range)
 
-	if not objs or #objs == 0 then return end
+	if not objs or #objs == 1 then return end -- only mob itself
 
 	-- remove entities we aren't interested in
 	for n = 1, #objs do
@@ -1741,6 +1741,8 @@ function mob_class:do_runaway_from()
 	local target, min_target, name
 	local min_dist = self.view_range + 1
 	local objs = core.get_objects_inside_radius(s, self.view_range)
+
+	if not objs or #objs == 1 then return end -- only mob itself
 
 	for n = 1, #objs do -- loop through entities surrounding mob
 
