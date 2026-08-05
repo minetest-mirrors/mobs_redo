@@ -17,7 +17,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260804",
+	mod = "redo", version = "20260805",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3216,6 +3216,7 @@ function mobs:register_mob(name, def)
 		stay_near = def.stay_near,
 		randomly_turn = def.randomly_turn ~= false,
 		ignore_invisibility = def.ignore_invisibility,
+		messages = def.messages, -- npc message table for idle chat
 -- health
 		armor = def.armor or 100,
 		damage = max(0, (def.damage or 0) * difficulty),
