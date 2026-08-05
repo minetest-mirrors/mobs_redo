@@ -3140,14 +3140,15 @@ function mobs:register_mob(name, def)
 
 	mobs.spawning_mobs[name] = {}
 
-	local collisionbox = def.collisionbox or {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25}
+	local collisionbox = table.copy(def.collisionbox or
+			{-0.25, -0.25, -0.25, 0.25, 0.25, 0.25})
 
 	-- quick fix to stop mobs glitching through nodes if too small
-	if mob_height_fix and -collisionbox[2] + collisionbox[5] < 1.01 then
+	if mob_height_fix and (collisionbox[5] - collisionbox[2]) < 1.01 then
 		collisionbox[5] = collisionbox[2] + 0.99
 	end
 
-	core.register_entity(":" .. name, setmetatable({
+	local entity_def = {
 
 		initial_properties = {
 			hp_max = max(1, (def.hp_max or 10) * difficulty),
@@ -3206,7 +3207,7 @@ function mobs:register_mob(name, def)
 		on_pick_up = def.on_pick_up,
 		reach = def.reach or 3,
 		docile_by_day = def.docile_by_day,
-		fear_height = def.fear_height or def.fly and 0 or 2,
+		fear_height = def.fear_height or (def.fly and 0 or 2),
 		runaway = def.runaway,
 		follow = def.follow,
 		floats = def.floats,
@@ -3289,9 +3290,10 @@ function mobs:register_mob(name, def)
 		get_staticdata = function(self)
 			return self:mob_staticdata(self)
 		end
-
 --		is_mob = true, _hittable_by_projectile = true, -- mineclone thing
-	}, mob_class_meta))
+	}
+
+	core.register_entity(":" .. name, setmetatable(entity_def, mob_class_meta))
 
 	-- older setting check for compatibility
 	mobs.compatibility_check(core.registered_entities[name])
