@@ -407,7 +407,7 @@ function mob_class:set_animation(anim, force)
 
 	-- only use different animation for attacks when using same set
 	if not force and anim ~= "punch" and anim ~= "shoot"
-	and current:find(anim, 1, true) then return end
+	and current == anim then return end
 
 	local num = 0
 
@@ -510,15 +510,17 @@ function mob_class:attempt_flight_correction(override)
 
 	local escape_target = flyable_nodes[random(#flyable_nodes)]
 
-	-- stop swimming mobs moving above water surface
-	if escape_target.y > pos.y and not core.find_node_near(
-			{x = escape_target.x, y = escape_target.y + 2, z = escape_target.z},
-			0, self.fly_in, true) then escape_target.y = pos.y
+	if escape_target.y ~= pos.y then
 
-	-- and flying mobs diving into the water
-	elseif escape_target.y < pos.y and not core.find_node_near(
-			{x = escape_target.x, y = escape_target.y - 2, z = escape_target.z},
-			0, self.fly_in, true) then escape_target.y = pos.y
+		local y_off = escape_target.y > pos.y and 2 or -2
+		local check_pos = {
+			x = escape_target.x,
+			y = escape_target.y + y_off,
+			z = escape_target.z}
+
+		if not core.find_node_near(check_pos, 0, self.fly_in, true) then
+			escape_target.y = pos.y
+		end
 	end
 
 	self.object:set_velocity(vdirection(pos, escape_target))
@@ -3261,7 +3263,7 @@ function mobs:register_mob(name, def)
 		dogshoot_count2_max = def.dogshoot_count2_max or def.dogshoot_count_max or 5,
 		group_attack = def.group_attack,
 		group_helper = def.group_helper,
-		attack_monsters = def.attacks_monsters or def.attack_monsters,
+		attack_monsters = def.attack_monsters,
 		attack_animals = def.attack_animals,
 		attack_players = def.attack_players,
 		attack_npcs = def.attack_npcs,
@@ -3562,14 +3564,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		if #core.find_nodes_in_area(
-				{x = pos.x - 16, y = pos.y - 16, z = pos.z - 16},
-				{x = pos.x + 16, y = pos.y + 16, z = pos.z + 16},
-				{"mobs:mob_repellent"}) > 0 then
---print("--- mob repellent nearby")
-			return
-		end
-
 		pos.y = pos.y + 1 -- change position to above node
 
 		if pos.y > max_height or pos.y < min_height then
@@ -3580,6 +3574,14 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		local light = core.get_node_light(pos)
 		if not light or light > max_light or light < min_light then
 --print("--- light limits not met", name, light)
+			return
+		end
+
+		if #core.find_nodes_in_area(
+				{x = pos.x - 16, y = pos.y - 16, z = pos.z - 16},
+				{x = pos.x + 16, y = pos.y + 16, z = pos.z + 16},
+				{"mobs:mob_repellent"}) > 0 then
+--print("--- mob repellent nearby")
 			return
 		end
 
@@ -3596,7 +3598,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		for _,player in pairs(core.get_connected_players()) do
+		for _,player in ipairs(core.get_connected_players()) do
 
 			if get_distance(player:get_pos(), pos) <= mob_nospawn_range then
 --print("--- player too close", name)
@@ -3634,10 +3636,8 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 			if mob_log_spawn then
 
-				local pos_string = pos and core.pos_to_string(pos) or ""
-
-				core.log("action", "[MOBS] Spawned " .. (name or "")
-						.. " at " .. pos_string)
+				core.log("action", string.format("[MOBS] Spawned %s at %s", name,
+						core.pos_to_string(pos)))
 			end
 
 			if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
@@ -3654,10 +3654,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			nodenames = nodes,
 			run_at_every_load = false,
 			min_y = min_height, max_y = max_height,
-
-			action = function(pos, node)
-				spawn_action(pos, node)
-			end
+			action = spawn_action
 		})
 	else
 		core.register_abm({ -- abm spawns at every interval/chance
@@ -3668,10 +3665,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			chance = max(1, (chance * mob_chance_multiplier)),
 			catch_up = false,
 			min_y = min_height, max_y = max_height,
-
-			action = function(pos, node, active_object_count, active_object_count_wider)
-				spawn_action(pos, node, active_object_count, active_object_count_wider)
-			end
+			action = spawn_action
 		})
 	end
 end
