@@ -10,6 +10,7 @@ local use_invisibility = core.get_modpath("invisibility")
 
 -- node check helper
 
+local registered_nodes = core.registered_nodes
 local function has(nodename)
 	return core.registered_nodes[nodename] and nodename
 end
@@ -17,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260805",
+	mod = "redo", version = "20260809",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -321,7 +322,7 @@ function mob_class:set_velocity(v)
 	local yaw = (self.object:get_yaw() or 0) + self.rotate
 
 	-- is mob standing in liquid?
-	local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity or 0, 7)
+	local visc = min(registered_nodes[self.standing_in].liquid_viscosity or 0, 7)
 
 	-- only slow moving mobs when inside a viscous fluid they cannot swim in
 	-- e.g. fish in water, spiders in cobweb
@@ -452,9 +453,11 @@ local function node_ok(pos, fallback)
 
 	local node = get_node(pos)
 
-	if core.registered_nodes[node.name] then return node end
+	if node and registered_nodes[node.name] then return node end
 
-	return core.registered_nodes[(fallback or mobs.fallback_node)]
+	local def = registered_nodes[fallback or mobs.fallback_node]
+
+	return {name = def.name, param1 = 0, param2 = 0, loaded = false}
 end
 
 function mobs:node_ok(pos, fallback)
@@ -485,7 +488,7 @@ end
 
 function mob_class:flight_check()
 
-	local def = core.registered_nodes[self.standing_in] ; if not def then return end
+	local def = registered_nodes[self.standing_in] ; if not def then return end
 
 	-- are we standing inside what we should be to fly/swim ?
 	if check_for(self.standing_in, self.fly_in) then return true end
@@ -871,7 +874,7 @@ end
 
 local function is_node_dangerous(self, nodename)
 
-	local def = core.registered_nodes[nodename] ; if not def then return end
+	local def = registered_nodes[nodename] ; if not def then return end
 
 	if (self.water_damage > 0 and def.groups.water)
 	or (self.lava_damage > 0 and def.groups.lava)
@@ -907,7 +910,7 @@ function mob_class:is_at_cliff()
 	or self.disable_falling then return end -- 0 for no fear of heights
 
 	-- if path already blocked, dont check for cliff
-	if core.registered_nodes[self.looking_at].walkable or self.facing_fence then
+	if registered_nodes[self.looking_at].walkable or self.facing_fence then
 		return
 	end
 
@@ -921,7 +924,7 @@ function mob_class:is_at_cliff()
 
 		local check_pos = {x = pos.x + dir_x, y = ypos - i, z = pos.z + dir_z}
 		local bnode = get_node(check_pos)
-		local def = core.registered_nodes[bnode.name]
+		local def = registered_nodes[bnode.name]
 
 		if is_node_dangerous(self, bnode.name) then return true end
 
@@ -959,7 +962,7 @@ function mob_class:do_env_damage()
 	end
 
 	local py = {x = pos.x, y = pos.y + self.prop.collisionbox[5], z = pos.z}
-	local nodef = core.registered_nodes[self.standing_in]
+	local nodef = registered_nodes[self.standing_in]
 
 	-- water damage
 	if self.water_damage ~= 0 and nodef.groups.water then
@@ -1080,18 +1083,18 @@ function mob_class:do_jump()
 	if self.state == "stand" or self.order == "stand" or vel.y ~= 0
 	or self.fly or self.child or self.jump_height == 0 then return end
 
-	local ndef = core.registered_nodes[self.standing_on]
+	local ndef = registered_nodes[self.standing_on]
 
 	-- only jump on solid nodes that allow it
 	if not ndef.walkable or ndef.groups.disable_jump == 1 then return end
 
 	-- is there anything stopping us from jumping up onto a block?
-	local blocked = core.registered_nodes[self.looking_above].walkable or self.facing_fence
+	local blocked = registered_nodes[self.looking_above].walkable or self.facing_fence
 
 	-- if mob can leap then remove blockages and let them try
 	if self.can_leap then blocked = false end
 
-	ndef = core.registered_nodes[self.looking_at] -- what node are we looking at?
+	ndef = registered_nodes[self.looking_at] -- what node are we looking at?
 
 	-- jump if we have space above to, or are a jumping mob
 	if self.walk_chance == 0 or (not blocked
@@ -1418,7 +1421,7 @@ local function can_dig_drop(pos)
 	if core.is_protected(pos, "") then return end
 
 	local node = node_ok(pos, "air").name
-	local ndef = core.registered_nodes[node]
+	local ndef = registered_nodes[node]
 
 	if not ndef or node == "ignore" or ndef.drawtype == "airlike" or ndef.groups.level
 	or ndef.groups.unbreakable or ndef.groups.liquid then return end
@@ -1461,7 +1464,7 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 
 				if not core.is_protected(s, "") then -- build upwards
 
-					local ndef1 = core.registered_nodes[self.standing_in]
+					local ndef1 = registered_nodes[self.standing_in]
 
 					if ndef1 and (ndef1.buildable_to or ndef1.groups.liquid) then
 
@@ -1525,7 +1528,7 @@ local function path_height_blocked(self)
 
 		node = get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
 
-		if core.registered_nodes[node].walkable then return true end
+		if registered_nodes[node].walkable then return true end
 	end
 end
 
@@ -2047,8 +2050,8 @@ function mob_class:do_states(dtime)
 			if self:flight_check() and self.animation
 			and self.animation.fly_start and self.animation.fly_end then
 
-				local on_ground = core.registered_nodes[self.standing_on].walkable
-				local in_water = core.registered_nodes[self.standing_in].groups.water
+				local on_ground = registered_nodes[self.standing_on].walkable
+				local in_water = registered_nodes[self.standing_in].groups.water
 
 				if on_ground and in_water then
 					self:set_animation("fly")
@@ -2408,9 +2411,9 @@ function mob_class:falling(pos)
 	local fall_speed = self.fall_speed
 
 	-- use liquid viscosity for float/sink speed when in water
-	if self.floats and core.registered_nodes[self.standing_in].groups.liquid then
+	if self.floats and registered_nodes[self.standing_in].groups.liquid then
 
-		local visc = min(core.registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
+		local visc = min(registered_nodes[self.standing_in].liquid_viscosity, 7) + 1
 
 		self.object:set_velocity({x = v.x, y = 0.45, z = v.z}) -- slow ascent in water
 
@@ -2430,7 +2433,7 @@ function mob_class:falling(pos)
 			self.standing_on = node_ok(
 					{x = pos.x, y = pos.y + y_level - 0.25, z = pos.z}, "air").name
 
-			local def = core.registered_nodes[self.standing_on]
+			local def = registered_nodes[self.standing_on]
 			local add = def and def.groups.fall_damage_add_percent
 
 			if add and add ~= 0 then
@@ -3351,7 +3354,7 @@ local function can_spawn(pos, name)
 		for x = min_x, max_x do
 			for z = min_z, max_z do
 
-				local def  = core.registered_nodes[node_ok(
+				local def  = registered_nodes[node_ok(
 						{x = pos.x + x, y = pos.y + y, z = pos.z + z}).name]
 
 				if def and def.walkable then
@@ -3615,7 +3618,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 				local pos2 = {x = pos.x, y = pos.y + n, z = pos.z}
 
-				if core.registered_nodes[node_ok(pos2).name].walkable then
+				if registered_nodes[node_ok(pos2).name].walkable then
 --print ("--- inside block", name, node_ok(pos2).name)
 					return
 				end
@@ -3905,7 +3908,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative, can_spawn
 
 				-- does existing on_rightclick function exist?
 				local under = get_node(pointed_thing.under)
-				local def = core.registered_nodes[under.name]
+				local def = registered_nodes[under.name]
 
 				if def and def.on_rightclick then
 
@@ -3962,7 +3965,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative, can_spawn
 
 			-- does existing on_rightclick function exist?
 			local under = get_node(pointed_thing.under)
-			local def = core.registered_nodes[under.name]
+			local def = registered_nodes[under.name]
 
 			if def and def.on_rightclick then
 
@@ -4436,7 +4439,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 			for n = 1, #ps do
 
-				local ndef = core.registered_nodes[get_node(ps[n]).name]
+				local ndef = registered_nodes[get_node(ps[n]).name]
 
 				if ndef and ndef.on_sound then
 
