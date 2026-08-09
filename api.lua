@@ -923,7 +923,7 @@ function mob_class:is_at_cliff()
 	for i = 1, self.fear_height do -- check each node going down
 
 		local check_pos = {x = pos.x + dir_x, y = ypos - i, z = pos.z + dir_z}
-		local bnode = get_node(check_pos)
+		local bnode = get_node(check_pos) or {name = "air"}
 		local def = registered_nodes[bnode.name]
 
 		if is_node_dangerous(self, bnode.name) then return true end
@@ -1526,9 +1526,10 @@ local function path_height_blocked(self)
 
 	for _,pos in pairs(self.path.way) do
 
-		node = get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
+		node = get_node({x = pos.x, y = pos.y + 1, z = pos.z})
+				or {name = "mobs:fallback_node"}
 
-		if registered_nodes[node].walkable then return true end
+		if registered_nodes[node.name].walkable then return true end
 	end
 end
 
@@ -3778,7 +3779,9 @@ function mobs:register_arrow(name, def)
 
 				if def.type == "node" and self.hit_node then
 
-					local node = get_node(def.node_pos) ; self.node_pos = def.node_pos
+					local node = node_ok(def.node_pos)
+
+					self.node_pos = def.node_pos
 
 					self:hit_node(pos, node) ; --print("-- hit node", node.name)
 
@@ -3908,7 +3911,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative, can_spawn
 
 				-- does existing on_rightclick function exist?
 				local under = get_node(pointed_thing.under)
-				local def = registered_nodes[under.name]
+				local def = under and registered_nodes[under.name]
 
 				if def and def.on_rightclick then
 
@@ -3965,7 +3968,7 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative, can_spawn
 
 			-- does existing on_rightclick function exist?
 			local under = get_node(pointed_thing.under)
-			local def = registered_nodes[under.name]
+			local def = under and registered_nodes[under.name]
 
 			if def and def.on_rightclick then
 
@@ -4439,7 +4442,8 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 			for n = 1, #ps do
 
-				local ndef = registered_nodes[get_node(ps[n]).name]
+				local nod = get_node(ps[n])
+				local ndef = nod and registered_nodes[nod.name]
 
 				if ndef and ndef.on_sound then
 
