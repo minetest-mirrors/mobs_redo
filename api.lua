@@ -441,9 +441,9 @@ local get_node = core.get_node
 
 if get_id then get_node = function(pos)
 
-		local id, p1, p2, pos_ok = get_id(pos.x, pos.y, pos.z)
+		local id, p1, p2, ok = get_id(pos.x, pos.y, pos.z)
 
-		return {name = get_id_name(id), param1 = p1, param2 = p2, loaded = pos_ok}
+		return ok and {name = get_id_name(id), param1 = p1, param2 = p2, loaded = ok}
 	end
 end
 
