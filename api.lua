@@ -43,6 +43,7 @@ local function atan(x)
 	if not x or x ~= x then return 0 else return atann(x) end
 end
 local table_copy, table_remove = table.copy, table.remove
+local get_connected_players = core.get_connected_players
 
 -- creative check
 
@@ -1423,8 +1424,9 @@ local function can_dig_drop(pos)
 	local node = node_ok(pos, "air").name
 	local ndef = registered_nodes[node]
 
-	if not ndef or node == "ignore" or ndef.drawtype == "airlike" or ndef.groups.level
-	or ndef.groups.unbreakable or ndef.groups.liquid then return end
+	if not ndef or not ndef.walkable or ndef.groups.level or ndef.groups.unbreakable then
+		return
+	end
 
 	local drops = core.get_node_drops(node)
 
@@ -1852,7 +1854,7 @@ function mob_class:follow_flop(dtime)
 	and self.state ~= "attack" and self.state ~= "runaway" then
 
 		local s = self.object:get_pos() ; if not s then return end
-		local players = core.get_connected_players()
+		local players = get_connected_players()
 
 		for n = 1, #players do
 
@@ -2943,7 +2945,7 @@ function mob_class:mob_expire(pos, dtime)
 	if self.lifetimer > 0 then return end
 
 	-- only despawn away from player
-	for _,player in pairs(core.get_connected_players()) do
+	for _,player in pairs(get_connected_players()) do
 
 		if get_distance(player:get_pos(), pos) <= 15 then
 			self.lifetimer = 20 ; return
@@ -3604,7 +3606,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		for _,player in ipairs(core.get_connected_players()) do
+		for _,player in ipairs(get_connected_players()) do
 
 			if get_distance(player:get_pos(), pos) <= mob_nospawn_range then
 --print("--- player too close", name)
@@ -4337,7 +4339,7 @@ core.register_chatcommand("clear_mobs", {
 
 		local count = 0
 
-		for _, player in pairs(core.get_connected_players()) do
+		for _, player in pairs(get_connected_players()) do
 
 			if player then
 
