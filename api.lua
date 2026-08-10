@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260809",
+	mod = "redo", version = "20260810",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2894,6 +2894,8 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.textures = textures
 	self.standing_in = "air"
 	self.standing_on = "air"
+	self.looking_at = "air"
+	self.looking_above = "air"
 	self.state = self.state or "stand"
 
 	self:set_yaw((random(0, 360) - 180) / 180 * pi, 6) -- stand at random yaw
