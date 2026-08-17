@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260810",
+	mod = "redo", version = "20260817",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3440,7 +3440,7 @@ function mobs:add_mob(pos, def)
 			new_texture = ent.child_texture[1]
 		end
 
-		ent.child = true
+		ent.child = true ; mobs:scale_mob(ent, .5, .5)
 
 	elseif def.texture then -- if not child set new texture
 
