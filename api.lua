@@ -18,7 +18,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260817",
+	mod = "redo", version = "20260818",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -43,7 +43,19 @@ local function atan(x)
 	if not x or x ~= x then return 0 else return atann(x) end
 end
 local table_copy, table_remove = table.copy, table.remove
+
+-- store connected players once every second
+
 local get_connected_players = core.get_connected_players
+local player_list = {}
+local ptimer = 1
+
+core.register_globalstep(function(dtime)
+
+	ptimer = ptimer + dtime ; if ptimer < 1 then return end ; ptimer = 0
+
+	player_list = get_connected_players()
+end)
 
 -- creative check
 
@@ -1854,14 +1866,13 @@ function mob_class:follow_flop(dtime)
 	and self.state ~= "attack" and self.state ~= "runaway" then
 
 		local s = self.object:get_pos() ; if not s then return end
-		local players = get_connected_players()
 
-		for n = 1, #players do
+		for _, player in ipairs(player_list) do
 
-			if players[n] and not is_invisible(self, players[n]:get_player_name())
-			and get_distance(players[n]:get_pos(), s) < self.view_range then
+			if player and not is_invisible(self, player:get_player_name())
+			and get_distance(player:get_pos(), s) < self.view_range then
 
-				self.following = players[n] ; break
+				self.following = player ; break
 			end
 		end
 	end
@@ -2945,9 +2956,9 @@ function mob_class:mob_expire(pos, dtime)
 	if self.lifetimer > 0 then return end
 
 	-- only despawn away from player
-	for _,player in pairs(get_connected_players()) do
+	for _, player in ipairs(player_list) do
 
-		if get_distance(player:get_pos(), pos) <= 15 then
+		if player and get_distance(player:get_pos(), pos) <= 15 then
 			self.lifetimer = 20 ; return
 		end
 	end
@@ -3606,9 +3617,9 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		for _,player in ipairs(get_connected_players()) do
+		for _, player in ipairs(player_list) do
 
-			if get_distance(player:get_pos(), pos) <= mob_nospawn_range then
+			if player and get_distance(player:get_pos(), pos) <= mob_nospawn_range then
 --print("--- player too close", name)
 				return
 			end
@@ -4339,7 +4350,7 @@ core.register_chatcommand("clear_mobs", {
 
 		local count = 0
 
-		for _, player in pairs(get_connected_players()) do
+		for _, player in ipairs(player_list) do
 
 			if player then
 
