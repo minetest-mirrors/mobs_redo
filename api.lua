@@ -97,7 +97,7 @@ local main_timer_interval = tonumber(settings:get("mob_main_timer_interval") or 
 
 -- pathfind settings
 
-local pathfinding_enable = settings:get_bool("mob_pathfinding_enable") or true
+local pathfinding_enable = settings:get_bool("mob_pathfinding_enable") ~= false
 local pathfinding_stuck_timeout = tonumber(
 		settings:get("mob_pathfinding_stuck_timeout")) or 3.0
 local pathfinding_stuck_path_timeout = tonumber(
@@ -765,7 +765,7 @@ local function remove_mob(self, decrease)
 
 	self.object:remove()
 
-	if decrease and active_limit and active_limit > 1 then
+	if decrease and active_limit and active_limit > 0 then
 		active_mobs = active_mobs - 1
 --print("-- active mobs: " .. active_mobs .. " / " .. active_limit)
 	end
@@ -1536,9 +1536,11 @@ end
 
 local function path_height_blocked(self)
 
-	local node
+	local node, pos
 
-	for _,pos in pairs(self.path.way) do
+	for i = 1, #self.path.way do
+
+		local pos = self.path.way[i]
 
 		node = get_node({x = pos.x, y = pos.y + 1, z = pos.z})
 				or {name = "mobs:fallback_node"}
@@ -2565,8 +2567,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, damage)
 	end
 
 	-- custom punch function (if false returned, do not continue)
-	if self.do_punch and not self:do_punch(
-			hitter, tflp, tool_caps, dir, damage) == false then
+	if self.do_punch and self:do_punch(hitter, tflp, tool_caps, dir, damage) == false then
 		return true
 	end
 
