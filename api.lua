@@ -11,14 +11,15 @@ local use_invisibility = core.get_modpath("invisibility")
 -- node check helper
 
 local registered_nodes = core.registered_nodes
+local registered_items = core.registered_items
 local function has(nodename)
-	return core.registered_nodes[nodename] and nodename
+	return registered_nodes[nodename] and nodename
 end
 
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260818",
+	mod = "redo", version = "20260819",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -88,7 +89,7 @@ local mob_height_fix = settings:get_bool("mob_height_fix")
 local mob_log_spawn = settings:get_bool("mob_log_spawn") == true
 local active_mobs = 0
 local mob_infotext = settings:get_bool("mob_infotext") ~= false
-local gravity = tonumber(core.settings:get("movement_gravity")) or 9.81
+local gravity = tonumber(settings:get("movement_gravity")) or 9.81
 
 -- loop interval timers
 
@@ -304,7 +305,7 @@ local function check_for(look_for, look_inside)
 		if type(str) == "string" and str:sub(1, 6) == "group:" then
 
 			local group = str:sub(7)
-			local def = core.registered_items[look_for]
+			local def = registered_items[look_for]
 
 			if def and def.groups[group] and def.groups[group] ~= 0 then return true end
 		end
@@ -488,7 +489,7 @@ function mob_class:line_of_sight(pos1, pos2)
 
 		if thing.type == "node" then
 
-			local nodedef = core.registered_items[get_node(thing.under).name]
+			local nodedef = registered_items[get_node(thing.under).name]
 
 			if nodedef and nodedef.walkable then return end
 		end
@@ -718,7 +719,7 @@ function mob_class:item_drop()
 
 		local wield_stack = self.cause_of_death.puncher:get_wielded_item()
 		local wield_stack_meta = wield_stack:get_meta()
-		local item_def = core.registered_items[wield_stack:get_name()]
+		local item_def = registered_items[wield_stack:get_name()]
 		local item_looting = item_def and item_def.tool_capabilities and
 				item_def.tool_capabilities.looting_level or 0
 
@@ -1540,7 +1541,7 @@ local function path_height_blocked(self)
 
 	for i = 1, #self.path.way do
 
-		local pos = self.path.way[i]
+		pos = self.path.way[i]
 
 		node = get_node({x = pos.x, y = pos.y + 1, z = pos.z})
 				or {name = "mobs:fallback_node"}
@@ -1620,7 +1621,9 @@ function mob_class:smart_mobs(s, p, dist, dtime)
 		-- show path length and particle trail
 		print("-- path length:" .. tonumber(#self.path.way))
 
-		for _,pos in pairs(self.path.way) do
+		for i = 1, #self.path.way do
+
+			local pos = self.path.way[i]
 
 			tpart(pos, 2)
 
@@ -4116,7 +4119,7 @@ function mobs:capture_mob(
 
 	-- add special mob egg with all mob information
 	-- unless 'replacewith' contains new item to use
-	if not replacewith and core.registered_items[mobname .. "_set"] then
+	if not replacewith and registered_items[mobname .. "_set"] then
 
 		new_stack = ItemStack(mobname .. "_set")
 
