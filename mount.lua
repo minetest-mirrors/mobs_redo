@@ -306,6 +306,8 @@ end
 
 function mobs.fly(entity, dtime, speed, shoots, arrow, moving_anim, stand_anim)
 
+	if not entity.driver then return end -- player check
+
 	local ctrl = entity.driver:get_player_control() ; if not ctrl then return end
 	local velo = entity.object:get_velocity() ; if not velo then return end
 	local dir = entity.driver:get_look_dir()
