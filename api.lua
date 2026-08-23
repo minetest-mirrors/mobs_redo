@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260819",
+	mod = "redo", version = "20260823",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -4200,8 +4200,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 	if item:get_name() == "mobs:nametag"
 	and (name == self.owner or core.check_player_privs(name, "protection_bypass")) then
 
-		-- store mob and nametag itemstack in external table
-		mob_nametag[name] = {object = self, itemstack = item}
+		mob_nametag[name] = self -- store mob in external table
 
 		local tag = self._nametag or ""
 		local esc = core.formspec_escape
@@ -4300,16 +4299,23 @@ core.register_on_player_receive_fields(function(player, formname, fields)
 		mob_nametag[name] = nil ; return
 	end
 
+	-- consume only the live wielded stack
+	local item = player:get_wielded_item()
+
+	if item:get_name() ~= "mobs:nametag" then
+		mob_nametag[name] = nil ; return
+	end
+
 	-- limit name entered to 64 characters
 	if fields.name:len() > 64 then fields.name = fields.name:sub(1, 64) end
 
-	mob_nametag[name].object:update_tag(fields.name) -- update nametag
+	mob_nametag[name]:update_tag(fields.name) -- update nametag
 
 	if not mobs.is_creative(name) then -- take nametag if not using creative
 
-		mob_nametag[name].itemstack:take_item()
+		item:take_item()
 
-		player:set_wielded_item(mob_nametag[name].itemstack)
+		player:set_wielded_item(item)
 	end
 
 	mob_nametag[name] = nil
