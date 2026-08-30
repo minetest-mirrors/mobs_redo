@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260823",
+	mod = "redo", version = "20260830",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -778,7 +778,7 @@ end
 
 -- death animation
 
-function mob_class:death_anim()
+function mob_class:death_anim(cmi_cause)
 
 	if not (self.animation and self.animation.die_start and self.animation.die_end) then
 		return
@@ -872,7 +872,7 @@ function mob_class:check_for_death(cmi_cause)
 	end
 
 	-- did we find a death animation
-	if self:death_anim() then return true end
+	if self:death_anim(cmi_cause) then return true end
 
 	-- otherwise remove mob and show particle effect
 	if use_cmi then cmi.notify_die(self.object, cmi_cause) end
@@ -1554,7 +1554,7 @@ end
 
 function mob_class:smart_mobs(s, p, dist, dtime)
 
-	local s1 = self.path.lastpos
+	local s1 = self.path.lastpos or s
 	local target_pos = p
 
 	-- are we stuck?
