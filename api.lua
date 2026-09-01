@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260830",
+	mod = "redo", version = "20260901",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -778,7 +778,7 @@ end
 
 -- death animation
 
-function mob_class:death_anim(cmi_cause)
+function mob_class:death_anim()
 
 	if not (self.animation and self.animation.die_start and self.animation.die_end) then
 		return
@@ -800,9 +800,6 @@ function mob_class:death_anim(cmi_cause)
 	core.after(length, function()
 
 		if self.object:get_luaentity() then
-
-			if use_cmi then cmi.notify_die(self.object, cmi_cause) end
-
 			remove_mob(self, true)
 		end
 	end)
@@ -849,10 +846,13 @@ function mob_class:check_for_death(cmi_cause)
 
 	local pos = self.object:get_pos() ; if not pos then return end
 
+	if use_cmi then cmi.notify_die(self.object, cmi_cause) end
+
+	local death_by_player = cmi_cause and cmi_cause.puncher
+			and is_player(cmi_cause.puncher)
+
 	-- execute mob api custom death function first for any special features
 	if self.on_die then
-
-		if use_cmi then cmi.notify_die(self.object, cmi_cause) end
 
 		if self:on_die(pos) then return true end -- skips removal of mob
 
@@ -863,7 +863,7 @@ function mob_class:check_for_death(cmi_cause)
 	if self.on_death then
 
 		-- only return killer if punched by player
-		cmi_cause = (cmi_cause.type == "punch" and is_player(cmi_cause.puncher))
+		cmi_cause = (cmi_cause.type == "punch" and death_by_player)
 				and cmi_cause.puncher or nil
 
 		self:on_death(cmi_cause)
@@ -872,11 +872,9 @@ function mob_class:check_for_death(cmi_cause)
 	end
 
 	-- did we find a death animation
-	if self:death_anim(cmi_cause) then return true end
+	if self:death_anim() then return true end
 
 	-- otherwise remove mob and show particle effect
-	if use_cmi then cmi.notify_die(self.object, cmi_cause) end
-
 	remove_mob(self, true)
 
 	effect(pos, 20, "mobs_tnt_smoke.png")
