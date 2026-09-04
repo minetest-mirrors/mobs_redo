@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260901",
+	mod = "redo", version = "20260904",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -177,8 +177,9 @@ local mob_class_meta = {__index = mob_class}
 
 local function at_limit()
 
-	if active_limit and active_limit > 0
-	and active_mobs and active_mobs >= active_limit then return true end
+	if active_limit > 0 and active_mobs >= active_limit then
+		return true
+	end
 end
 
 -- play sound
@@ -766,7 +767,7 @@ local function remove_mob(self, decrease)
 
 	self.object:remove()
 
-	if decrease and active_limit and active_limit > 0 then
+	if decrease and active_limit > 0 and active_mobs > 0 then
 		active_mobs = active_mobs - 1
 --print("-- active mobs: " .. active_mobs .. " / " .. active_limit)
 	end
@@ -2474,7 +2475,7 @@ end
 
 local dis_damage_kb = settings:get_bool("mobs_disable_damage_kb")
 
-function mob_class:on_punch(hitter, tflp, tool_caps, dir, damage)
+function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 
 	-- mob health and nil check
 	if self.health <= 0 or not hitter then return true end
@@ -2719,7 +2720,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, damage)
 		self.following = nil
 	end
 
-	local hitter_name = hitter:get_player_name() or ""
+	local hitter_name = is_player(hitter) and hitter:get_player_name() or ""
 
 	-- call for help and attack puncher
 	if not self.passive and self.state ~= "flop" and not self.child
@@ -3432,14 +3433,14 @@ function mobs:add_mob(pos, def)
 
 --print("[mobs] Spawned " .. def.name .. " at " .. core.pos_to_string(pos))
 
-	local ent = mob:get_luaentity()
+	local ent = mob and mob:get_luaentity()
 
 	if not ent then
 --print("[mobs] entity not found " .. def.name)
 		return
-	else
-		effect(pos, 15, "mobs_tnt_smoke.png", 1, 2, 2, 15, 5)
 	end
+
+	effect(pos, 15, "mobs_tnt_smoke.png", 1, 2, 2, 15, 5)
 
 	-- use new texture if found
 	local new_texture = def.texture or ent.base_texture
@@ -4042,9 +4043,9 @@ function mobs:force_capture(self, clicker)
 
 	new_stack:get_meta():set_string("", data_str)
 
-	local inv = clicker:get_inventory()
+	local inv = clicker and clicker:get_inventory()
 
-	if inv:room_for_item("main", new_stack) then
+	if inv and inv:room_for_item("main", new_stack) then
 		inv:add_item("main", new_stack) -- add to inventory if room found
 	else
 		core.add_item(clicker:get_pos(), new_stack) -- drop spawn egg
