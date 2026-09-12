@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260904",
+	mod = "redo", version = "20260912",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -38,7 +38,6 @@ local pi, abs, min, max = math.pi, math.abs, math.min, math.max
 local square, random = math.sqrt, math.random
 local sin, cos, rad, deg = math.sin, math.cos, math.rad, math.deg
 local floor, ceil, vdirection = math.floor, math.ceil, vector.direction
-local vmultiply, vsubtract = vector.multiply, vector.subtract
 local settings, atann = core.settings, math.atan
 local function atan(x)
 	if not x or x ~= x then return 0 else return atann(x) end
@@ -490,7 +489,7 @@ function mob_class:line_of_sight(pos1, pos2)
 
 		if thing.type == "node" then
 
-			local nodedef = registered_items[get_node(thing.under).name]
+			local nodedef = registered_nodes[get_node(thing.under).name]
 
 			if nodedef and nodedef.walkable then return end
 		end
@@ -551,7 +550,7 @@ end
 function mob_class:yaw_to_pos(target, rot, delay)
 
 	local pos = self.object:get_pos()
-	local vec = vector.subtract(target, pos)
+	local vec = {x = target.x - pos.x, y = target.y - pos.y, z = target.z - pos.z}
 	local yaw = core.dir_to_yaw(vec) + (rot or 0) - self.rotate
 
 	return self:set_yaw(yaw, delay)
@@ -955,8 +954,8 @@ function mob_class:is_inside(itemtable)
 	local pos = self.object:get_pos()
 
 	return #core.find_nodes_in_area(
-			vector.offset(pos, cb[1], cb[2], cb[3]),
-			vector.offset(pos, cb[4], cb[5], cb[6]), itemtable) > 0
+			{x = pos.x + cb[1], y = pos.y + cb[2], z = pos.z + cb[3]},
+			{x = pos.x + cb[4], y = pos.y + cb[5], z = pos.z + cb[6]}, itemtable) > 0
 end
 
 -- environmental damage
@@ -1294,7 +1293,7 @@ function mob_class:breed()
 			self:update_tag()
 
 			-- have we reached active mob limit
-			if at_limit() then
+			if at_limit() and self.owner and self.owner ~= "" then
 
 				core.chat_send_player(self.owner, S("Active Mob Limit Reached!")
 						.. "  (" .. active_mobs .. " / " .. active_limit .. ")")
@@ -3312,7 +3311,7 @@ function mobs:register_mob(name, def)
 			return self:mob_activate(staticdata, def, dtime)
 		end,
 		get_staticdata = function(self)
-			return self:mob_staticdata(self)
+			return self:mob_staticdata()
 		end
 --		is_mob = true, _hittable_by_projectile = true, -- mineclone thing
 	}
@@ -3781,7 +3780,7 @@ function mobs:register_arrow(name, def)
 
 				if p and core.line_of_sight(self.object:get_pos(), p) then
 
-					self.object:set_velocity(vector.direction(
+					self.object:set_velocity(vdirection(
 							self.object:get_pos(), p) * self.velocity)
 				else
 					self._homing_target = nil
@@ -3845,9 +3844,10 @@ end
 
 function mobs:safe_boom(self, pos, radius, texture)
 
-	core.sound_play(self and self.sounds and self.sounds.explode or "tnt_explode", {
-		pos = pos, max_hear_distance = (self.sounds and self.sounds.distance) or 32
-	}, true)
+	local sounds = self and self.sounds or {}
+
+	core.sound_play(sounds.explode or "tnt_explode",
+			{pos = pos, max_hear_distance = (sounds.distance or 32)}, true)
 
 	entity_physics(pos, radius)
 
@@ -3862,7 +3862,7 @@ function mobs:boom(self, pos, node_damage_radius, entity_radius, texture)
 
 	texture = texture or "mobs_tnt_smoke.png"
 
-	if mobs_griefing and not minetest.is_protected(pos, "") then
+	if mobs_griefing and not core.is_protected(pos, "") then
 
 		if core.get_modpath("mcl_explosions") then
 
@@ -4461,8 +4461,9 @@ if settings:get_bool("mobs_can_hear") ~= false then
 
 			local dist = min(def.max_hear_distance, 8)
 			local ps = core.find_nodes_in_area(
-					vector.subtract(def.pos, dist),
-					vector.add(def.pos, dist), {"group:on_sound"})
+					{x = def.pos.x - dist, y = def.pos.y - dist, z = def.pos.z - dist},
+					{x = def.pos.x + dist, y = def.pos.y + dist, z = def.pos.z + dist},
+					{"group:on_sound"})
 
 			for n = 1, #ps do
 
