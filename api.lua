@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260912",
+	mod = "redo", version = "20260913",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3487,7 +3487,7 @@ end
 -- older spawning function
 
 function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, interval,
-		chance, aoc, min_height, max_height, day_toggle, on_spawn, map_load)
+		chance, aoc, min_height, max_height, day_toggle, on_spawn, map_load, def)
 
 	if not mobs_spawn or not mobs.spawning_mobs[name] then
 --print ("--- spawning not registered for " .. name)
@@ -3590,6 +3590,13 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		if pos.y > max_height or pos.y < min_height then
 --print("--- height limits not met", name, pos.y)
 			return
+		end
+
+		-- check mob spawns in correct biome (if set)
+		local bdata = core.get_biome_data and core.get_biome_data(pos)
+		if bdata and def.biomes then
+			local biome = core.get_biome_name(bdata.biome) or ""
+			if not check_for(biome, def.biomes) then return end
 		end
 
 		local light = core.get_node_light(pos)
@@ -3705,7 +3712,7 @@ function mobs:spawn(def)
 		def.min_height or -31000, def.max_height or 31000,
 		def.day_toggle,
 		def.on_spawn,
-		def.on_map_load)
+		def.on_map_load, def)
 end
 
 -- register arrow for shoot attack
