@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260914",
+	mod = "redo", version = "20260916",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -237,29 +237,35 @@ end
 function mob_class:collision()
 
 	local pos = self.object:get_pos() ; if not pos then return 0, 0 end
-	local x, z = 0, 0
-	local width = -self.prop.collisionbox[1] + self.prop.collisionbox[4] + 0.5
-	local width_sq = width * width
-	local players = core.get_objects_inside_radius(pos, width)
+	local radius = self.prop.collisionbox[4] - self.prop.collisionbox[1] + 0.5
+	local radius_sq = radius * radius
+	local push_x, push_z = 0, 0
 
-	for i = 1, #players do
+	for _, object in ipairs(core.get_objects_inside_radius(pos, radius)) do
 
-		if players[i]:is_player() then
+		if object:is_player() then
 
-			local pos2 = players[i]:get_pos()
-			local vx, vz = pos.x - pos2.x, pos.z - pos2.z
-			local dist_sq = vx * vx + vz * vz
+			local p = object:get_pos()
 
-			if dist_sq < width_sq then
+			if p then
 
-				local force = (width - dist_sq ^ 0.5) * 2
+				local dx, dz = (pos.x - p.x), (pos.z - p.z)
+				local dist_sq = dx * dx + dz * dz
 
-				x = x + vx * force ; z = z + vz * force
+				if dist_sq > 0 and dist_sq < radius_sq then
+
+					local dist = square(dist_sq)
+					local force = (radius - dist) * 2
+					local scale = force / dist
+
+					push_x = push_x + dx * scale
+					push_z = push_z + dz * scale
+				end
 			end
 		end
 	end
 
-	return x, z
+	return push_x, push_z
 end
 
 -- helper function to scale mob
