@@ -555,9 +555,10 @@ end
 
 function mob_class:yaw_to_pos(target, rot, delay)
 
-	local pos = self.object:get_pos()
-	local vec = {x = target.x - pos.x, y = target.y - pos.y, z = target.z - pos.z}
-	local yaw = core.dir_to_yaw(vec) + (rot or 0) - self.rotate
+	local pos = self.object:get_pos() ; if not pos or not target then return end
+	local yaw = core.dir_to_yaw({x = target.x - pos.x, y = 0, z = target.z - pos.z})
+
+	yaw = yaw + (rot or 0) - self.rotate
 
 	return self:set_yaw(yaw, delay)
 end
@@ -568,10 +569,9 @@ function mob_class:do_stay_near()
 
 	if not self.stay_near then return end
 
-	local pos = self.object:get_pos()
+	if random(self.stay_near[2] or 10) > 1 then return end
 
-	if not pos or random(self.stay_near[2] or 10) > 1 then return end
-
+	local pos = self.object:get_pos() ; if not pos then return end
 	local r = self.view_range
 
 	if core.find_node_near(pos, 3, self.stay_near[1], true) then return end
@@ -582,9 +582,7 @@ function mob_class:do_stay_near()
 
 	if #nearby_nodes == 0 then return end
 
-	local yaw = self:yaw_to_pos(nearby_nodes[random(#nearby_nodes)], 0, 1)
-
-	self:set_yaw(yaw, 0)
+	self:yaw_to_pos(nearby_nodes[random(#nearby_nodes)], 0, 1)
 	self:set_animation("walk")
 	self:set_velocity(self.walk_velocity)
 
