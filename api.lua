@@ -464,7 +464,7 @@ if get_id then get_node = function(pos)
 
 		local id, p1, p2, ok = get_id(pos.x, pos.y, pos.z)
 
-		return ok and {name = get_id_name(id), param1 = p1, param2 = p2, loaded = ok}
+		return {name = get_id_name(id), param1 = p1, param2 = p2, loaded = ok}
 	end
 end
 
@@ -490,15 +490,14 @@ end
 function mob_class:line_of_sight(pos1, pos2)
 
 	local rays = core.raycast(pos1, pos2, true, false) -- ignore entities
-	local next_ray = rays.next
 
-	for thing in next_ray, rays do
+	for pointed in rays do
 
-		if thing.type == "node" then
+		if pointed.type == "node" then
 
-			local nodedef = registered_nodes[get_node(thing.under).name]
+			local def = registered_nodes[get_node(pointed.under).name]
 
-			if nodedef and nodedef.walkable then return end
+			if def and def.walkable then return end
 		end
 	end
 
