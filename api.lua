@@ -1135,7 +1135,7 @@ function mob_class:do_jump()
 	end
 
 	-- if blocked for 3 jump counts, turn
-	if not self.following and (self.facing_fence or blocked) then
+	if not self.following and not self.attack and (self.facing_fence or blocked) then
 
 		self.jump_count = (self.jump_count or 0) + 1
 
@@ -1154,7 +1154,7 @@ local function entity_physics(pos, radius)
 
 	radius = radius * 2
 
-	local objs = core.get_objects_inside_radius(pos, radius)
+	local objs = core.get_objects_inside_radius(pos, radius) ; if #objs == 0 then return end
 	local obj_pos, dist
 
 	for n = 1, #objs do
