@@ -43,6 +43,7 @@ local function atan(x)
 	if not x or x ~= x then return 0 else return atann(x) end
 end
 local table_copy, table_remove = table.copy, table.remove
+local TWO_PI = 2 * pi
 
 -- store connected players once every second
 
@@ -371,11 +372,9 @@ end
 
 local function shortest_rotation(from, to)
 
-	local diff = to - from
+	local diff = (to - from) % TWO_PI
 
-	if diff > pi then return diff - 2 * pi
-	elseif diff < -pi then return diff + 2 * pi
-	end
+	if diff > pi then diff = diff - TWO_PI end
 
 	return diff
 end
@@ -384,11 +383,11 @@ end
 
 function mob_class:set_yaw(yaw, delay)
 
-	yaw = (yaw or 0) % (2 * pi) -- clamp yaw
+	yaw = (yaw or 0) % TWO_PI -- clamp yaw
 
 	delay = (mob_smooth_rotate and delay) or 0
 
-	if delay == 0 then
+	if delay <= 0 then
 
 		local rot = self.object:get_rotation() ; rot.y = yaw ; self.object:set_rotation(rot)
 
@@ -398,7 +397,7 @@ function mob_class:set_yaw(yaw, delay)
 	self.target_yaw = yaw
 	self.delay = delay
 
-	return self.target_yaw
+	return yaw
 end
 
 function mob_class:set_pitch(pitch)
