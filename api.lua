@@ -304,16 +304,18 @@ local function check_for(look_for, look_inside)
 
 	if type(look_inside) ~= "table" then return end
 
-	for _, str in pairs(look_inside) do
+	local def = registered_items[look_for]
+	local groups = def and def.groups
+
+	for _, str in ipairs(look_inside) do
 
 		if str == look_for then return true end
 
 		if type(str) == "string" and str:sub(1, 6) == "group:" then
 
 			local group = str:sub(7)
-			local def = registered_items[look_for]
 
-			if def and def.groups[group] and def.groups[group] ~= 0 then return true end
+			if groups and (groups[group] or 0) > 0 then return true end
 		end
 	end
 end
