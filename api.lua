@@ -324,10 +324,9 @@ end
 
 function mob_class:set_velocity(v)
 
-	v = v or 0.01
+	v = v or 0
 
-	-- halt mob if ordered to stay
-	if self.order == "stand" then
+	if self.order == "stand" then -- halt mob if ordered to stay
 
 		local vel = self.object:get_velocity() or {y = 0}
 
@@ -336,26 +335,27 @@ function mob_class:set_velocity(v)
 		return
 	end
 
-	local c_x, c_y = 0, 0
+	local push_x, push_z = 0, 0
 
 	-- calculate direction if mob can be pushed
-	if self.pushable then c_x, c_y = self:collision() end
+	if self.pushable then push_x, push_z = self:collision() end
 
 	local yaw = (self.object:get_yaw() or 0) + self.rotate
 
-	-- is mob standing in liquid?
-	local visc = min(registered_nodes[self.standing_in].liquid_viscosity or 0, 7)
+	if v > 0 then
 
-	-- only slow moving mobs when inside a viscous fluid they cannot swim in
-	-- e.g. fish in water, spiders in cobweb
-	if v > 0 and visc > 0 and not check_for(self.standing_in, self.fly_in) then
-		v = v / (visc + 1)
+		local visc = min(registered_nodes[self.standing_in].liquid_viscosity or 0, 7)
+
+		-- only slow moving mobs in viscous fluid unless they can swim in it (fish/spider)
+		if visc > 0 and not check_for(self.standing_in, self.fly_in) then
+			v = v / (visc + 1)
+		end
 	end
 
-	local vel = self.object:get_velocity() or {y = 0}
+	local vel = self.object:get_velocity() or {y = 0} -- keep old vertical velocity
 
 	self.object:set_velocity({
-			x = (sin(yaw) * -v) + c_x, y = vel.y, z = (cos(yaw) * v) + c_y})
+			x = (sin(yaw) * -v) + push_x, y = vel.y, z = (cos(yaw) * v) + push_z})
 end
 
 -- return velocity
