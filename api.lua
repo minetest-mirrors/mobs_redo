@@ -1693,7 +1693,7 @@ function mob_class:general_attack()
 	local s = self.object:get_pos() ; if not s then return end
 	local objs = core.get_objects_inside_radius(s, self.view_range)
 
-	if not objs or #objs == 1 then return end -- only mob itself
+	if not objs or #objs <= 1 then return end -- only mob itself
 
 	-- random attack chance here to save additional computation
 	if random(100) <= self.attack_chance then return end
@@ -2770,17 +2770,17 @@ end
 
 local function clean_staticdata(self)
 
-	local tmp, t = {}
+	local res, t = {}
 
-	for _,stat in pairs(self) do
+	for _, val in pairs(self) do
 
-		t = type(stat)
+		t = type(val)
 
 		if  t ~= "function" and t ~= "nil" and t ~= "userdata" and _ ~= "temp"
-		and _ ~= "object" and _ ~= "_cmi_components" then tmp[_] = self[_] end
+		and _ ~= "object" and _ ~= "_cmi_components" then res[_] = val end
 	end
 
-	return tmp
+	return res
 end
 
 -- get entity staticdata
@@ -2844,7 +2844,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 
 	if tmp then
 
-		local t ; for _,stat in pairs(tmp) do
+		local t ; for _, stat in pairs(tmp) do
 
 			t = type(stat)
 
@@ -3118,9 +3118,7 @@ function mob_class:on_step(dtime, moveresult)
 		self:follow_flop(dtime)
 
 		-- when not attacking call do_states every second (return if dead)
-		if self.state ~= "attack" then
-			if self:do_states(main_timer_interval) then return end
-		end
+		if self.state ~= "attack" and self:do_states(main_timer_interval) then return end
 
 		self:do_runaway_from()
 		self:do_stay_near()
@@ -3132,25 +3130,18 @@ end
 
 function mob_class:follow_teleport()
 
-	if self.order == "follow" and self.state ~= "attack" and not self.following then
+	if self.order ~= "follow" or self.state == "attack" or self.following
+	or not self.owner or self.owner == "" then return end
 
-		if self.owner and self.owner ~= "" then
+	local player = core.get_player_by_name(self.owner) ; if not player then return end
+	local pos = player:get_pos()
 
-			local player = core.get_player_by_name(self.owner)
+	if get_distance(self.object:get_pos(), pos) > (self.view_range * 2) then
 
-			if player then
+		pos.y = pos.y - self.base_colbox[2] -- dont teleport into the ground
 
-				local pos = player:get_pos()
-
-				if get_distance(self.object:get_pos(), pos) > (self.view_range * 2) then
-
-					pos.y = pos.y - self.base_colbox[2] -- dont teleport into the ground
-
-					self.object:move_to(pos, true)
-					self:mob_sound("default_dirt_footstep")
-				end
-			end
-		end
+		self.object:move_to(pos, true)
+		self:mob_sound("default_dirt_footstep")
 	end
 end
 
@@ -3478,9 +3469,7 @@ function mobs:add_mob(pos, def)
 
 	if def.nametag then
 
-		if def.nametag:len() > 64 then -- limit name entered to 64 characters
-			def.nametag = def.nametag:sub(1, 64)
-		end
+		def.nametag = def.nametag:sub(1, 64)
 
 		ent:update_tag(def.nametag)
 	end
