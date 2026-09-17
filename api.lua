@@ -1339,10 +1339,12 @@ end
 
 function mob_class:replace(pos)
 
+	if not mobs_griefing or self.child
+	or not self.replace_rate or not self.replace_what then return end
+
 	local vel = self.object:get_velocity()
 
-	if not vel or not mobs_griefing or not self.replace_rate or not self.replace_what
-	or self.child or vel.y ~= 0 or random(self.replace_rate) > 1 then return end
+	if not vel or vel.y ~= 0 or random(self.replace_rate) > 1 then return end
 
 	local what, with, y_offset, reach
 
@@ -1361,17 +1363,16 @@ function mob_class:replace(pos)
 		reach = 0
 	end
 
-	pos.y = pos.y + y_offset
-
+	local spos = {x = pos.x, y = pos.y + y_offset, z  = pos.z}
 	local found = core.find_nodes_in_area(
-			{x = pos.x - reach, y = pos.y, z = pos.z - reach},
-			{x = pos.x + reach, y = pos.y, z = pos.z + reach}, what)
+			{x = spos.x - reach, y = spos.y, z = spos.z - reach},
+			{x = spos.x + reach, y = spos.y, z = spos.z + reach}, what)
 
 	if #found == 0 then return end
 
-	pos = found[random(#found)]
+	spos = found[random(#found)]
 
--- print("replace node = ".. core.get_node(pos).name, pos.y)
+-- print("replace node = ".. core.get_node(pos).name, spos.y)
 
 	if self.on_replace then
 
@@ -1380,15 +1381,15 @@ function mob_class:replace(pos)
 
 		-- pass node name when using table or groups
 		if type(oldnode) == "table" or oldnode:sub(1, 6) == "group:" then
-			oldnode = get_node(pos).name
+			oldnode = get_node(spos).name
 		end
 
-		if self:on_replace(pos, oldnode, newnode) == false then return end
+		if self:on_replace(spos, oldnode, newnode) == false then return end
 	end
 
-	core.set_node(pos, {name = with})
+	core.set_node(spos, {name = with})
 
-	self:mob_sound(self.sounds.replace)
+	if self.sounds.replace then self:mob_sound(self.sounds.replace) end
 end
 
 -- look directly around mob to see if it can pickup any dropped items
@@ -1397,22 +1398,27 @@ function mob_class:check_item_pickup(pos)
 
 	if not self.on_pick_up or not self.pick_up or #self.pick_up == 0 then return end
 
-	for _,o in pairs(core.get_objects_inside_radius(pos, 2)) do
+	for _, obj in pairs(core.get_objects_inside_radius(pos, 2)) do
 
-		local l = o:get_luaentity()
+		local ent = obj:get_luaentity()
 
-		if l and l.name == "__builtin:item" then
+		if ent and ent.name == "__builtin:item" then
 
-			for k,v in pairs(self.pick_up) do
+			for k = 1, #self.pick_up do
 
-				if self.on_pick_up and l.itemstring:find(v, 1, true) then
+				local item = self.pick_up[k]
 
-					local r = self.on_pick_up(self, l)
+				if self.on_pick_up and ent.itemstring:find(item, 1, true) then
 
-					if r and r.is_empty and not r:is_empty() then
-						l.itemstring = r:to_string()
-					elseif r and r.is_empty and r:is_empty() then
-						o:remove()
+					local res = self.on_pick_up(self, ent)
+
+					if res and res.is_empty then
+
+						if res:is_empty() then
+							obj:remove()
+						else
+							ent.itemstring = res:to_string()
+						end
 					end
 				end
 			end
