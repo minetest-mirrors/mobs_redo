@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260916",
+	mod = "redo", version = "20260917",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1439,9 +1439,9 @@ local function can_dig_drop(pos)
 	if core.is_protected(pos, "") then return end
 
 	local node = node_ok(pos, "air").name
-	local ndef = registered_nodes[node]
+	local def = registered_nodes[node]
 
-	if not ndef or not ndef.walkable or ndef.groups.level or ndef.groups.unbreakable then
+	if not def or not def.walkable or def.groups.level or def.groups.unbreakable then
 		return
 	end
 
@@ -1468,7 +1468,7 @@ function mob_class:apply_path(way, target_pos, add_jump, set_velocity)
 
 	if self.attack then self:do_attack(self.attack) end
 
-	if not self.path.way then -- no path found
+	if not way or #way == 0 then -- no path found
 
 		self.path.following = false
 
@@ -1556,10 +1556,11 @@ end
 
 -- path finding and smart mob routine by rnd, line_of_sight and other edits by Elkien3
 
-function mob_class:smart_mobs(s, p, dist, dtime)
+function mob_class:smart_mobs(s, target_pos, dist, dtime)
+
+	if dtime <= 0 then return end
 
 	local s1 = self.path.lastpos or s
-	local target_pos = p
 
 	-- are we stuck?
 	if (abs(s1.x - s.x) + abs(s1.z - s.z)) / dtime < 0.5 then
@@ -1694,6 +1695,9 @@ function mob_class:general_attack()
 
 	if not objs or #objs == 1 then return end -- only mob itself
 
+	-- random attack chance here to save additional computation
+	if random(100) <= self.attack_chance then return end
+
 	-- remove entities we aren't interested in
 	for n = 1, #objs do
 
@@ -1755,7 +1759,7 @@ function mob_class:general_attack()
 		end
 	end
 
-	if min_target and random(100) > self.attack_chance then -- attack!
+	if min_target then -- attack!
 		self:do_attack(min_target)
 	end
 end
