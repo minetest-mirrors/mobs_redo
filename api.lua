@@ -1201,70 +1201,67 @@ function mob_class:breed()
 
 		self.hornytimer = self.hornytimer + 1
 
-		if self.hornytimer > CHILD_GROW_TIME then
+		if self.hornytimer <= CHILD_GROW_TIME then return end
 
-			self.child = false ; self.hornytimer = 0
+		self.child = false ; self.hornytimer = 0
 
-			if self.mommy_tex then -- replace child texture with adult one
-				self.base_texture = self.mommy_tex ; self.mommy_tex = nil
-			end
+		if self.mommy_tex then -- replace child texture with adult one
+			self.base_texture = self.mommy_tex ; self.mommy_tex = nil
+		end
 
-			self.object:set_properties({
-				textures = self.base_texture,
-				mesh = self.base_mesh, visual_size = self.base_size,
-				collisionbox = self.base_colbox, selectionbox = self.base_selbox
-			})
+		self.object:set_properties({
+			textures = self.base_texture,
+			mesh = self.base_mesh, visual_size = self.base_size,
+			collisionbox = self.base_colbox, selectionbox = self.base_selbox
+		})
 
-			-- run custom function when grown
-			if self.on_grown then self.on_grown(self)
-			else
-				local pos = self.object:get_pos() ; if not pos then return end
+		if self.on_grown then -- run custom function when grown
+			self.on_grown(self)
+		else
+			local pos = self.object:get_pos() ; if not pos then return end
 
-				pos.y = pos.y - self.prop.collisionbox[2] + 0.1
+			pos.y = pos.y - self.prop.collisionbox[2] + 0.1
 
-				self.object:set_pos(pos)
+			self.object:set_pos(pos)
 
-				-- jump slightly when grown so as not to fall into ground
-				self.object:set_velocity({x = 0, y = 2, z = 0 })
-			end
+			-- jump slightly when grown so as not to fall into ground
+			self.object:set_velocity({x = 0, y = 2, z = 0 })
 		end
 
 		return
 	end
 
+	if not self.horny then return end
+
+	self.hornytimer = self.hornytimer + 1
+
 	-- horny animal can mate for HORNY_TIME seconds,
 	-- afterwards horny animal cannot mate again for HORNY_AGAIN_TIME seconds
-	if self.horny and self.hornytimer < HORNY_TIME + HORNY_AGAIN_TIME then
-
-		self.hornytimer = self.hornytimer + 1
+	if self.hornytimer > HORNY_TIME then
 
 		if self.hornytimer >= HORNY_TIME + HORNY_AGAIN_TIME then
 			self.hornytimer = 0
 			self.horny = false
 		end
 
-		self:update_tag()
+		self:update_tag() ; return
 	end
 
-	if not (self.horny and self.hornytimer <= HORNY_TIME) then return end
-
 	-- find similar animal who is horny and mate if nearby
-	local pos = self.object:get_pos()
+	local pos = self.object:get_pos() ; if not pos then return end
 
 	effect({x = pos.x, y = pos.y + self.prop.collisionbox[5], z = pos.z}, 8,
 			"mobs_heart_particle.png", 3, 4, 1, 0.1, 1, true)
 
 	local objs = core.get_objects_inside_radius(pos, 3)
-	local ent
 
 	for n = 1, #objs do
 
-		ent = objs[n]:get_luaentity()
-
-		-- check for same animal with different colour
+		local ent = objs[n]:get_luaentity()
 		local canmate = false
 
-		if ent then
+		-- check for same animal with different colour
+		if ent and ent.object ~= self.object then
 
 			if ent.name == self.name then canmate = true
 			else
@@ -1282,8 +1279,7 @@ function mob_class:breed()
 		end
 
 		-- found another similar horny?
-		if canmate and ent and ent.object ~= self.object
-		and ent.horny and ent.hornytimer <= HORNY_TIME then
+		if canmate and ent.horny and ent.hornytimer <= HORNY_TIME then
 
 			local pos2 = ent.object:get_pos()
 
@@ -1307,19 +1303,19 @@ function mob_class:breed()
 			-- spawn baby
 			core.after(5, function(self, ent)
 
-				if not self.object:get_luaentity() then return end
+				-- is parent still here
+				if not self.object or not self.object:get_luaentity() then return end
 
 				-- custom breed function
 				if self.on_breed and self:on_breed(ent) == false then return end
 
 				-- add baby
-				local ent2 = mobs:add_mob(pos, {
+				local baby = mobs:add_mob(pos, {
 					name = self.name, child = true, owner = self.owner,
 					ignore_count = true
 				})
 
-				-- set baby textures
-				if ent2 then
+				if baby then -- set baby textures
 
 					local textures = self.base_texture
 
@@ -1327,10 +1323,10 @@ function mob_class:breed()
 						textures = self.child_texture[1]
 					end
 
-					ent2.mommy_tex = self.base_texture -- when grown
-					ent2.object:set_properties({textures = textures})
-					ent2.base_texture = textures
-					mobs:scale_mob(ent2, .5, .5)
+					baby.mommy_tex = self.base_texture -- when grown
+					baby.object:set_properties({textures = textures})
+					baby.base_texture = textures
+					mobs:scale_mob(baby, .5, .5)
 				end
 			end, self, ent)
 
