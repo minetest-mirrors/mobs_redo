@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260917",
+	mod = "redo", version = "20260918",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1981,13 +1981,13 @@ function mob_class:do_states(dtime)
 
 		local lp = core.find_nodes_in_area_under_air(
 				{x = s.x - 6, y = s.y - 2, z = s.z - 6},
-				{x = s.x + 6, y = s.y + 0, z = s.z + 6},
+				{x = s.x + 6, y = s.y, z = s.z + 6},
 				{"group:cracky", "group:crumbly", "group:choppy", "group:solid"})
 
 		if lp and #lp > 0 then -- if we found land try to climb out
 
 			yaw = self:yaw_to_pos( lp[random(#lp)], 0, 1 )
-			self:set_yaw(yaw, 0)
+--			self:set_yaw(yaw, 0)
 
 			self.state = "walk"
 			self.pause_timer = 3
@@ -2011,7 +2011,7 @@ function mob_class:do_states(dtime)
 			local objs = core.get_objects_inside_radius(s, 3)
 			local obj_pos
 
-			for _,obj in pairs(objs) do
+			for _, obj in pairs(objs) do
 
 				if obj:is_player() then
 					obj_pos = obj:get_pos() ; break
@@ -2040,13 +2040,18 @@ function mob_class:do_states(dtime)
 		-- or are we able to jump
 		elseif self.walk_chance == 0 and not self.at_cliff
 		and self.jump_chance and random(100) <= self.jump_chance then
+
 			self:set_velocity(self.walk_velocity)
 			self.state = "jump"
 		end
 
+		return
+
 	elseif self.state == "jump" then
 
 		self.state = "stand" -- we jump for one cycle before standing again
+
+		return
 
 	elseif self.state == "walk" and not self.following then
 
@@ -2068,29 +2073,31 @@ function mob_class:do_states(dtime)
 
 				self:set_velocity(0)
 				self.state = "stand"
-				self:set_animation("stand", true)
-			end
-		else
-			self:set_velocity(self.walk_velocity)
-
-			-- figure out which animation to use while in motion
-			if self:flight_check() and self.animation
-			and self.animation.fly_start and self.animation.fly_end then
-
-				local on_ground = registered_nodes[self.standing_on].walkable
-				local in_water = registered_nodes[self.standing_in].groups.water
-
-				if on_ground and in_water then
-					self:set_animation("fly")
-				elseif on_ground then
-					self:set_animation("walk")
-				else
-					self:set_animation("fly")
-				end
-			else
-				self:set_animation("walk")
+				self:set_animation("stand", true) ; return
 			end
 		end
+
+		self:set_velocity(self.walk_velocity)
+
+		-- figure out which animation to use while in motion
+		if self:flight_check() and self.animation
+		and self.animation.fly_start and self.animation.fly_end then
+
+			local on_ground = registered_nodes[self.standing_on].walkable
+			local in_water = registered_nodes[self.standing_in].groups.water
+
+			if on_ground and in_water then
+				self:set_animation("fly")
+			elseif on_ground then
+				self:set_animation("walk")
+			else
+				self:set_animation("fly")
+			end
+		else
+			self:set_animation("walk")
+		end
+
+		return
 
 	elseif self.state == "runaway" then
 
@@ -2104,327 +2111,338 @@ function mob_class:do_states(dtime)
 			self:set_animation("stand")
 
 			yaw = self:set_yaw(yaw + random(-1, 1) * 1.5, 4) -- turn so we arent stuck
-		else
-			self:set_velocity(self.run_velocity)
-			self:set_animation("walk")
+
+			return
 		end
 
-	-- attack routines (explode, dogfight, shoot, dogshoot)
-	elseif self.state == "attack" then
+		self:set_velocity(self.run_velocity)
+		self:set_animation("walk") ; return
+	end
 
-		-- get enemy position and distance between mob
-		local p = self.attack and self.attack:get_pos()
-		local dist = p and get_distance(p, s) or 500
+	if self.state ~= "attack" then return end -- if we aren't attacking
 
-		-- stop attacking if player out of range or invisible
-		if dist > self.view_range_attacking
-		or not self.attack or not self.attack:get_pos() or self.attack:get_hp() <= 0
-		or (is_player(self.attack)
-		and is_invisible(self, self.attack:get_player_name())) then
+	-- get enemy position and distance between mob
+	local p = self.attack and self.attack:get_pos()
+	local dist = p and get_distance(p, s) or 500
+
+	-- stop attacking if player out of range or invisible
+	if dist > self.view_range_attacking
+	or not self.attack or not self.attack:get_pos() or self.attack:get_hp() <= 0
+	or (is_player(self.attack)
+	and is_invisible(self, self.attack:get_player_name())) then
 
 --print(" ** stop attacking **", self.name, self.health, dist, self.view_range_attacking)
 
+		self:stop_attack() ; return
+	end
+
+	-- check enemy is in sight
+	local ey = self.base_colbox[5] * 0.9 -- approx mob eye level
+	local in_sight = self:line_of_sight(
+			{x = s.x, y = s.y + ey, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z})
+
+	-- stop attacking when enemy not seen for 11 seconds
+	if not in_sight then
+
+		self.target_time_lost = (self.target_time_lost or 0) + dtime
+
+		if self.target_time_lost > self.attack_patience then
 			self:stop_attack() ; return
 		end
+	else
+		self.target_time_lost = 0
+	end
 
-		-- check enemy is in sight
-		local ey = self.base_colbox[5] * 0.9 -- mob eye level
-		local in_sight = self:line_of_sight(
-				{x = s.x, y = s.y + ey, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z})
+	local ds_var = (self.attack_type == "dogshoot") and self:dogswitch(dtime) or 0
 
-		-- stop attacking when enemy not seen for 11 seconds
-		if not in_sight then
+	if self.attack_type == "explode" then
 
-			self.target_time_lost = (self.target_time_lost or 0) + dtime
+		self:yaw_to_pos(p)
 
-			if self.target_time_lost > self.attack_patience then
-				self:stop_attack() ; return
-			end
-		else
-			self.target_time_lost = 0
-		end
+		local node_break_radius = self.explosion_radius or 1
+		local entity_damage_radius = self.explosion_damage_radius
+				or (node_break_radius * 2)
 
-		local ds_var = (self.attack_type == "dogshoot") and self:dogswitch(dtime) or 0
+		-- start timer when in reach and line of sight
+		if not self.v_start and dist <= self.reach and in_sight then
 
-		if self.attack_type == "explode" then
-
-			self:yaw_to_pos(p)
-
-			local node_break_radius = self.explosion_radius or 1
-			local entity_damage_radius = self.explosion_damage_radius
-					or (node_break_radius * 2)
-
-			-- start timer when in reach and line of sight
-			if not self.v_start and dist <= self.reach and in_sight then
-
-				self.v_start = true
-				self.explode_timer = 0
-				self.blinktimer = 0
-				self:mob_sound(self.sounds.fuse)
+			self.v_start = true
+			self.explode_timer = 0
+			self.blinktimer = 0
+			self:mob_sound(self.sounds.fuse)
 
 --print("=== explosion timer started", self.explosion_timer)
 
-			-- stop timer if out of reach or direct line of sight
-			elseif self.allow_fuse_reset and self.v_start
-			and (dist > self.reach or not in_sight) then
+		-- stop timer if out of reach or direct line of sight
+		elseif self.allow_fuse_reset and self.v_start
+		and (dist > self.reach or not in_sight) then
 
 --print("=== explosion timer stopped")
 
-				self.v_start = false
-				self.explode_timer = 0
+			self.v_start = false
+			self.explode_timer = 0
+			self.blinktimer = 0
+			self.blinkstatus = false
+			self.object:set_texture_mod("")
+			self.object:set_properties({glow = self.glow})
+		end
+
+		-- walk right up to player unless the timer is active
+		if self.v_start and (self.stop_to_explode or dist < 1.5) then
+			self:set_velocity(0)
+		else
+			self:set_velocity(self.run_velocity)
+		end
+
+		if self.animation and self.animation.run_start then
+			self:set_animation("run")
+		else
+			self:set_animation("walk")
+		end
+
+		if self.v_start then -- fuse active
+
+			self.explode_timer = (self.explode_timer or 0) + dtime
+			self.blinktimer = (self.blinktimer or 0) + dtime
+
+			if self.blinktimer > 0.2 then
+
 				self.blinktimer = 0
-				self.blinkstatus = false
-				self.object:set_texture_mod("")
-				self.object:set_properties({glow = self.glow})
-			end
+				self.blinkstatus = not self.blinkstatus
 
-			-- walk right up to player unless the timer is active
-			if self.v_start and (self.stop_to_explode or dist < 1.5) then
-				self:set_velocity(0)
-			else
-				self:set_velocity(self.run_velocity)
-			end
-
-			if self.animation and self.animation.run_start then
-				self:set_animation("run")
-			else
-				self:set_animation("walk")
-			end
-
-			if self.v_start then
-
-				self.explode_timer = (self.explode_timer or 0) + dtime
-				self.blinktimer = (self.blinktimer or 0) + dtime
-
-				if self.blinktimer > 0.2 then
-
-					self.blinktimer = 0
-					self.blinkstatus = not self.blinkstatus
-
-					if self.blinkstatus then
-						self.object:set_texture_mod(self.texture_mods)
-						self.object:set_properties({glow = (self.glow or 0)})
-					else
-						self.object:set_texture_mod(self.texture_mods .. "^[brighten")
-						self.object:set_properties({glow = (self.glow or 0) + 3})
-					end
+				if self.blinkstatus then
+					self.object:set_texture_mod(self.texture_mods)
+					self.object:set_properties({glow = (self.glow or 0)})
+				else
+					self.object:set_texture_mod(self.texture_mods .. "^[brighten")
+					self.object:set_properties({glow = (self.glow or 0) + 3})
 				end
+			end
 
 --print("=== explosion timer", self.explode_timer)
 
-				if self.explode_timer > self.explosion_timer then
+			if self.explode_timer > self.explosion_timer then
 
-					-- dont damage anything if area protected or near water
-					if core.find_node_near(s, 1, {"group:water"})
-					or core.is_protected(s, "") then
-						node_break_radius = 1
-					end
-
-					remove_mob(self, true)
-
-					mobs:boom(self, s, node_break_radius, entity_damage_radius)
-
-					return true
+				-- dont damage anything if area protected or near water
+				if core.find_node_near(s, 1, {"group:water"})
+				or core.is_protected(s, "") then
+					node_break_radius = 1
 				end
+
+				remove_mob(self, true)
+
+				mobs:boom(self, s, node_break_radius, entity_damage_radius)
+
+				return true
 			end
+		end
 
-		elseif self.attack_type == "dogfight" or (self.attack_type == "dogshoot"
-		and (ds_var == 2 or dist <= self.reach)) then
+		return
+	end
 
-			-- make sure flying mobs are inside proper medium
-			if self.fly and dist > self.reach and self:flight_check() then
+	if self.attack_type == "dogfight" or (self.attack_type == "dogshoot"
+	and (ds_var == 2 or dist <= self.reach)) then
 
-				local s_y, p_y = floor(s.y), floor(p.y + 1) -- self, attacker
-				local v = self.object:get_velocity()
+		-- make sure flying mobs are inside proper medium
+		if self.fly and dist > self.reach and self:flight_check() then
 
-				-- fly/swim up towards attacker
-				if s_y < p_y then
+			local s_y, p_y = floor(s.y), floor(p.y + 1) -- self, attacker
+			local v = self.object:get_velocity()
 
-					-- if correct medium above then move up
-					if core.find_node_near({x = s.x, y = s.y + 1, z = s.z},
-							0, self.fly_in, true) then
+			-- fly/swim up towards attacker
+			if s_y < p_y then
 
-						self.object:set_velocity({
-								x = v.x, y = self.walk_velocity, z = v.z})
-					else
-						self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
-					end
-
-				-- fly/swim down towards attacker
-				elseif s_y > p_y then
-
-					-- if correct medium below then move down
-					if core.find_node_near({x = s.x, y = s.y - 1, z = s.z},
+				-- if correct medium above then move up
+				if core.find_node_near({x = s.x, y = s.y + 1, z = s.z},
 						0, self.fly_in, true) then
 
-						self.object:set_velocity({
-								x = v.x, y = -self.walk_velocity, z = v.z})
-					else
-						self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
-					end
-				end
-			end
-
-			-- rnd: new movement direction
-			if self.path.following and self.path.way
-			and self.attack_type ~= "dogshoot" then
-
-				-- no paths longer than 60
-				if #self.path.way > 60 or dist < self.reach then
-					self.path.following = false ; return
-				end
-
-				local p1 = self.path.way[1]
-
-				if not p1 then
-					self.path.following = false ; return
-				end
-
-				if abs(p1.x - s.x) + abs(p1.z - s.z) < 0.6 then
-					table_remove(self.path.way, 1) -- remove waypoint once reached
-				end
-
-				p = self.path.way[1] or p1 -- set to next position with fallback
-			end
-
-			self:yaw_to_pos(p)
-
-			-- move towards enemy if beyond mob reach
-			if dist > (self.reach + (self.reach_ext or 0)) then
-
-				-- path finding by rnd (only when enabled in setting and mob)
-				if self.pathfinding and pathfinding_enable then
-					self:smart_mobs(s, p, dist, dtime)
-				end
-
-				-- distance padding to stop mob spinning
-				local pad = abs(p.x - s.x) + abs(p.z - s.z)
-
-				if self.at_cliff or pad < 0.2 then
-
-					self.reach_ext = 0.8 -- extend reach when on top of player
-					self:set_velocity(0)
-					self:set_animation("stand")
+					self.object:set_velocity({
+							x = v.x, y = self.walk_velocity, z = v.z})
 				else
-					self.reach_ext = 0 -- reset
-
-					if self.path.stuck then
-						self:set_velocity(self.walk_velocity)
-					else
-						self:set_velocity(self.run_velocity)
-					end
-
-					local anim = "walk"
-
-					if self.order == "stand" then anim = "stand"
-					elseif self.animation and self.animation.run_start then anim = "run"
-					end
-
-					self:set_animation(anim)
+					self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
 				end
-			else -- rnd: if inside reach range
 
-				self.path.stuck = false
-				self.path.stuck_timer = 0
-				self.path.following = false -- not stuck anymore
+			-- fly/swim down towards attacker
+			elseif s_y > p_y then
 
-				self:set_velocity(0)
+				-- if correct medium below then move down
+				if core.find_node_near({x = s.x, y = s.y - 1, z = s.z},
+					0, self.fly_in, true) then
 
-				self.punch_timer = (self.punch_timer or 0) + dtime
-
-				if self.punch_timer >= self.punch_interval then
-
-					self.punch_timer = 0
-
-					-- no custom attack or custom attack returns true to continue
-					if not self.custom_attack or self:custom_attack(self, p) then
-
-						local p2, s2 = p, s
-
-						-- approximate mob eye level
-						local cbox = self.prop.collisionbox
-						local offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
-						s2.y = s2.y + offset
-
-						-- approximate victim eye level
-						cbox = self.attack:get_properties().collisionbox
-						offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
-						p2.y = p2.y + offset
-
-						-- if we can see who we attack, then do so
-						if self:line_of_sight(p2, s2) then
-
-							self:set_animation("punch")
-
-							if random(self.sounds.attack_chance or 1) == 1 then
-								self:mob_sound(self.sounds.attack)
-							end
-
-							-- punch player (or what player is attached to)
-							local target = self.attack:get_attach() or self.attack
-
-							local dgroup = self.damage_group or "fleshy"
-
-							target:punch(self.object, 1.0, {
-								full_punch_interval = 1.0,
-								damage_groups = {[dgroup] = self.damage}
-							}, nil)
-						end
-					end
-				end
-			end
-
-		elseif self.attack_type == "shoot"
-		or (self.attack_type == "dogshoot" and ds_var == 1) then
-
-			p.y = p.y - 0.5 ; s.y = s.y + 0.5
-
-			local vec = {x = p.x - s.x, y = p.y - s.y, z = p.z - s.z}
-
-			self:yaw_to_pos(p) ; self:set_velocity(0)
-
-			self.shoot_timer = (self.shoot_timer or 0) + dtime
-
-			if self.shoot_timer > self.shoot_interval then
-
-				self.shoot_timer = 0
-
-				if core.registered_entities[self.arrow]
-				and random(100) <= self.shoot_chance then
-
-					self:set_animation("shoot")
-					self:mob_sound(self.sounds.shoot_attack)
-
-					local p = self.object:get_pos()
-					local cb = self.prop.collisionbox
-
-					p.y = p.y + (cb[2] + cb[5]) / 2
-
-					local obj = core.add_entity(p, self.arrow)
-					local ent = obj:get_luaentity()
-					local amount = (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) ^ 0.5
-
-					-- check for arrow custom override
-					if self.arrow_override then self.arrow_override(ent, self) end
-
-					local v = ent.velocity or 1
-
-					ent.owner_id = tostring(self.object) -- add unique owner id to arrow
-
-					if self.homing then -- setup homing arrow and target
-						ent._homing_target = self.attack
-					end
-
-					local scale = v / amount
-
-					obj:set_velocity({
-						x = vec.x * scale,
-						y =  (vec.y + self.shoot_offset) * scale,
-						z = vec.z * scale
-					})
+					self.object:set_velocity({
+							x = v.x, y = -self.walk_velocity, z = v.z})
+				else
+					self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
 				end
 			end
 		end
+
+		-- rnd: new movement direction
+		if self.path.following and self.path.way
+		and self.attack_type ~= "dogshoot" then
+
+			-- no paths longer than 60
+			if #self.path.way > 60 or dist < self.reach then
+				self.path.following = false ; return
+			end
+
+			local p1 = self.path.way[1]
+
+			if not p1 then
+				self.path.following = false ; return
+			end
+
+			if abs(p1.x - s.x) + abs(p1.z - s.z) < 0.6 then
+				table_remove(self.path.way, 1) -- remove waypoint once reached
+			end
+
+			p = self.path.way[1] or p1 -- set to next position with fallback
+		end
+
+		self:yaw_to_pos(p)
+
+		-- move towards enemy if beyond mob reach
+		if dist > (self.reach + (self.reach_ext or 0)) then
+
+			-- path finding by rnd (only when enabled in setting and mob)
+			if self.pathfinding and pathfinding_enable then
+				self:smart_mobs(s, p, dist, dtime)
+			end
+
+			-- distance padding to stop mob spinning
+			local pad = abs(p.x - s.x) + abs(p.z - s.z)
+
+			if self.at_cliff or pad < 0.2 then
+
+				self.reach_ext = 0.8 -- extend reach when on top of player
+				self:set_velocity(0)
+				self:set_animation("stand")
+			else
+				self.reach_ext = 0 -- reset
+
+				if self.path.stuck then
+					self:set_velocity(self.walk_velocity)
+				else
+					self:set_velocity(self.run_velocity)
+				end
+
+				local anim = "walk"
+
+				if self.order == "stand" then anim = "stand"
+				elseif self.animation and self.animation.run_start then anim = "run"
+				end
+
+				self:set_animation(anim)
+			end
+
+			return
+		end
+
+		-- rnd: if inside reach range
+
+		if self.path.following then
+			self.path.stuck = false
+			self.path.stuck_timer = 0
+			self.path.following = false -- not stuck anymore
+		end
+
+		self:set_velocity(0)
+
+		self.punch_timer = (self.punch_timer or 0) + dtime
+
+		if self.punch_timer < self.punch_interval then return end
+
+		self.punch_timer = 0
+
+		-- no custom attack or custom attack returns true to continue
+		if self.custom_attack and not self:custom_attack(self, p) then return end
+
+		local p2, s2 = p, s
+
+		-- approximate mob eye level
+		local cbox = self.prop.collisionbox
+		local offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
+
+		s2.y = s2.y + offset
+
+		-- approximate victim eye level
+		cbox = self.attack:get_properties().collisionbox
+		offset = cbox[2] + ((cbox[5] - cbox[2]) * 0.9)
+
+		p2.y = p2.y + offset
+
+		-- if we can see who we attack, then do so
+		if not self:line_of_sight(p2, s2) then return end
+
+		self:set_animation("punch")
+
+		if random(self.sounds.attack_chance or 1) == 1 then
+			self:mob_sound(self.sounds.attack)
+		end
+
+		-- punch player (or what player is attached to)
+		local target = self.attack:get_attach() or self.attack
+
+		local dgroup = self.damage_group or "fleshy"
+
+		target:punch(self.object, 1.0, {
+			full_punch_interval = 1.0,
+			damage_groups = {[dgroup] = self.damage}
+		}, nil)
+
+		return
+	end
+
+	if self.attack_type == "shoot"
+	or (self.attack_type == "dogshoot" and ds_var == 1) then
+
+		p.y = p.y - 0.5 ; s.y = s.y + 0.5
+
+		local vec = {x = p.x - s.x, y = p.y - s.y, z = p.z - s.z}
+
+		self:yaw_to_pos(p) ; self:set_velocity(0)
+
+		self.shoot_timer = (self.shoot_timer or 0) + dtime
+
+		if self.shoot_timer < self.shoot_interval then return end
+
+		self.shoot_timer = 0
+
+		if not core.registered_entities[self.arrow]
+		and random(100) > self.shoot_chance then return end
+
+		self:set_animation("shoot")
+		self:mob_sound(self.sounds.shoot_attack)
+
+		local p = self.object:get_pos()
+		local cb = self.prop.collisionbox
+
+		p.y = p.y + (cb[2] + cb[5]) / 2
+
+		local obj = core.add_entity(p, self.arrow)
+		local ent = obj and obj:get_luaentity() ; if not ent then return end
+		local amount = (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) ^ 0.5
+
+		if amount == 0 then amount = 0.1 end -- prevent division by 0
+
+		-- check for arrow custom override
+		if self.arrow_override then self.arrow_override(ent, self) end
+
+		local v = ent.velocity or 1
+
+		ent.owner_id = tostring(self.object) -- add unique owner id to arrow
+
+		if self.homing then -- setup homing arrow and target
+			ent._homing_target = self.attack
+		end
+
+		local scale = v / amount
+
+		obj:set_velocity({
+			x = vec.x * scale,
+			y =  (vec.y + self.shoot_offset) * scale,
+			z = vec.z * scale
+		})
 	end
 end
 
