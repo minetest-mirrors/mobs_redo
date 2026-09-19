@@ -4095,8 +4095,8 @@ function mobs:capture_mob(
 	end
 
 	-- cannot pick up if not owner, unless admin
-	if not core.check_player_privs(name, "protection_bypass")
-	and self.owner ~= name and not force_take then
+	if not force_take and self.owner ~= name
+	and not core.check_player_privs(name, "protection_bypass") then
 		core.chat_send_player(name, S("@1 is owner!", self.owner)) ; return
 	end
 
@@ -4104,7 +4104,7 @@ function mobs:capture_mob(
 
 	if item == "" and chance_hand and chance_hand > 0 then
 
-	chance = chance_hand
+		chance = chance_hand
 
 	elseif item == "mobs:net" and chance_net and chance_net > 0 then
 
@@ -4117,16 +4117,16 @@ function mobs:capture_mob(
 
 	if not chance or chance == 0 then return end
 
-	if wear then
-		tool:add_wear(wear) ; clicker:set_wielded_item(tool)
-	end
-
 	-- calculate chance, add to inventory if successful?
 	if random(100) > chance then
 
 		core.chat_send_player(name, S("Missed!"))
 
 		self:mob_sound("mobs_swing") ; return
+	end
+
+	if wear then
+		tool:add_wear(wear) ; clicker:set_wielded_item(tool)
 	end
 
 	local new_stack = ItemStack(mobname)
@@ -4178,11 +4178,6 @@ function mobs:protect(self, clicker)
 		core.chat_send_player(name, S("Already protected!")) ; return true
 	end
 
-	if not mobs.is_creative(clicker:get_player_name()) then
-		tool:take_item() -- take 1 protection rune
-		clicker:set_wielded_item(tool)
-	end
-
 	-- set protection level
 	if tool_name == "mobs:protector" then
 		self.protected = true
@@ -4190,7 +4185,12 @@ function mobs:protect(self, clicker)
 		self.protected = 2 ; self.fire_damage = 0
 	end
 
-	local pos = self.object:get_pos()
+	local pos = self.object:get_pos() ; if not pos then return end
+
+	if not mobs.is_creative(name) then
+		tool:take_item() -- take 1 protection rune
+		clicker:set_wielded_item(tool)
+	end
 
 	pos.y = pos.y + self.prop.collisionbox[5]
 
@@ -4231,74 +4231,75 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 	-- sneak & right-click mob to show what it eats/follows
 	if clicker:get_player_control().sneak then
 
-		if type(self.follow) == "string" then
-			self.follow = {self.follow}
+		local follow = self.follow
+
+		if type(follow) == "string" then
+			follow = {follow}
 		end
 
-		core.chat_send_player(name, S("@1 follows:", self.name:split(":")[2])
-			.. "\n- " .. table.concat(self.follow, "\n- "))
+		local mob_name = self.name:split(":")[2] or self.name
+
+		core.chat_send_player(name, S("@1 follows:", mob_name)
+			.. "\n- " .. table.concat(follow, "\n- "))
 
 		return
 	end
 
 	-- can eat/tame with item in hand
-	if self:follow_holding(clicker) then
+	if not self:follow_holding(clicker) then return end
 
-		-- take item when not using creative
-		if not mobs.is_creative(name) then
+	-- take item when not using creative
+	if not mobs.is_creative(name) then
 
-			local item = clicker:get_wielded_item()
+		item:take_item()
 
-			item:take_item()
+		clicker:set_wielded_item(item)
+	end
 
-			clicker:set_wielded_item(item)
-		end
+	self.health = min(self.health + 4, self.prop.hp_max) -- increase health
 
-		self.health = min(self.health + 4, self.prop.hp_max) -- increase health
+	self.object:set_hp(self.health)
 
-		self.object:set_hp(self.health)
+	if self.child then -- make children grow quicker, deduct 10% of time to adulthood
 
-		if self.child then -- make children grow quicker, deduct 10% of time to adulthood
+		self.hornytimer = floor(self.hornytimer + (
+				(CHILD_GROW_TIME - self.hornytimer) * 0.1))
 
-			self.hornytimer = floor(self.hornytimer + (
-					(CHILD_GROW_TIME - self.hornytimer) * 0.1))
+		return true
+	end
 
-			return true
-		end
+	-- feed and tame
+	self.food = (self.food or 0) + 1
+	self._breed_countdown = breed and (feed_count - self.food)
+	self._tame_countdown = not self.tamed and tame and (feed_count - self.food)
 
-		-- feed and tame
-		self.food = (self.food or 0) + 1
-		self._breed_countdown = breed and (feed_count - self.food)
-		self._tame_countdown = not self.tamed and tame and (feed_count - self.food)
+	if self.food >= feed_count then
 
-		if self.food >= feed_count then
+		self.food = 0
+		self._breed_countdown = nil
 
-			self.food = 0
-			self._breed_countdown = nil
+		if breed and self.hornytimer == 0 then self.horny = true end
 
-			if breed and self.hornytimer == 0 then self.horny = true end
+		if tame then
 
-			if tame then
+			if not self.tamed then
 
-				if not self.tamed then
-
-					core.chat_send_player(name,
-							S("@1 has been tamed!", self.name:split(":")[2]))
-				end
-
-				self.tamed = true
-				self.static_save = true
-
-				if not self.owner or self.owner == "" then
-					self.owner = name
-				end
+				core.chat_send_player(name,
+						S("@1 has been tamed!", self.name:split(":")[2]))
 			end
 
-			self:mob_sound(self.sounds.random) -- play sound when feed count hit
+			self.tamed = true
+			self.static_save = true
+
+			if not self.owner or self.owner == "" then
+				self.owner = name
+			end
 		end
 
-		self:update_tag() ; return true
+		self:mob_sound(self.sounds.random) -- play sound when feed count hit
 	end
+
+	self:update_tag() ; return true
 end
 
 -- inspired by blockmen's nametag mod
