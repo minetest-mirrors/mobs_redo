@@ -3779,8 +3779,11 @@ function mobs:register_arrow(name, def)
 
 			local pos = self.object:get_pos() ; self.lastpos = pos
 
-			-- does arrow have a tail?
-			if def.tail and def.tail == 1 and def.tail_texture then
+			if self.do_custom and self:do_custom(dtime, moveresult) == false then
+				return
+			end
+
+			if def.tail_texture then -- add tail if texture given
 
 				core.add_particle({
 					pos = pos,
@@ -3792,10 +3795,6 @@ function mobs:register_arrow(name, def)
 					size = def.tail_size or 5,
 					glow = def.glow
 				})
-			end
-
-			if self.do_custom and self:do_custom(dtime, moveresult) == false then
-				return
 			end
 
 			if self._homing_target then -- follow target when in view
@@ -3811,55 +3810,54 @@ function mobs:register_arrow(name, def)
 				end
 			end
 
-			-- did a solid arrow hit a solid thing?
-			if moveresult and moveresult.collides then
+			-- hit nothing so return
+			if not moveresult or not moveresult.collides then return end
 
-				local def = moveresult.collisions and moveresult.collisions[1] or {}
+			local def = moveresult.collisions and moveresult.collisions[1] or {}
 
-				self.moveresult = moveresult -- pass moveresult into arrow entity
+			self.moveresult = moveresult -- pass moveresult into arrow entity
 
-				if def.type == "node" and self.hit_node then
+			if def.type == "node" and self.hit_node then
 
-					local node = node_ok(def.node_pos)
+				local node = node_ok(def.node_pos)
 
-					self.node_pos = def.node_pos
+				self.node_pos = def.node_pos
 
-					self:hit_node(pos, node) ; --print("-- hit node", node.name)
+				self:hit_node(pos, node) ; --print("-- hit node", node.name)
 
-					if (type(self.drop) == "boolean" and self.drop)
-					or (type(self.drop) == "number" and random(self.drop) == 1) then
+				if (type(self.drop) == "boolean" and self.drop)
+				or (type(self.drop) == "number" and random(self.drop) == 1) then
 
-						local drop = self.drop_item or self.object:get_luaentity().name
+					local drop = self.drop_item or self.object:get_luaentity().name
 
-						core.add_item(pos, drop) ; --print("-- arrow drop", drop)
-					end
+					core.add_item(pos, drop) ; --print("-- arrow drop", drop)
 				end
+			end
 
-				if def.type == "object" then
+			if def.type == "object" then
 
-					local obj = def.object
+				local obj = def.object
 
-					if is_player(obj) and self.hit_player then
-						self:hit_player(obj) ; --print("-- hit player", obj:get_player_name())
-					else
-						local entity = obj:get_luaentity()
+				if is_player(obj) and self.hit_player then
+					self:hit_player(obj) ; --print("-- hit player", obj:get_player_name())
+				else
+					local entity = obj:get_luaentity()
 
-						if entity then
+					if entity then
 
-							if entity._cmi_is_mob and self.hit_mob then
+						if entity._cmi_is_mob and self.hit_mob then
 
-								self:hit_mob(obj) ; --print("-- hit mob", entity.name)
+							self:hit_mob(obj) ; --print("-- hit mob", entity.name)
 
-							elseif self.hit_object then
+						elseif self.hit_object then
 
-								self:hit_object(obj) ; --print("-- hit object", entity.name)
-							end
+							self:hit_object(obj) ; --print("-- hit object", entity.name)
 						end
 					end
 				end
-
-				self.object:remove() ; return -- remove arrow after hitting solid item
 			end
+
+			self.object:remove() -- remove arrow after hitting solid item
 		end
 	})
 end
