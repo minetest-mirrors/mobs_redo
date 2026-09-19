@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260918",
+	mod = "redo", version = "20260919",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2513,17 +2513,20 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 		return true
 	end
 
+	-- cache most used vars
+	local is_hitter_player = is_player(hitter)
+	local hitter_name = is_hitter_player and hitter:get_player_name() or ""
+	local hitter_ent = not is_hitter_player and hitter:get_luaentity()
+	local hitter_pos = hitter:get_pos()
+
 	if self.protected then -- are we protected ?
 
-		if is_player(hitter) then -- only protect from players
+		if is_hitter_player then -- only protect from players
 
-			local player_name = hitter:get_player_name()
+			if hitter_name ~= self.owner
+			and core.is_protected(hitter_pos, hitter_name) then
 
-			if player_name ~= self.owner
-			and core.is_protected(self.object:get_pos(), player_name) then
-
-				core.chat_send_player(hitter:get_player_name(),
-						S("Mob has been protected!"))
+				core.chat_send_player(hitter_name, S("Mob has been protected!"))
 
 				return true
 			end
@@ -2531,14 +2534,14 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 		-- if protection is on level 2 then dont let arrows harm mobs
 		elseif self.protected == 2 then
 
-			local ent = hitter and hitter:get_luaentity()
-
-			if not ent or ent._is_arrow then return true end
+			if not hitter_ent or hitter_ent._is_arrow then return true end
 		end
 	end
 
+	-- weapon info
 	local weapon = hitter:get_wielded_item()
 	local weapon_def = weapon:get_definition() or {}
+	local damage_groups = tool_caps.damage_groups or {}
 
 	-- calculate mob damage
 	local damage = 0
@@ -2553,22 +2556,21 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 		damage = cmi.calculate_damage(self.object, hitter, tflp, tool_caps, dir)
 	else
 
-		for group,_ in pairs( (tool_caps.damage_groups or {}) ) do
+		local punch = tflp / punch_interval ; punch = max(min(punch, 1), 0)
 
-			tmp = tflp / punch_interval
+		for group, _ in pairs(damage_groups) do
 
-			if tmp < 0 then tmp = 0.0 elseif tmp > 1 then tmp = 1.0 end
-
+			-- use tool_caps damage groups incase tool has been altered
 			damage = damage + (tool_caps.damage_groups[group] or 0)
-					* tmp * ((armor[group] or 0) / 100.0)
+					* punch * ((armor[group] or 0) / 100)
 		end
 	end
 
 	-- check if hit by player item or entity
 	local hit_item = weapon_def.name
 
-	if not is_player(hitter) then
-		hit_item = hitter:get_luaentity().name
+	if not is_hitter_player then
+		hit_item = hitter_ent.name
 	end
 
 	for n = 1, #self.immune_to do -- check for tool immunity or special damage
@@ -2622,7 +2624,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 	-- check for punch_attack_uses being 0 to negate wear
 	if tool_caps.punch_attack_uses == 0 then
 		wear = 0
-	elseif mobs.is_creative(hitter:get_player_name()) then
+	elseif mobs.is_creative(hitter_name) then
 		wear = use_tr and 1 or 0
 	end
 
@@ -2685,13 +2687,13 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 			local entity = hitter and hitter:get_luaentity()
 
 			-- check if arrow from same mob, if so then do no damage
-			if (entity and entity.name ~= self.arrow) or is_player(hitter) then
+			if (entity and entity.name ~= self.arrow) or is_hitter_player then
 				self.health = self.health - floor(damage)
 			end
 		end
 
 		-- exit here if dead, check for tools with fire damage
-		local hot = tool_caps.damage_groups and tool_caps.damage_groups.fire
+		local hot = damage_groups.fire
 
 		-- check for any fire enchants also
 		if use_mc2 and (enchants.flame or enchants.fire_aspect) then
@@ -2712,7 +2714,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 
 			local kb = dis_damage_kb and 1 or (damage or 1)
 
-			kb = tool_caps.damage_groups["knockback"] or kb
+			kb = damage_groups.knockback or kb
 
 			if use_mc2 and enchants.knockback then -- check for knockback enchantment
 				kb = kb + 3 * enchants.knockback
@@ -2740,25 +2742,23 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 	-- if skittish then run away
 	if self.runaway and self.order ~= "stand" then
 
-		self:yaw_to_pos(hitter:get_pos(), 3, 4) -- opposite dir
+		self:yaw_to_pos(hitter_pos, 3, 4) -- opposite dir
 
 		self.state = "runaway"
 		self.runaway_timer = 3
 		self.following = nil
 	end
 
-	local hitter_name = is_player(hitter) and hitter:get_player_name() or ""
-
 	-- call for help and attack puncher
 	if not self.passive and self.state ~= "flop" and not self.child
-	and not (is_player(hitter) and hitter_name == self.owner)
+	and not (is_hitter_player and hitter_name == self.owner)
 	and not is_invisible(self, hitter_name) and self.object ~= hitter then
 
 		self.state = ""
 		self:do_attack(hitter) -- attack whoever punched mob
 
 		-- alert others to the attack
-		local objs = core.get_objects_inside_radius(hitter:get_pos(), self.view_range)
+		local objs = core.get_objects_inside_radius(hitter_pos, self.view_range)
 
 		for n = 1, #objs do
 
@@ -2768,13 +2768,13 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 
 				-- only alert members of same mob or assigned helper
 				if ent.group_attack and ent.state ~= "attack"
-				and not (is_player(hitter) and ent.owner == hitter_name)
+				and not (is_hitter_player and ent.owner == hitter_name)
 				and (ent.name == self.name or ent.name == self.group_helper) then
 					ent:do_attack(hitter)
 				end
 
 				-- have owned mobs attack player threat
-				if is_player(hitter) and ent.owner == hitter_name and ent.owner_loyal then
+				if is_hitter_player and ent.owner == hitter_name and ent.owner_loyal then
 					ent:do_attack(self.object)
 				end
 			end
