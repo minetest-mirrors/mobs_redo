@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260919",
+	mod = "redo", version = "20260923",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -172,6 +172,17 @@ mobs.mob_class = {
 
 local mob_class = mobs.mob_class -- compatibility
 local mob_class_meta = {__index = mob_class}
+
+-- drop item
+
+local function drop_item(pos, item)
+
+	local obj = core.add_item(pos, item)
+
+	if obj then
+		obj:set_velocity({x = random() - 0.5, y = 5, z = random() - 0.5})
+	end
+end
 
 -- return True if mob limit reached
 
@@ -751,12 +762,7 @@ function mob_class:item_drop()
 
 			-- only drop rare items (drops.min = 0) if killed by player
 			if death_by_player or drops[n].min ~= 0 then
-
-				local obj = core.add_item(pos, ItemStack(item .. " " .. num))
-
-				if obj then
-					obj:set_velocity({x = random() - 0.5, y = 5, z = random() - 0.5})
-				end
+				drop_item(pos, ItemStack(item .. " " .. num))
 			end
 		end
 	end
@@ -1450,7 +1456,7 @@ local function can_dig_drop(pos)
 	core.remove_node(pos)
 
 	for n = 1, #drops do
-		core.add_item(pos, drops[n])
+		drop_item(pos, drops[n])
 	end
 
 	return true
@@ -3830,7 +3836,7 @@ function mobs:register_arrow(name, def)
 
 					local drop = self.drop_item or self.object:get_luaentity().name
 
-					core.add_item(pos, drop) ; --print("-- arrow drop", drop)
+					drop_item(pos, drop) ; --print("-- arrow drop", drop)
 				end
 			end
 
@@ -4063,7 +4069,7 @@ function mobs:force_capture(self, clicker)
 	if inv and inv:room_for_item("main", new_stack) then
 		inv:add_item("main", new_stack) -- add to inventory if room found
 	else
-		core.add_item(clicker:get_pos(), new_stack) -- drop spawn egg
+		drop_item(clicker:get_pos(), new_stack) -- drop spawn egg
 	end
 
 	self:mob_sound("default_place_node_hard")
@@ -4147,7 +4153,7 @@ function mobs:capture_mob(
 	else
 		local pos = self.object:get_pos() or clicker:get_pos() ; pos.y = pos.y + 0.5
 
-		core.add_item(pos, new_stack)
+		drop_item(pos, new_stack)
 	end
 
 	self:mob_sound("default_place_node_hard")
