@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260924",
+	mod = "redo", version = "20260926",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -4240,7 +4240,7 @@ core.register_chatcommand("clear_mobs", {
 
 	func = function (name, param)
 
-		local count = 0
+		local count, ucount = 0, 0
 
 		for _, player in ipairs(player_list) do
 
@@ -4265,14 +4265,21 @@ core.register_chatcommand("clear_mobs", {
 
 						elseif param == "unknown" and not ent
 						and not obj:is_player() then
+
 							obj:remove() -- clear unknown objects
+
+							ucount = ucount + 1
 						end
 					end
 				end
 			end
 		end
 
-		core.chat_send_player(name, S("@1 mobs removed.", count))
+		if ucount > 0 then
+			core.chat_send_player(name, S("@1 unknowns removed.", ucount))
+		elseif count > 0 then
+			core.chat_send_player(name, S("@1 mobs removed.", count))
+		end
 	end
 })
 
