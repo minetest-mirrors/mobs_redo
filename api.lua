@@ -4277,7 +4277,7 @@ core.register_chatcommand("clear_mobs", {
 
 		if ucount > 0 then
 			core.chat_send_player(name, S("@1 unknowns removed.", ucount))
-		elseif count > 0 then
+		else
 			core.chat_send_player(name, S("@1 mobs removed.", count))
 		end
 	end
