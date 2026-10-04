@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20260926",
+	mod = "redo", version = "20261004",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -332,12 +332,7 @@ function mob_class:set_velocity(v)
 	v = v or 0
 
 	if self.order == "stand" then -- halt mob if ordered to stay
-
-		local vel = self.object:get_velocity() or {y = 0}
-
-		self.object:set_velocity({x = 0, y = vel.y, z = 0})
-
-		return
+		v = 0
 	end
 
 	local push_x, push_z = 0, 0
