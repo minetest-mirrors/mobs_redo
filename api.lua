@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261004",
+	mod = "redo", version = "20261005",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1096,16 +1096,16 @@ function mob_class:do_jump()
 	if self.walk_chance == 0 or (not blocked
 	and (ndef.drawtype == "normal" or ndef.drawtype:sub(1, 5) == "glass")) then
 
+		self:set_animation("jump")
+
+		local yaw = self.object:get_yaw() or 0
+		local boost = self.jump_height * 0.35
+
 		vel.y = self.jump_height
+		vel.x = (vel.x or 0) - sin(yaw) * boost -- forward hop
+		vel.z = (vel.z or 0) + cos(yaw) * boost
 
-		self:set_animation("jump") ; self.object:set_velocity(vel)
-
-		core.after(0.3, function() -- move forward when in air
-
-			if self.object:get_luaentity() then
-				self.object:set_acceleration({x = vel.x * 2, y = 0, z = vel.z * 2})
-			end
-		end)
+		self.object:set_velocity(vel)
 
 		if self:get_velocity() > 0 then
 			self:mob_sound(self.sounds.jump)
@@ -1540,7 +1540,7 @@ function mob_class:smart_mobs(s, target_pos, dist, dtime)
 	local s1 = self.path.lastpos or s
 
 	-- are we stuck?
-	if (abs(s1.x - s.x) + abs(s1.z - s.z)) / dtime < 0.5 then
+	if (abs(s1.x - s.x) + abs(s1.y - s.y) + abs(s1.z - s.z)) / dtime < 0.5 then
 		self.path.stuck_timer = self.path.stuck_timer + dtime
 	else
 		self.path.stuck_timer = 0
@@ -2879,7 +2879,6 @@ function mob_class:mob_activate(staticdata, def, dtime)
 			or {fleshy = self.armor, immortal = 1} -- immortal for custom damage
 
 	self.object:set_armor_groups(armor)
-
 	self.old_y = self.object:get_pos().y -- var defaults
 	self.old_health = self.health
 	self.textures = textures
@@ -2888,7 +2887,6 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.looking_at = "air"
 	self.looking_above = "air"
 	self.state = self.state or "stand"
-
 	self:set_yaw((random(0, 360) - 180) / 180 * pi, 6) -- stand at random yaw
 	self:set_animation("stand")
 
