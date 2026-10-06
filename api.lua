@@ -1550,6 +1550,7 @@ function mob_class:smart_mobs(s, target_pos, dist, dtime)
 
 	if self.path.stuck_timer <= pathfinding_stuck_timeout then return end
 
+	-- we can see target so normal movement
 	local has_lineofsight = core.line_of_sight(
 			{x = s.x, y = s.y + 0.5, z = s.z},
 			{x = target_pos.x, y = target_pos.y + 1.5, z = target_pos.z}, .2)
@@ -1560,15 +1561,7 @@ function mob_class:smart_mobs(s, target_pos, dist, dtime)
 		self.path.following = false ; return
 	end
 
-	-- round position to avoid getting stuck in walls
-	local sx, sz = floor(s.x + 0.5), floor(s.z + 0.5)
-
-	local ssight, sground = core.line_of_sight(s, {x = sx, y = s.y - 4, z = sz}, 1)
-
-	-- determine node above ground (adjust height for player models)
-	if not ssight then s.y = sground.y + 1 end
-
-	local dropheight = self.fear_height ~= 0 and self.fear_height or pathfinding_max_drop
+	-- calculate jump height
 	local jumpheight = 0
 
 	if self.jump_height >= pathfinding_max_jump then
@@ -1577,12 +1570,15 @@ function mob_class:smart_mobs(s, target_pos, dist, dtime)
 
 	elseif self.prop.stepheight > 0.5 then jumpheight = 1 end
 
-	local p1 = {
+	-- calc drop height
+	local dropheight = self.fear_height ~= 0 and self.fear_height or pathfinding_max_drop
+
+	local target = {
 		x = floor(target_pos.x + 0.5),
 		y = floor(target_pos.y + 0.5),
 		z = floor(target_pos.z + 0.5)}
 
-	self.path.way = core.find_path(s, p1, pathfinding_searchdistance,
+	self.path.way = core.find_path(s, target, pathfinding_searchdistance,
 			jumpheight, dropheight, pathfinding_algorithm)
 
 	local height = self.prop.collisionbox[5] - self.prop.collisionbox[2]
@@ -2238,21 +2234,24 @@ function mob_class:do_states(dtime)
 		if self.path.following and self.path.way
 		and self.attack_type ~= "dogshoot" then
 
-			if #self.path.way > 60 or dist < self.reach then -- limit path size
-				self.path.following = false ; return
+			if dist < self.reach or #self.path.way > 60 then -- limit path size
+				self.path.following = false
+			else
+				local next_pos = self.path.way[1]
+
+				if not next_pos then
+					self.path.following = false
+				else
+					if abs(next_pos.x - s.x) + abs(next_pos.z - s.z) < 0.6 then
+
+						table_remove(self.path.way, 1) -- remove waypoint once reached
+
+						next_pos = self.path.way[1]
+					end
+
+					p = next_pos or p -- set to next position with fallback
+				end
 			end
-
-			local p1 = self.path.way[1]
-
-			if not p1 then
-				self.path.following = false ; return
-			end
-
-			if abs(p1.x - s.x) + abs(p1.z - s.z) < 0.6 then
-				table_remove(self.path.way, 1) -- remove waypoint once reached
-			end
-
-			p = self.path.way[1] or p1 -- set to next position with fallback
 		end
 
 		self:yaw_to_pos(p)
