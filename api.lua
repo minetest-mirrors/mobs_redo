@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261005",
+	mod = "redo", version = "20261006",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -35,7 +35,7 @@ dofile(core.get_modpath("mobs") .. "/compatibility.lua")
 -- localize common functions
 
 local pi, abs, min, max = math.pi, math.abs, math.min, math.max
-local square, random = math.sqrt, math.random
+local sqrt, random = math.sqrt, math.random
 local sin, cos, rad, deg = math.sin, math.cos, math.rad, math.deg
 local floor, ceil, vdirection = math.floor, math.ceil, vector.direction
 local settings, atann = core.settings, math.atan
@@ -228,7 +228,7 @@ local function get_distance(a, b)
 
 	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
 
-	return square(x * x + y * y + z * z)
+	return sqrt(x * x + y * y + z * z)
 end
 
 -- are we a real player?
@@ -259,7 +259,7 @@ function mob_class:collision()
 
 				if dist_sq > 0 and dist_sq < radius_sq then
 
-					local dist = square(dist_sq)
+					local dist = sqrt(dist_sq)
 					local force = (radius - dist) * 2
 					local scale = force / dist
 
