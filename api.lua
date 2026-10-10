@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261006",
+	mod = "redo", version = "20261010",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -45,7 +45,7 @@ end
 local table_copy, table_remove = table.copy, table.remove
 local TWO_PI = 2 * pi
 
--- store connected players once every second (saves each mob getting it multiple times )
+-- store connected players once every second (saves each mob getting it multiple times)
 
 local get_connected_players = core.get_connected_players
 local player_list = {}
@@ -61,6 +61,7 @@ end)
 -- creative check
 
 local creative_cache = core.settings:get_bool("creative_mode")
+
 function mobs.is_creative(name)
 	return creative_cache or core.check_player_privs(name, {creative = true})
 end
@@ -114,9 +115,8 @@ local pathfinding_max_drop = tonumber(settings:get("mob_pathfinding_max_drop") o
 local pathfinding_searchdistance = tonumber(
 		settings:get("mob_pathfinding_searchdistance") or 16)
 
--- show peaceful mode message
+if peaceful_only then -- show message when peaceful mode active
 
-if peaceful_only then
 	core.register_on_joinplayer(function(player)
 		core.chat_send_player(player:get_player_name(),
 				S("** Peaceful Mode Active - No Monsters Will Spawn"))
@@ -124,11 +124,9 @@ if peaceful_only then
 end
 
 -- calculate aoc range for mob count
-
 local aoc_range = (tonumber(settings:get("active_block_range")) or 4) * 16
 
 -- can we attack Creatura mobs ?
-
 local creatura = core.get_modpath("creatura") and settings:get_bool("mobs_attack_creatura")
 
 -- default settings
@@ -172,7 +170,7 @@ mobs.mob_class = {
 local mob_class = mobs.mob_class -- compatibility
 local mob_class_meta = {__index = mob_class}
 
--- drop item
+-- drop item with velocity
 
 local function drop_item(pos, item)
 
@@ -331,9 +329,7 @@ function mob_class:set_velocity(v)
 
 	v = v or 0
 
-	if self.order == "stand" then -- halt mob if ordered to stay
-		v = 0
-	end
+	if self.order == "stand" then v = 0 end -- halt mob if ordered to stay
 
 	local push_x, push_z = 0, 0
 
@@ -2961,7 +2957,7 @@ function mob_class:get_nodes()
 	local dir_x = -sin(yaw) * (self.prop.collisionbox[4] + 0.5)
 	local dir_z = cos(yaw) * (self.prop.collisionbox[4] + 0.5)
 
-	-- nodes in front of mob and front/above
+	-- nodes in front of and front/above mob
 	self.looking_at = node_ok(
 			{x = pos.x + dir_x, y = pos.y + y_level + 0.1, z = pos.z + dir_z}).name
 
@@ -3277,11 +3273,11 @@ local function count_mobs(pos, mob_name)
 
 	local total = 0
 	local objs = core.get_objects_inside_radius(pos, aoc_range * 2)
-	local ent, players
+	local ent, players_nearby
 
 	for n = 1, #objs do
 
-		if is_player(objs[n]) then players = true
+		if is_player(objs[n]) then players_nearby = true
 		else
 			ent = objs[n]:get_luaentity()
 
@@ -3289,7 +3285,7 @@ local function count_mobs(pos, mob_name)
 		end
 	end
 
-	return total, players
+	return total, players_nearby
 end
 
 -- helper function for can_spawn
@@ -3384,6 +3380,7 @@ function mobs:add_mob(pos, def)
 		end
 
 		ent.child = true ; mobs:scale_mob(ent, .5, .5)
+		mob:set_properties({textures = new_texture})
 
 	elseif def.texture then -- if not child set new texture
 
