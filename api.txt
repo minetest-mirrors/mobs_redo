@@ -258,6 +258,9 @@ functions needed for the mob to work properly which contains the following:
       'fly_start'    when a mob is flying.
       'fly_end'
       'fly_speed'
+      'glide_start'  Used for flying mobs not touching the ground instead of walk/stand
+      'glide_end'
+      'glide_speed'
       'jump_start'   when a mob is jumping
       'jump_end'
       'jump_speed'
@@ -276,6 +279,9 @@ functions needed for the mob to work properly which contains the following:
       'falling_start' falling animation when mob is plummeting
       'falling_end'
       'falling_speed'
+      'flop_start'    when flying/swimming mob out of their respective nodess.
+      'flop_end'
+      'flop_speed'
       'die_start'    death animation
       'die_end'
       'die_speed'
@@ -471,6 +477,7 @@ mob:class_set_pitch(pitch) -- change mob pitch in radians
 mob:class_set_roll(roll) -- change mob roll in radians
 mob_class:yaw_to_pos(pos, delay) -- rotates mod to look at position and returns new yaw
 mob_class:set_animation(animation, force) -- set mob animation
+mob_class:ground_animation(anim1, anim2) -- uses anim1 when touching ground or anim2
 mob_class:line_of_sight(pos1, pos2) -- internal line of sight function
 mob_class:attempt_flight_correction(override) -- check for stuck flying mobs and fix
 mob_class:update_tag(newname) -- update nametag or give new name

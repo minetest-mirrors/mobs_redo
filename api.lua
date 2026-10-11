@@ -447,6 +447,18 @@ function mob_class:set_animation(anim, force)
 			anims[anim .. "_loop"] ~= false)
 end
 
+-- checks if mob touching ground to play anim1, otherwise in air so anim2
+
+function mob_class:ground_animation(anim1, anim2, force)
+
+	if self.fly and not self.touching_ground
+	and self.animation[anim2 .. "_start"] and self.animation[anim2 .. "_end"] then
+		self:set_animation(anim1, force)
+	end
+
+	self:set_animation(anim2, force)
+end
+
 -- use new functions if available
 
 local get_id = core.get_node_raw
@@ -1829,7 +1841,7 @@ function mob_class:follow_target(s, p, dtime)
 
 			self.state = "standing" -- fake state to pause mob within reach
 			self:set_velocity(0)
-			self:set_animation("stand")
+			self:stand_animation("stand", "glide")
 		end
 
 		return true
@@ -1895,7 +1907,7 @@ function mob_class:follow_flop(dtime)
 
 			self.object:set_velocity({x = 0, y = -5, z = 0})
 
-			self:set_animation("stand") ; return
+			self:stand_animation("stand", "flop") ; return
 
 		elseif self.state == "flop" then self.state = "stand" end
 	end
@@ -1928,7 +1940,7 @@ function mob_class:stop_attack()
 	self.v_start = false ; self.blinktimer = 0
 	self.path.way = nil ; self.state = "stand"
 	self:set_velocity(0)
-	self:set_animation("stand", true)
+	self:stand_animation("stand", "glide", true)
 end
 
 -- execute current state (stand, walk, run, attack)
@@ -1988,7 +2000,7 @@ function mob_class:do_states(dtime)
 		end
 
 		self:set_velocity(0)
-		self:set_animation("stand")
+		self:ground_animation("stand", "glide")
 
 		-- are we able to walk
 		if self.order ~= "stand" and self.walk_chance ~= 0
@@ -1997,7 +2009,7 @@ function mob_class:do_states(dtime)
 
 			self:set_velocity(self.walk_velocity)
 			self.state = "walk"
-			self:set_animation("walk")
+			self:ground_animation("walk", "glide")
 
 		-- or are we able to jump
 		elseif self.walk_chance == 0 and not self.at_cliff
@@ -2033,7 +2045,9 @@ function mob_class:do_states(dtime)
 
 				self:set_velocity(0)
 				self.state = "stand"
-				self:set_animation("stand", true) ; return
+				self:ground_animation("stand", "glide")
+
+				return
 			end
 		end
 
@@ -2043,12 +2057,11 @@ function mob_class:do_states(dtime)
 		if self:flight_check() and self.animation
 		and self.animation.fly_start and self.animation.fly_end then
 
-			local on_ground = registered_nodes[self.standing_on].walkable
 			local in_water = registered_nodes[self.standing_in].groups.water
 
-			if on_ground and in_water then
+			if self.touching_ground and in_water then
 				self:set_animation("fly")
-			elseif on_ground then
+			elseif self.touching_ground then
 				self:set_animation("walk")
 			else
 				self:set_animation("fly")
@@ -2068,7 +2081,7 @@ function mob_class:do_states(dtime)
 
 			self:set_velocity(0)
 			self.state = "stand"
-			self:set_animation("stand")
+			self:stand_animation("stand", "glide")
 
 			yaw = self:set_yaw(yaw + random(-1, 1) * 1.5, 4) -- turn so we arent stuck
 
@@ -2986,6 +2999,8 @@ function mob_class:on_step(dtime, moveresult)
 
 	-- get nodes (every 1/4 second by default)
 	if self.node_timer > node_timer_interval then
+
+		self.touching_ground = moveresult and moveresult.touching_ground
 
 		self:get_nodes() -- get nodes above, below, in front and front-above
 
