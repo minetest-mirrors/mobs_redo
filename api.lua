@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261010",
+	mod = "redo", version = "20261011",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2412,12 +2412,15 @@ function mob_class:falling(pos)
 		self.object:set_velocity({x = v.x, y = 0.45, z = v.z}) -- slow ascent in water
 
 		fall_speed = -1.2 / visc
-
-	elseif self.fall_damage and v.y == 0 then
-
+	else
 		local d = (self.old_y or v.y) - self.object:get_pos().y
 
-		if d > 6 then -- stay consistent with player fall damage
+		if d > 0.08 and self.animation and self.animation.falling_end then
+			self:set_animation("falling")
+		end
+
+		-- stay consistent with player fall damage
+		if self.fall_damage and v.y == 0 and d > 6 then
 
 			local damage = d - 6
 			local y_level = self.prop.collisionbox[2]

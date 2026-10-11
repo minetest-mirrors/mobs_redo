@@ -273,6 +273,9 @@ functions needed for the mob to work properly which contains the following:
       'injured_start' when hit or damaged > 1 hp (if not set then 'walk' is used)
       'injured_end'
       'injured_speed'
+      'falling_start' falling animation when mob is plummeting
+      'falling_end'
+      'falling_speed'
       'die_start'    death animation
       'die_end'
       'die_speed'
