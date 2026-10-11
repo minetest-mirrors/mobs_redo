@@ -2874,6 +2874,10 @@ function mob_class:mob_activate(staticdata, def, dtime)
 		if def.child_texture then textures = def.child_texture[1] end
 	end
 
+	if self.child and self.child_mesh then -- use child mesh if found
+		self.object:set_properties({mesh = self.child_mesh})
+	end
+
 	-- set mob size and textures
 	self.object:set_properties({textures = textures})
 
@@ -3174,6 +3178,7 @@ function mobs:register_mob(name, def)
 		texture_list = def.textures,
 		texture_mods = def.texture_mods or "",
 		child_texture = def.child_texture,
+		child_mesh = def.child_mesh,
 -- behaviour
 		jump_height = def.jump_height or 4,
 		jump_chance = def.jump_chance,
@@ -3398,8 +3403,14 @@ function mobs:add_mob(pos, def)
 			new_texture = ent.child_texture[1]
 		end
 
+		local mesh = ent.base_mesh
+
+		if ent.child_mesh then
+			mesh = ent.child_mesh
+		end
+
 		ent.child = true ; mobs:scale_mob(ent, .5, .5)
-		mob:set_properties({textures = new_texture})
+		mob:set_properties({textures = new_texture, mesh = mesh})
 
 	elseif def.texture then -- if not child set new texture
 

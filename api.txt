@@ -232,6 +232,7 @@ functions needed for the mob to work properly which contains the following:
                        could use multiple lists inside another table for random
                        selection e.g. { {"texture1.png"}, {"texture2.png"} }
    'child_texture'     holds the texture table for when baby mobs are used.
+   'child_mesh'        the object used for child mobs.
    'gotten_texture'    holds the texture table for when self.gotten value is
                        true, used for milking cows or shearing sheep.
    'texture_mods'      holds a string which overlays a texture on top of the
