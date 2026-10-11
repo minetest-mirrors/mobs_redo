@@ -451,12 +451,13 @@ end
 
 function mob_class:ground_animation(anim1, anim2, force)
 
-	if self.fly and not self.touching_ground
-	and self.animation[anim2 .. "_start"] and self.animation[anim2 .. "_end"] then
+	local anim_ok = self.animation[anim2 .. "_start"] and self.animation[anim2 .. "_end"]
+
+	if self.fly and not self.touching_ground and anim_ok then
+		self:set_animation(anim2, force)
+	else
 		self:set_animation(anim1, force)
 	end
-
-	self:set_animation(anim2, force)
 end
 
 -- use new functions if available
@@ -1841,7 +1842,7 @@ function mob_class:follow_target(s, p, dtime)
 
 			self.state = "standing" -- fake state to pause mob within reach
 			self:set_velocity(0)
-			self:stand_animation("stand", "glide")
+			self:ground_animation("stand", "glide")
 		end
 
 		return true
@@ -1907,7 +1908,7 @@ function mob_class:follow_flop(dtime)
 
 			self.object:set_velocity({x = 0, y = -5, z = 0})
 
-			self:stand_animation("stand", "flop") ; return
+			self:ground_animation("stand", "flop") ; return
 
 		elseif self.state == "flop" then self.state = "stand" end
 	end
@@ -1940,7 +1941,7 @@ function mob_class:stop_attack()
 	self.v_start = false ; self.blinktimer = 0
 	self.path.way = nil ; self.state = "stand"
 	self:set_velocity(0)
-	self:stand_animation("stand", "glide", true)
+	self:ground_animation("stand", "glide", true)
 end
 
 -- execute current state (stand, walk, run, attack)
@@ -2054,8 +2055,7 @@ function mob_class:do_states(dtime)
 		self:set_velocity(self.walk_velocity)
 
 		-- figure out which animation to use while in motion
-		if self:flight_check() and self.animation
-		and self.animation.fly_start and self.animation.fly_end then
+		if self:flight_check() and self.animation.fly_end then
 
 			local in_water = registered_nodes[self.standing_in].groups.water
 
@@ -2081,7 +2081,7 @@ function mob_class:do_states(dtime)
 
 			self:set_velocity(0)
 			self.state = "stand"
-			self:stand_animation("stand", "glide")
+			self:ground_animation("stand", "glide")
 
 			yaw = self:set_yaw(yaw + random(-1, 1) * 1.5, 4) -- turn so we arent stuck
 
