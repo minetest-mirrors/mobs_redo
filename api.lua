@@ -3720,6 +3720,9 @@ function mobs:register_arrow(name, def)
 
 			if def.type == "object" then
 
+				-- if somehow you hit yourself, ignore it
+				if self.owner_id == tostring(def.object) then return end
+
 				local obj = def.object
 
 				if is_player(obj) and self.hit_player then
