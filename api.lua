@@ -862,7 +862,7 @@ function mob_class:check_for_death(cmi_cause)
 	if self.on_death then -- run official luanti function if found
 
 		-- only return killer if punched by player
-		cmi_cause = (cmi_cause.type == "punch" and death_by_player)
+		cmi_cause = (cmi_cause and cmi_cause.type == "punch" and death_by_player)
 				and cmi_cause.puncher or nil
 
 		self:on_death(cmi_cause)
@@ -2530,7 +2530,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 	local hit_item = weapon_def.name
 
 	if not is_hitter_player then
-		hit_item = hitter_ent.name
+		hit_item = hitter_ent and hitter_ent.name
 	end
 
 	for n = 1, #self.immune_to do -- check for tool immunity or special damage
@@ -4187,34 +4187,27 @@ end
 
 core.register_on_player_receive_fields(function(player, formname, fields)
 
+	if formname ~= "mobs_nametag" then return end
+
 	local name = player:get_player_name()
-
-	if not mob_nametag[name] then return end
-
-	if formname ~= "mobs_nametag" or not fields.name then
-		mob_nametag[name] = nil ; return
-	end
-
-	-- consume only the live wielded stack
-	local item = player:get_wielded_item()
-
-	if item:get_name() ~= "mobs:nametag" then
-		mob_nametag[name] = nil ; return
-	end
-
-	-- limit name entered to 64 characters
-	if fields.name:len() > 64 then fields.name = fields.name:sub(1, 64) end
-
-	mob_nametag[name]:update_tag(fields.name) -- update nametag
-
-	if not mobs.is_creative(name) then -- take nametag if not using creative
-
-		item:take_item()
-
-		player:set_wielded_item(item)
-	end
+	local mob = mob_nametag[name]
 
 	mob_nametag[name] = nil
+
+	if not fields.name then return end
+
+	-- check mob still exists before naming it
+	if not mob or not mob.object or not mob.object:get_pos() then return end
+
+	local item = player:get_wielded_item()
+
+	if item:get_name() ~= "mobs:nametag" then return end
+
+	local newname = fields.name:sub(1, 64) ; mob:update_tag(newname)
+
+	if not mobs.is_creative(name) then
+		item:take_item() ; player:set_wielded_item(item)
+	end
 end)
 
 -- compatibility function for mobs that have been renamed
