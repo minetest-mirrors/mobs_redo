@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261011",
+	mod = "redo", version = "20261012",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2359,16 +2359,20 @@ function mob_class:do_states(dtime)
 	if self.attack_type == "shoot"
 	or (self.attack_type == "dogshoot" and ds_var == 1) then
 
-		p.y = p.y - 0.5 ; s.y = s.y + 0.5
+		local pcb = self.prop.collisionbox
+		local target = self.attack:get_properties() ; if not target then return end
+		local scb = target.collisionbox
 
+		s.y = s.y + (pcb[2] + pcb[5]) / 2 + self.shoot_offset -- middle Y pos of mob
+		p.y = p.y + (scb and (scb[2] + scb[5]) / 2 or 0.5) -- middle Y pos of target
+
+		-- direction from mob to target
 		local vec = {x = p.x - s.x, y = p.y - s.y, z = p.z - s.z}
 
 		self:yaw_to_pos(p) ; self:set_velocity(0)
 
 		self.shoot_timer = (self.shoot_timer or 0) + dtime
-
 		if self.shoot_timer < self.shoot_interval then return end
-
 		self.shoot_timer = 0
 
 		if not core.registered_entities[self.arrow]
@@ -2377,12 +2381,7 @@ function mob_class:do_states(dtime)
 		self:set_animation("shoot")
 		self:mob_sound(self.sounds.shoot_attack)
 
-		local p = self.object:get_pos()
-		local cb = self.prop.collisionbox
-
-		p.y = p.y + (cb[2] + cb[5]) / 2
-
-		local obj = core.add_entity(p, self.arrow)
+		local obj = core.add_entity(s, self.arrow)
 		local ent = obj and obj:get_luaentity() ; if not ent then return end
 		local amount = (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) ^ 0.5
 
@@ -2401,11 +2400,7 @@ function mob_class:do_states(dtime)
 
 		local scale = v / amount
 
-		obj:set_velocity({
-			x = vec.x * scale,
-			y =  (vec.y + self.shoot_offset) * scale,
-			z = vec.z * scale
-		})
+		obj:set_velocity({x = vec.x * scale, y = vec.y * scale, z = vec.z * scale})
 	end
 end
 
