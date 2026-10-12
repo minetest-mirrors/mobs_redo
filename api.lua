@@ -193,7 +193,11 @@ function mob_class:mob_sound(sound)
 
 	if not sound or not self.sounds then return end
 
-	if type(sound) == "string" then sound = {name = sound} end
+	if type(sound) == "string" then
+		sound = {name = sound}
+	else
+		sound = table_copy(sound)
+	end
 
 	sound.pitch = (sound.pitch or 1.0) + random(-10, 10) * 0.005 -- random differences
 
@@ -709,6 +713,7 @@ function mob_class:item_drop()
 
 	local pos = self.object:get_pos()
 	local drops = self.drops
+	local cause = self.cause_of_death or {}
 
 	-- check for drops function
 	if type(drops) == "function" then drops = self.drops(pos) end
@@ -716,8 +721,7 @@ function mob_class:item_drop()
 	if not drops or #drops == 0 then return end
 
 	-- was mob killed by player?
-	local death_by_player = self.cause_of_death and self.cause_of_death.puncher
-			and is_player(self.cause_of_death.puncher)
+	local death_by_player = cause.puncher and is_player(cause.puncher)
 
 	-- check for tool 'looting_level' under tool_capabilities as default, or use
 	-- meta string 'looting_level' if found (max looting level is 3).
@@ -725,7 +729,7 @@ function mob_class:item_drop()
 
 	if death_by_player then
 
-		local wield_stack = self.cause_of_death.puncher:get_wielded_item()
+		local wield_stack = cause.puncher:get_wielded_item()
 		local wield_stack_meta = wield_stack:get_meta()
 		local item_def = registered_items[wield_stack:get_name()]
 		local item_looting = item_def and item_def.tool_capabilities and
@@ -737,16 +741,15 @@ function mob_class:item_drop()
 
 	for n = 1, #drops do
 
-		if random(drops[n].chance) == 1 then
+		if random(drops[n].chance or 1) == 1 then
 
 			local num = random(drops[n].min or 1, drops[n].max or 1) + looting
 			local item = drops[n].name
 
-			-- cook items for a hot death
-			if self.cause_of_death.hot then
+			if cause.hot then -- cook items if mob had a Hot death
 
 				local output = core.get_craft_result(
-						{method = "cooking", width = 1, items = {item}})
+						{method = "cooking", width = 1, items = {ItemStack(item)}})
 
 				if output and output.item and not output.item:is_empty() then
 					item = output.item:get_name()
@@ -2477,7 +2480,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 	local is_hitter_player = is_player(hitter)
 	local hitter_name = is_hitter_player and hitter:get_player_name() or ""
 	local hitter_ent = not is_hitter_player and hitter:get_luaentity()
-	local hitter_pos = hitter:get_pos()
+	local hitter_pos = hitter:get_pos() or self.object:get_pos()
 
 	if self.protected then -- are we protected ?
 
@@ -2978,8 +2981,9 @@ function mob_class:get_nodes()
 			{x = pos.x + dir_x, y = pos.y + y_level + 1.1, z = pos.z + dir_z}).name
 
 	-- are we facing a fence or wall
-	self.facing_fence = self.looking_at:find("fence")
-			or self.looking_at:find("gate") or self.looking_at:find("wall")
+	self.facing_fence = self.looking_at:find("fence", 1, true)
+			or self.looking_at:find("gate", 1, true)
+			or self.looking_at:find("wall", 1, true)
 end
 
 -- main mob function
@@ -3697,15 +3701,15 @@ function mobs:register_arrow(name, def)
 
 			if not moveresult or not moveresult.collides then return end -- nothing hit
 
-			local def = moveresult.collisions and moveresult.collisions[1] or {}
+			local hit = moveresult.collisions and moveresult.collisions[1] or {}
 
 			self.moveresult = moveresult -- pass moveresult into arrow entity
 
-			if def.type == "node" and self.hit_node then
+			if hit.type == "node" and self.hit_node then
 
-				local node = node_ok(def.node_pos)
+				local node = node_ok(hit.node_pos)
 
-				self.node_pos = def.node_pos
+				self.node_pos = hit.node_pos
 
 				self:hit_node(pos, node) ; --print("-- hit node", node.name)
 
@@ -3718,12 +3722,12 @@ function mobs:register_arrow(name, def)
 				end
 			end
 
-			if def.type == "object" then
+			if hit.type == "object" then
 
 				-- if somehow you hit yourself, ignore it
-				if self.owner_id == tostring(def.object) then return end
+				if self.owner_id == tostring(hit.object) then return end
 
-				local obj = def.object
+				local obj = hit.object
 
 				if is_player(obj) and self.hit_player then
 					self:hit_player(obj)
