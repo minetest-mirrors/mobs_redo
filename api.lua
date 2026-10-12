@@ -2596,6 +2596,13 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 
 	hitter:set_wielded_item(weapon)
 
+	if not self.friendly_fire and not is_hitter_player then -- check for friendly fire
+
+		local entity = hitter and hitter:get_luaentity()
+
+		if entity and entity.name == self.arrow then return end
+	end
+
 	-- only play hit sound and show blood effects if damage is 1 or over
 	if damage >= 1 then
 
@@ -2640,17 +2647,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 			end)
 		end
 
-		-- check for friendly fire (arrows from same mob)
-		if self.friendly_fire then
-			self.health = self.health - floor(damage) -- do damage regardless
-		else
-			local entity = hitter and hitter:get_luaentity()
-
-			-- check if arrow from same mob, if so then do no damage
-			if (entity and entity.name ~= self.arrow) or is_hitter_player then
-				self.health = self.health - floor(damage)
-			end
-		end
+		self.health = self.health - floor(damage)
 
 		-- exit here if dead, check for tools with fire damage
 		local hot = damage_groups.fire
