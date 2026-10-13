@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261012",
+	mod = "redo", version = "20261013",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1597,12 +1597,10 @@ function mob_class:smart_mobs(s, target_pos, dist, dtime)
 	local height = self.prop.collisionbox[5] - self.prop.collisionbox[2]
 
 	-- since we have a path, double check clearance height for 2x node high mobs
-	if self.path.way and #self.path.way > 0 then
+	if self.path.way and #self.path.way > 0 and height > 1 then
 
-		if height > 1 then
-			if path_height_blocked(self) then -- make sure 2 high mobs can get access
-				self.path.way = nil
-			end
+		if path_height_blocked(self) then -- make sure 2 high mobs can get access
+			self.path.way = nil
 		end
 	end
 
@@ -1674,16 +1672,15 @@ function mob_class:general_attack()
 	if self.passive or self.state == "runaway" or self.state == "attack"
 	or self.state == "flop" or self:day_docile() then return end
 
+	-- random attack chance here to save additional computation
+	if random(100) <= self.attack_chance then return end
+
 	local s = self.object:get_pos() ; if not s then return end
 	local objs = core.get_objects_inside_radius(s, self.view_range)
 
 	if not objs or #objs <= 1 then return end -- only mob itself
 
-	-- random attack chance here to save additional computation
-	if random(100) <= self.attack_chance then return end
-
-	-- remove entities we aren't interested in
-	for n = 1, #objs do
+	for n = 1, #objs do -- remove entities we aren't interested in
 
 		local ent = objs[n]:get_luaentity()
 
@@ -1721,31 +1718,32 @@ function mob_class:general_attack()
 			or (self.specific_attack and not check_for(ent.name, self.specific_attack)) then
 				objs[n] = nil
 			end
-		else -- remove all other entities
-			objs[n] = nil
+		else
+			objs[n] = nil -- remove all other entities
 		end
 	end
 
-	local min_dist, min_target = self.view_range + 1
+	local min_dist = self.view_range * self.view_range -- view range sq to save sqrt
+	local min_target
+	local ey = self.base_colbox[5] * 0.9 -- mob eye level
+	local from = {x = s.x, y = s.y + ey, z = s.z}
 
-	for _, target in pairs(objs) do
+	for _, target in pairs(objs) do -- loop through entities left skipping nils
 
 		local p = target:get_pos()
-		local dist = get_distance(p, s)
-		local ey = self.base_colbox[5] * 0.9 -- mob eye level
+		local dx, dy, dz = p.x - s.x, p.y - s.y, p.z - s.z
+		local dist_sq = dx * dx + dy * dy + dz * dz
 
 		-- choose closest entity to attack while looking higher for better sights
-		if dist ~= 0 and dist < min_dist and self:line_of_sight(
-				{x = s.x, y = s.y + ey, z = s.z}, {x = p.x, y = p.y + .5, z = p.z}) then
+		if dist_sq > 0 and dist_sq < min_dist
+		and self:line_of_sight(from, {x = p.x, y = p.y + 0.5, z = p.z}) then
 
-			min_dist = dist
+			min_dist = dist_sq
 			min_target = target
 		end
 	end
 
-	if min_target then -- attack!
-		self:do_attack(min_target)
-	end
+	if min_target then self:do_attack(min_target) end -- attack!
 end
 
 -- find someone to runaway from
@@ -1756,10 +1754,10 @@ function mob_class:do_runaway_from()
 
 	local s = self.object:get_pos() ; if not s then return end
 	local target, min_target, name
-	local min_dist = self.view_range + 1
+	local min_dist = self.view_range * self.view_range
+	local ey = self.base_colbox[5] * 0.9 -- mob eye level
+	local from = {x = s.x, y = s.y + ey, z = s.z}
 	local objs = core.get_objects_inside_radius(s, self.view_range)
-
-	if not objs or #objs == 1 then return end -- only mob itself
 
 	for n = 1, #objs do -- loop through entities surrounding mob
 
@@ -1785,15 +1783,14 @@ function mob_class:do_runaway_from()
 		and (self.runaway_from and check_for(name, self.runaway_from)) then
 
 			local p = target and target:get_pos() or s
-			local dist = get_distance(p, s)
-			local ey = self.base_colbox[5] * 0.9 -- mob eye level
+			local dx, dy, dz = p.x - s.x, p.y - s.y, p.z - s.z
+			local dist_sq = dx * dx + dy * dy + dz * dz
 
 			-- choose closest entity to runaway from
-			if dist < min_dist and self:line_of_sight(
-					{x = s.x, y = s.y + ey, z = s.z},
-					{x = p.x, y = p.y + .5, z = p.z}) then
+			if dist_sq > 0 and dist_sq < min_dist
+			and self:line_of_sight(from, {x = p.x, y = p.y + 0.5, z = p.z}) then
 
-				min_dist = dist
+				min_dist = dist_sq
 				min_target = target
 			end
 		end
@@ -1812,10 +1809,8 @@ function mob_class:do_runaway_from()
 
 	-- check for nodes to runaway from when seen
 	local p = core.find_node_near(s, self.view_range, self.runaway_from, true)
-	local ey = self.base_colbox[5] * 0.9 -- mob eye level
 
-	if p and core.line_of_sight(
-			{x = s.x, y = s.y + ey, z = s.z}, {x = p.x, y = p.y + 0.5, z = p.z}) then
+	if p and core.line_of_sight(from, {x = p.x, y = p.y + 1, z = p.z}) then
 
 		self:yaw_to_pos(p, 3) -- opposite dir
 		self.state = "runaway"
