@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261013",
+	mod = "redo", version = "20261014",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1810,12 +1810,23 @@ function mob_class:do_runaway_from()
 	-- check for nodes to runaway from when seen
 	local p = core.find_node_near(s, self.view_range, self.runaway_from, true)
 
-	if p and core.line_of_sight(from, {x = p.x, y = p.y + 1, z = p.z}) then
+	if p then
 
-		self:yaw_to_pos(p, 3) -- opposite dir
-		self.state = "runaway"
-		self.runaway_timer = 3
-		self.following = nil
+		local _, blocked = core.line_of_sight(from, {x = p.x, y = p.y, z = p.z})
+
+		if blocked then -- node in way, lets see if it's the node we want
+
+			local ppos = core.pos_to_string(p)
+			local bpos = core.pos_to_string(blocked)
+
+			if ppos == bpos then -- same coords, is node we want
+
+				self:yaw_to_pos(p, 3) -- opposite dir
+				self.state = "runaway"
+				self.runaway_timer = 3
+				self.following = nil
+			end
+		end
 	end
 end
 
