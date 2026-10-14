@@ -1429,6 +1429,10 @@ local function can_dig_drop(pos)
 
 	if core.is_protected(pos, "") then return end
 
+	-- check for meta (containers)
+	local meta = core.find_nodes_with_meta(pos, pos)
+	if #meta > 0 then return end
+
 	local node = node_ok(pos, "air").name
 	local def = registered_nodes[node]
 
