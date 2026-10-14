@@ -314,7 +314,7 @@ eating.
                        {"default:dirt_with_grass", "default:dirt", -1, 0}
                     }
    'replace_with'   replace with what e.g. "air" or in chickens case "mobs:egg"
-   'replace_rate'   how random should the replace rate be (typically 10)
+   'replace_rate'   how many seconds before next replace check (typically 10)
    'replace_offset' +/- y offset value to check specific node to replace
    'reach'          horizontal reach around mob for replace, default is 0
 

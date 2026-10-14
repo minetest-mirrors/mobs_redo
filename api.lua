@@ -1330,14 +1330,14 @@ end
 
 -- find and replace what mob is looking for (grass, wheat etc.)
 
-function mob_class:replace(pos)
+function mob_class:replace(pos, dtime) -- dtime will be 1 since called every second
 
-	if not mobs_griefing or self.child
+	if not mobs_griefing or self.child or not self.touching_ground
 	or not self.replace_rate or not self.replace_what then return end
 
-	local vel = self.object:get_velocity()
-
-	if not vel or vel.y ~= 0 or random(self.replace_rate) > 1 then return end
+	self.replace_timer = (self.replace_timer or 0) + dtime
+	if self.replace_timer < self.replace_rate then return end
+	self.replace_timer = 0
 
 	local what, with, y_offset, reach
 
@@ -1380,7 +1380,7 @@ function mob_class:replace(pos)
 
 	core.set_node(spos, {name = with})
 
-	if self.sounds.replace then self:mob_sound(self.sounds.replace) end
+	if self.sounds and self.sounds.replace then self:mob_sound(self.sounds.replace) end
 end
 
 -- look directly around mob to see if it can pickup any dropped items
@@ -3045,7 +3045,7 @@ function mob_class:on_step(dtime, moveresult)
 
 		if self:do_env_damage() then return end -- check for damage
 
-		self:replace(pos) -- node replacement (cows eat grass etc.)
+		self:replace(pos, 1) -- node replacement (cows eat grass etc.)
 
 		self:check_item_pickup(pos) -- look for dropped items
 	end
