@@ -2471,7 +2471,7 @@ function mob_class:falling(pos)
 		-- stay consistent with player fall damage over 6 high
 		if self.fall_damage and v.y == 0 and self.fall_velocity < -6 then
 
-			local damage = -self.fall_velocity - 10
+			local damage = ceil(-self.fall_velocity) - 10
 
 			self.fall_velocity = 0
 
