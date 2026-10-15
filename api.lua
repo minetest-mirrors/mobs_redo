@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261014",
+	mod = "redo", version = "20261015",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1330,7 +1330,7 @@ end
 
 -- find and replace what mob is looking for (grass, wheat etc.)
 
-function mob_class:replace(pos, dtime) -- dtime will be 1 since called every second
+function mob_class:replace(pos, dtime)
 
 	if not mobs_griefing or self.child or not self.touching_ground
 	or not self.replace_rate or not self.replace_what then return end
@@ -1339,46 +1339,59 @@ function mob_class:replace(pos, dtime) -- dtime will be 1 since called every sec
 	if self.replace_timer < self.replace_rate then return end
 	self.replace_timer = 0
 
-	local what, with, y_offset, reach
+	local rules = {}
 
-	if type(self.replace_what[1]) == "table" then
+	if type(self.replace_what) == "table" and type(self.replace_what[1]) == "table" then
 
-		local replacement = self.replace_what[random(#self.replace_what)]
+		for _, rule in ipairs(self.replace_what) do
 
-		what = replacement[1] or ""
-		with = replacement[2] or ""
-		y_offset = replacement[3] or 0
-		reach = replacement[4] or 0
-	else
-		what = self.replace_what
-		with = self.replace_with or ""
-		y_offset = self.replace_offset or 0
-		reach = 0
-	end
-
-	local spos = {x = pos.x, y = pos.y + y_offset, z  = pos.z}
-	local found = core.find_nodes_in_area(
-			{x = spos.x - reach, y = spos.y, z = spos.z - reach},
-			{x = spos.x + reach, y = spos.y, z = spos.z + reach}, what)
-
-	if #found == 0 then return end
-
-	spos = found[random(#found)]
-
-	if self.on_replace then
-
-		local oldnode = what or ""
-		local newnode = with
-
-		-- pass node name when using table or groups
-		if type(oldnode) == "table" or oldnode:sub(1, 6) == "group:" then
-			oldnode = get_node(spos).name
+			rules[#rules + 1] = {
+				what = rule[1],
+				with = rule[2] or "",
+				y_off = rule[3] or 0,
+				reach = rule[4] or 0
+			}
 		end
-
-		if self:on_replace(spos, oldnode, newnode) == false then return end
+	else
+		rules[1] = {
+			what = self.replace_what,
+			with = self.replace_with or "",
+			y_off = self.replace_offset or 0,
+			reach = 0
+		}
 	end
 
-	core.set_node(spos, {name = with})
+	if #rules == 0 then return end
+
+	local spos, selected_rule
+
+	for _, rule in ipairs(rules) do
+
+		if rule.with ~= "" then
+
+			local found = core.find_nodes_in_area(
+				{x = pos.x - rule.reach, y = pos.y + rule.y_off, z = pos.z - rule.reach},
+				{x = pos.x + rule.reach, y = pos.y + rule.y_off, z = pos.z + rule.reach},
+				rule.what)
+
+			if #found > 0 then
+				spos = found[random(#found)] ; selected_rule = rule ; break
+			end
+		end
+	end
+
+	if not spos then return end
+
+	local newname = selected_rule.with
+
+	if self.on_replace then -- custom function
+
+		local oldname = get_node(spos).name
+
+		if self:on_replace(spos, oldname, newname) == false then return end
+	end
+
+	core.set_node(spos, {name = newname})
 
 	if self.sounds and self.sounds.replace then self:mob_sound(self.sounds.replace) end
 end

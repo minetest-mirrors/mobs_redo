@@ -327,9 +327,6 @@ eating.
 
        If false is returned, the mob will not replace the node.
 
-       By default, replacing sets self.gotten to true and resets the object
-       properties. (DEPRECATED, use on_replace to make changes).
-
 
 Pickup Items
 ------------
