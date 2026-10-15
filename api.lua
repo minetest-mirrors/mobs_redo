@@ -233,6 +233,13 @@ local function get_distance(a, b)
 	return sqrt(x * x + y * y + z * z)
 end
 
+local function get_distance_sq(a, b)
+
+	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
+
+	return (x * x + y * y + z * z)
+end
+
 -- are we a real player?
 
 local function is_player(player)
@@ -1756,8 +1763,7 @@ function mob_class:general_attack()
 	for _, target in pairs(objs) do -- loop through entities left skipping nils
 
 		local p = target:get_pos()
-		local dx, dy, dz = p.x - s.x, p.y - s.y, p.z - s.z
-		local dist_sq = dx * dx + dy * dy + dz * dz
+		local dist_sq = get_distance_sq(p, s)
 
 		-- choose closest entity to attack while looking higher for better sights
 		if dist_sq > 0 and dist_sq < min_dist
@@ -1808,8 +1814,7 @@ function mob_class:do_runaway_from()
 		and (self.runaway_from and check_for(name, self.runaway_from)) then
 
 			local p = target and target:get_pos() or s
-			local dx, dy, dz = p.x - s.x, p.y - s.y, p.z - s.z
-			local dist_sq = dx * dx + dy * dy + dz * dz
+			local dist_sq = get_distance_sq(p, s)
 
 			-- choose closest entity to runaway from
 			if dist_sq > 0 and dist_sq < min_dist
