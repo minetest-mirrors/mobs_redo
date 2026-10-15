@@ -1341,24 +1341,30 @@ function mob_class:replace(pos, dtime)
 
 	local rules = {}
 
-	if type(self.replace_what) == "table" and type(self.replace_what[1]) == "table" then
+	if not self.temp.replace_rules then -- build rules
 
-		for _, rule in ipairs(self.replace_what) do
+		if type(self.replace_what) == "table"
+		and type(self.replace_what[1]) == "table" then
 
-			rules[#rules + 1] = {
-				what = rule[1],
-				with = rule[2] or "",
-				y_off = rule[3] or 0,
-				reach = rule[4] or 0
-			}
+			for _, rule in ipairs(self.replace_what) do
+
+				rules[#rules + 1] = {
+					what = rule[1],
+					with = rule[2] or "",
+					y_off = rule[3] or 0,
+					reach = rule[4] or 0 }
+			end
+		else
+			rules[1] = {
+				what = self.replace_what,
+				with = self.replace_with or "",
+				y_off = self.replace_offset or 0,
+				reach = 0 }
 		end
+
+		self.temp.replace_rules = rules -- store rules
 	else
-		rules[1] = {
-			what = self.replace_what,
-			with = self.replace_with or "",
-			y_off = self.replace_offset or 0,
-			reach = 0
-		}
+		rules = self.temp.replace_rules -- used cached rules
 	end
 
 	if #rules == 0 then return end
@@ -1383,6 +1389,8 @@ function mob_class:replace(pos, dtime)
 	if not spos then return end
 
 	local newname = selected_rule.with
+
+	if not registered_nodes[newname] then return end
 
 	if self.on_replace then -- custom function
 
