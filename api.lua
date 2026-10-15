@@ -2461,16 +2461,24 @@ function mob_class:falling(pos)
 
 		fall_speed = -1.2 / visc
 	else
-		local d = (self.old_y or v.y) - self.object:get_pos().y
+		-- store fastest fall velocity
+		if v.y < (self.fall_velocity or 0) then self.fall_velocity = v.y end
 
-		if d > 0.08 and self.animation and self.animation.falling_end then
+		if v.y < -3 and self.animation and self.animation.falling_end then
 			self:set_animation("falling")
 		end
 
-		-- stay consistent with player fall damage
-		if self.fall_damage and v.y == 0 and d > 6 then
+		-- stay consistent with player fall damage over 6 high
+		if self.fall_damage and v.y == 0 and self.fall_velocity < -6 then
 
-			local damage = d - 6
+			local damage = -self.fall_velocity - 10
+
+			self.fall_velocity = 0
+
+			self:set_animation("stand") -- reset falling animation
+
+			if damage < 1 then return end
+
 			local y_level = self.prop.collisionbox[2]
 			local pos = self.object:get_pos()
 
@@ -2491,8 +2499,6 @@ function mob_class:falling(pos)
 
 			if self:check_for_death({type = "fall"}) then return true end
 		end
-
-		self.old_y = self.object:get_pos().y
 	end
 
 	self.object:set_acceleration({x = 0, y = fall_speed, z = 0}) -- fall at set speed
@@ -2934,6 +2940,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 	self.looking_at = "air"
 	self.looking_above = "air"
 	self.state = self.state or "stand"
+	self.fall_velocity = 0
 	self:set_yaw((random(0, 360) - 180) / 180 * pi, 6) -- stand at random yaw
 	self:set_animation("stand")
 
