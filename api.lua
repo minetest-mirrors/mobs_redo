@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261015",
+	mod = "redo", version = "20261016",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -835,7 +835,7 @@ function mob_class:check_for_death(cmi_cause)
 
 	if self.health > 0 then -- mob still alive but damaged
 
-		if damaged then self:mob_sound(self.sounds.damage) end
+		if damaged then self:mob_sound(self.sounds and self.sounds.damage) end
 
 		-- make sure health isn't higher than max
 		if self.health > self.prop.hp_max then self.health = self.prop.hp_max end
@@ -2464,6 +2464,7 @@ function mob_class:falling(pos)
 		-- store fastest fall velocity
 		if v.y < (self.fall_velocity or 0) then self.fall_velocity = v.y end
 
+		-- how fast we need to fall before falling animation starts
 		if v.y < -3 and self.animation and self.animation.falling_end then
 			self:set_animation("falling")
 		end
@@ -2477,8 +2478,6 @@ function mob_class:falling(pos)
 
 			self:set_animation("stand") -- reset falling animation
 
-			if damage < 1 then return end
-
 			local y_level = self.prop.collisionbox[2]
 			local pos = self.object:get_pos()
 
@@ -2489,9 +2488,16 @@ function mob_class:falling(pos)
 			local def = registered_nodes[self.standing_on]
 			local add = def and def.groups.fall_damage_add_percent
 
+			if def and def.sounds and def.sounds.footstep and def.sounds.footstep.name then
+				core.sound_play(def.sounds.footstep.name,
+						{pos = pos, max_hear_distance = 12}, true)
+			end
+
 			if add and add ~= 0 then
 				damage = damage + damage * (add / 100)
 			end
+
+			if damage < 1 then return end
 
 			self.health = self.health - ceil(damage)
 
