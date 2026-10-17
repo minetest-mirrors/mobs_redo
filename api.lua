@@ -1,3 +1,4 @@
+
 -- translation & mod checks
 
 local S = core.get_translator("mobs")
@@ -851,7 +852,7 @@ function mob_class:check_for_death(cmi_cause)
 	-- reset vars and fall
 	self.attack = nil
 	self.following = nil
-	self.v_start = false ; self.blinktimer = 0
+	self.v_start = false ; self.temp.blinktimer = 0
 	self.state = "die"
 	self.object:set_acceleration({x = 0, y = -9.5, z = 0})
 
@@ -1345,9 +1346,9 @@ function mob_class:replace(pos, dtime)
 	-- ground mobs can only replace/eat when on the ground
 	if not self.fly and not self.touching_ground then return end
 
-	self.replace_timer = (self.replace_timer or 0) + dtime
-	if self.replace_timer < self.replace_rate then return end
-	self.replace_timer = 0
+	self.temp.replace_timer = (self.temp.replace_timer or 0) + dtime
+	if self.temp.replace_timer < self.replace_rate then return end
+	self.temp.replace_timer = 0
 
 	local rules = {}
 
@@ -1981,7 +1982,7 @@ end
 function mob_class:stop_attack()
 
 	self.attack = nil ; self.following = nil
-	self.v_start = false ; self.blinktimer = 0
+	self.v_start = false ; self.temp.blinktimer = 0
 	self.path.way = nil ; self.state = "stand"
 	self:set_velocity(0)
 	self:ground_animation("stand", "glide", true)
@@ -2004,7 +2005,7 @@ function mob_class:do_states(dtime)
 
 		if lp and #lp > 0 then -- if we found land try to climb out
 
-			yaw = self:yaw_to_pos( lp[random(#lp)], 0, 1 )
+			yaw = self:yaw_to_pos(lp[random(#lp)], 0, 1)
 			self:set_yaw(yaw, 0) -- needed to fix yaw when escaping
 
 			self.state = "walk"
@@ -2180,8 +2181,8 @@ function mob_class:do_states(dtime)
 		if not self.v_start and dist <= self.reach and in_sight then
 
 			self.v_start = true
-			self.explode_timer = 0
-			self.blinktimer = 0
+			self.temp.explode_timer = 0
+			self.temp.blinktimer = 0
 			self:mob_sound(self.sounds.fuse)
 
 		-- stop timer if out of reach or direct line of sight
@@ -2189,8 +2190,8 @@ function mob_class:do_states(dtime)
 		and (dist > self.reach or not in_sight) then
 
 			self.v_start = false
-			self.explode_timer = 0
-			self.blinktimer = 0
+			self.temp.explode_timer = 0
+			self.temp.blinktimer = 0
 			self.blinkstatus = false
 			self.object:set_texture_mod("")
 			self.object:set_properties({glow = self.glow})
@@ -2211,12 +2212,12 @@ function mob_class:do_states(dtime)
 
 		if self.v_start then -- fuse active
 
-			self.explode_timer = (self.explode_timer or 0) + dtime
-			self.blinktimer = (self.blinktimer or 0) + dtime
+			self.temp.explode_timer = (self.temp.explode_timer or 0) + dtime
+			self.temp.blinktimer = (self.temp.blinktimer or 0) + dtime
 
-			if self.blinktimer > 0.2 then
+			if self.temp.blinktimer > 0.2 then
 
-				self.blinktimer = 0
+				self.temp.blinktimer = 0
 				self.blinkstatus = not self.blinkstatus
 
 				if self.blinkstatus then
@@ -2228,7 +2229,7 @@ function mob_class:do_states(dtime)
 				end
 			end
 
-			if self.explode_timer > self.explosion_timer then
+			if self.temp.explode_timer > self.explosion_timer then
 
 				-- dont damage anything if area protected or near water
 				if core.find_node_near(s, 1, {"group:water"})
@@ -2355,9 +2356,9 @@ function mob_class:do_states(dtime)
 
 		self:set_velocity(0)
 
-		self.punch_timer = (self.punch_timer or 0) + dtime
-		if self.punch_timer < self.punch_interval then return end
-		self.punch_timer = 0
+		self.temp.punch_timer = (self.temp.punch_timer or 0) + dtime
+		if self.temp.punch_timer < self.punch_interval then return end
+		self.temp.punch_timer = 0
 
 		-- no custom attack or custom attack returns true to continue
 		if self.custom_attack and not self:custom_attack(self, p) then return end
@@ -2387,13 +2388,10 @@ function mob_class:do_states(dtime)
 
 		-- punch player (or what player is attached to)
 		local target = self.attack:get_attach() or self.attack
-
 		local dgroup = self.damage_group or "fleshy"
 
 		target:punch(self.object, 1.0, {
-			full_punch_interval = 1.0,
-			damage_groups = {[dgroup] = self.damage}
-		}, nil)
+			full_punch_interval = 1.0, damage_groups = {[dgroup] = self.damage}}, nil)
 
 		return
 	end
@@ -2413,9 +2411,9 @@ function mob_class:do_states(dtime)
 
 		self:yaw_to_pos(p) ; self:set_velocity(0)
 
-		self.shoot_timer = (self.shoot_timer or 0) + dtime
-		if self.shoot_timer < self.shoot_interval then return end
-		self.shoot_timer = 0
+		self.temp.shoot_timer = (self.temp.shoot_timer or 0) + dtime
+		if self.temp.shoot_timer < self.shoot_interval then return end
+		self.temp.shoot_timer = 0
 
 		if not core.registered_entities[self.arrow]
 		and random(100) > self.shoot_chance then return end
@@ -3116,8 +3114,18 @@ function mob_class:on_step(dtime, moveresult)
 
 	if self.timer > 100 then self.timer = 1 end -- never go over 100
 
-	-- when attacking call do_states live (return if dead)
-	if self.state == "attack" and self:do_states(dtime) then return end
+	-- when attacking call do_states every 10th of a second (return if dead)
+	if self.state == "attack" then
+
+		self.state_timer = (self.state_timer or 0) + dtime
+
+		if self.state_timer >= 0.1 then
+
+			self.state_timer = 0
+
+			if self:do_states(0.1) then return end
+		end
+	end
 
 	self.timer1 = (self.timer1 or 0) + dtime
 
