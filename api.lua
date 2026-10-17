@@ -719,7 +719,8 @@ function mob_class:item_drop()
 
 	if not mobs_drop_items or self.child then return end
 
-	local pos = self.object:get_pos()
+	local cb = self.prop.collisionbox
+	local pos = self.object:get_pos() ; pos.y = pos.y + (cb[2] + cb[5]) / 2
 	local drops = self.drops
 	local cause = self.cause_of_death or {}
 
