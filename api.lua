@@ -19,7 +19,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261016",
+	mod = "redo", version = "20261017",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1339,8 +1339,11 @@ end
 
 function mob_class:replace(pos, dtime)
 
-	if not mobs_griefing or self.child or not self.touching_ground
+	if not mobs_griefing or self.child
 	or not self.replace_rate or not self.replace_what then return end
+
+	-- ground mobs can only replace/eat when on the ground
+	if not self.fly and not self.touching_ground then return end
 
 	self.replace_timer = (self.replace_timer or 0) + dtime
 	if self.replace_timer < self.replace_rate then return end
