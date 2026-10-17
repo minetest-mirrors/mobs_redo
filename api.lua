@@ -81,10 +81,10 @@ local spawn_monster_protected = settings:get_bool("mobs_spawn_monster_protected"
 local remove_far = settings:get_bool("remove_far_mobs") ~= false
 local mob_area_spawn = settings:get_bool("mob_area_spawn")
 local difficulty = tonumber(settings:get("mob_difficulty")) or 1.0
-local max_per_block = tonumber(settings:get("max_objects_per_block") or 99)
-local mob_nospawn_range = tonumber(settings:get("mob_nospawn_range") or 12)
+local max_per_block = tonumber(settings:get("max_objects_per_block")) or 99
+local mob_nospawn_range = tonumber(settings:get("mob_nospawn_range")) or 12
 local active_limit = tonumber(settings:get("mob_active_limit")) or 0
-local mob_chance_multiplier = tonumber(settings:get("mob_chance_multiplier") or 1)
+local mob_chance_multiplier = tonumber(settings:get("mob_chance_multiplier")) or 1
 local peaceful_player_enabled = settings:get_bool("enable_peaceful_player")
 local mob_smooth_rotate = settings:get_bool("mob_smooth_rotate") ~= false
 local mob_height_fix = settings:get_bool("mob_height_fix")
@@ -95,8 +95,8 @@ local gravity = tonumber(settings:get("movement_gravity")) or 9.81
 
 -- loop interval timers
 
-local node_timer_interval = tonumber(settings:get("mob_node_timer_interval") or 0.25)
-local main_timer_interval = tonumber(settings:get("mob_main_timer_interval") or 1.0)
+local node_timer_interval = tonumber(settings:get("mob_node_timer_interval")) or 0.25
+local main_timer_interval = tonumber(settings:get("mob_main_timer_interval")) or 1.0
 
 -- pathfind settings
 
@@ -111,10 +111,10 @@ if pathfinding_algorithm == "AStar_noprefetch" then pathfinding_algorithm = "A*_
 elseif pathfinding_algorithm == "AStar" then pathfinding_algorithm = "A*"
 end
 
-local pathfinding_max_jump = tonumber(settings:get("mob_pathfinding_max_jump") or 4)
-local pathfinding_max_drop = tonumber(settings:get("mob_pathfinding_max_drop") or 6)
+local pathfinding_max_jump = tonumber(settings:get("mob_pathfinding_max_jump")) or 4
+local pathfinding_max_drop = tonumber(settings:get("mob_pathfinding_max_drop")) or 6
 local pathfinding_searchdistance = tonumber(
-		settings:get("mob_pathfinding_searchdistance") or 16)
+		settings:get("mob_pathfinding_searchdistance")) or 16
 
 if peaceful_only then -- show message when peaceful mode active
 
@@ -3571,13 +3571,16 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		if pos.y > max_height or pos.y < min_height then return end
 
 		-- check mob spawns in correct biome (if set)
-		local bdata = core.get_biome_data and core.get_biome_data(pos)
+		if def and type(def.biomes) == "table" then
 
-		if bdata and def and type(def.biomes) == "table" then
+			local bdata = core.get_biome_data and core.get_biome_data(pos)
 
-			local biome = core.get_biome_name(bdata.biome) or ""
+			if bdata then
 
-			if not check_for(biome, def.biomes) then return end
+				local biome = core.get_biome_name(bdata.biome) or ""
+
+				if not check_for(biome, def.biomes) then return end
+			end
 		end
 
 		local light = core.get_node_light(pos)
@@ -3592,9 +3595,8 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		-- check if mob/monster can be spawned inside protected areas
 		if core.is_protected(pos, "") then
 
-			if core.registered_entities[name].type == "monster"
-			and spawn_monster_protected == false then return
-			elseif spawn_protected == false then return
+			if ent.type == "monster" and not spawn_monster_protected then return
+			elseif not spawn_protected then return
 			end
 		end
 
@@ -3605,41 +3607,37 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		if mob_area_spawn ~= true and ent.base_colbox then
+		if not mob_area_spawn and ent.base_colbox then
 
-			-- do we have enough height clearance to spawn mob?
 			local height = max(0, ent.base_colbox[5] - ent.base_colbox[2])
 
-			for n = 0, floor(height) do
+			for n = 0, floor(height) do -- do we have enough height clearance
 
 				local pos2 = {x = pos.x, y = pos.y + n, z = pos.z}
 
 				if registered_nodes[node_ok(pos2).name].walkable then return end
 			end
-		else
-			pos = can_spawn(pos, name) -- return position if enough space to spawn
+		else -- return position if enough space to spawn
+			pos = can_spawn(pos, name) ; if not pos then return end
 		end
 
-		if pos then
+		-- get mob collisionbox and determine y_offset when spawning
+		local _prop = ent and ent.initial_properties or {}
+		local _y = _prop.collisionbox and -_prop.collisionbox[2] or 1
 
-			-- get mob collisionbox and determine y_offset when spawning
-			local _prop = ent and ent.initial_properties or {}
-			local _y = _prop.collisionbox and -_prop.collisionbox[2] or 1
+		pos.y = pos.y + _y
 
-			pos.y = pos.y + _y
+		local mob = core.add_entity(pos, name)
 
-			local mob = core.add_entity(pos, name)
+		if mob_log_spawn then
 
-			if mob_log_spawn then
+			core.log("action", string.format("[MOBS] Spawned %s at %s", name,
+					core.pos_to_string(pos)))
+		end
 
-				core.log("action", string.format("[MOBS] Spawned %s at %s", name,
-						core.pos_to_string(pos)))
-			end
-
-			if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
-		else
+		if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
+	else
 --print("--- not enough space to spawn", name)
-		end
 	end
 
 	if map_load then
@@ -4423,8 +4421,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 			end
 		end
 
-		-- find nodes that can hear up to 8 blocks away
-		if node_hear then
+		if node_hear then -- find nodes that can hear up to 8 blocks away
 
 			local dist = min(def.max_hear_distance, 8)
 			local ps = core.find_nodes_in_area(
