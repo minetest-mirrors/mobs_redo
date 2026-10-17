@@ -3617,27 +3617,30 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 				if registered_nodes[node_ok(pos2).name].walkable then return end
 			end
-		else -- return position if enough space to spawn
-			pos = can_spawn(pos, name) ; if not pos then return end
+		else
+			pos = can_spawn(pos, name) -- return position if enough space to spawn
 		end
 
-		-- get mob collisionbox and determine y_offset when spawning
-		local _prop = ent and ent.initial_properties or {}
-		local _y = _prop.collisionbox and -_prop.collisionbox[2] or 1
+		if pos then
 
-		pos.y = pos.y + _y
+			-- get mob collisionbox and determine y_offset when spawning
+			local _prop = ent and ent.initial_properties or {}
+			local _y = _prop.collisionbox and -_prop.collisionbox[2] or 1
 
-		local mob = core.add_entity(pos, name)
+			pos.y = pos.y + _y
 
-		if mob_log_spawn then
+			local mob = core.add_entity(pos, name)
 
-			core.log("action", string.format("[MOBS] Spawned %s at %s", name,
-					core.pos_to_string(pos)))
-		end
+			if mob_log_spawn then
 
-		if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
-	else
+				core.log("action", string.format("[MOBS] Spawned %s at %s", name,
+						core.pos_to_string(pos)))
+			end
+
+			if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
+		else
 --print("--- not enough space to spawn", name)
+		end
 	end
 
 	if map_load then
