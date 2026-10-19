@@ -2130,7 +2130,14 @@ function mob_class:do_states(dtime)
 		end
 
 		self:set_velocity(self.run_velocity)
-		self:set_animation("walk") ; return
+
+		if self.animation and self.animation.run_start and self.animation.run_end then
+			self:set_animation("run")
+		else
+			self:set_animation("walk")
+		end
+
+		return
 	end
 
 	if self.state ~= "attack" then return end -- if we aren't attacking
