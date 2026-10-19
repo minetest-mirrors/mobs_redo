@@ -3526,6 +3526,9 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 				name, chance, aoc))
 	end
 
+	-- add a few seconds before/after interval to step spawning
+	local rand = random(-5, 5) ; interval = max(interval + rand, 1)
+
 	mobs.spawning_mobs[name].aoc = aoc
 
 	local function spawn_action(pos, node, active_object_count, active_object_count_wider)
@@ -3539,10 +3542,6 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
-		local ent = core.registered_entities[name]
-
-		if not mobs.spawning_mobs[name] or not ent then return end
-
 		if at_limit() then return end
 
 		-- custom checks for mob spawning
@@ -3550,9 +3549,7 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 
 		local num_mob, is_pla = count_mobs(pos, name)
 
-		if not is_pla then return end
-
-		if num_mob >= aoc then return end
+		if not is_pla or num_mob >= aoc then return end
 
 		if day_toggle ~= nil then
 
@@ -3587,8 +3584,8 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		if not light or light > max_light or light < min_light then return end
 
 		if #core.find_nodes_in_area(
-				{x = pos.x - 16, y = pos.y - 16, z = pos.z - 16},
-				{x = pos.x + 16, y = pos.y + 16, z = pos.z + 16},
+				{x = pos.x - 8, y = pos.y - 8, z = pos.z - 8},
+				{x = pos.x + 8, y = pos.y + 8, z = pos.z + 8},
 				{"mobs:mob_repellent"}) > 0 then return end
 
 		-- check if mob/monster can be spawned inside protected areas
@@ -3620,26 +3617,23 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			pos = can_spawn(pos, name) -- return position if enough space to spawn
 		end
 
-		if pos then
+		if not pos then return end
 
-			-- get mob collisionbox and determine y_offset when spawning
-			local _prop = ent and ent.initial_properties or {}
-			local _y = _prop.collisionbox and -_prop.collisionbox[2] or 1
+		-- get mob collisionbox and determine y_offset when spawning
+		local _prop = ent and ent.initial_properties or {}
+		local _y = _prop.collisionbox and -_prop.collisionbox[2] or 1
 
-			pos.y = pos.y + _y
+		pos.y = pos.y + _y
 
-			local mob = core.add_entity(pos, name)
+		local mob = core.add_entity(pos, name)
 
-			if mob_log_spawn then
+		if mob_log_spawn then
 
-				core.log("action", string.format("[MOBS] Spawned %s at %s", name,
-						core.pos_to_string(pos)))
-			end
-
-			if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
-		else
---print("--- not enough space to spawn", name)
+			core.log("action", string.format("[MOBS] Spawned %s at %s", name,
+					core.pos_to_string(pos)))
 		end
+
+		if on_spawn and mob then on_spawn(mob:get_luaentity(), pos) end
 	end
 
 	if map_load then

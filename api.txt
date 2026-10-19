@@ -531,7 +531,7 @@ default setting and can be omitted:
                           spawn on top of (defaults to {"group:dirt", "group:stone"}
     'neighbors'           is a list of nodenames on that the animal/monster will
                           spawn beside (default is {"air"})
-    'interval'            is same as in register_abm() (default is 30)
+    'interval'            is same as in register_abm() (default is 45)
     'chance'              is same as in register_abm() (default is 5000)
     'min_light'           is the minimum light level (default is 0)
     'max_light'           is the maximum light (default is 15)
