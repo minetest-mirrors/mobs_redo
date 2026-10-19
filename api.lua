@@ -3669,7 +3669,7 @@ function mobs:spawn(def)
 		def.nodes or {"group:soil", "group:stone"},
 		def.neighbors or {"air"},
 		def.min_light or 0, def.max_light or 15,
-		def.interval or 30, def.chance or 5000,
+		def.interval or 45, def.chance or 5000,
 		def.active_object_count or 1,
 		def.min_height or -31000, def.max_height or 31000,
 		def.day_toggle,
