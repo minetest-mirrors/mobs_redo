@@ -213,7 +213,7 @@ functions needed for the mob to work properly which contains the following:
       'max'    maximum number of items dropped.
    Note: If weapon has {fire=1} damage group set then cooked items will drop.
    Note2: A function can now be passed which can also return drops table, e.g.
-      drops = function(pos)
+      drops = function(self, pos)
          -- do something
          return { {name = "farming:bread"}, {name = "default:dirt", chance = 2} }
       end

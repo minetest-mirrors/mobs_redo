@@ -729,7 +729,7 @@ function mob_class:item_drop()
 	local cause = self.cause_of_death or {}
 
 	-- check for drops function
-	if type(drops) == "function" then drops = self.drops(pos) end
+	if type(drops) == "function" then drops = self.drops(self, pos) end
 
 	if not drops or #drops == 0 then return end
 
