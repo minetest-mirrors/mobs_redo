@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261019",
+	mod = "redo", version = "20261020",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -430,6 +430,9 @@ function mob_class:set_animation(anim, force)
 
 	if not self.animation or not anim then return end
 
+	-- skip new animation until animation timer finished
+	if self.temp.animation_timer and self.temp.animation_timer > 0 then return end
+
 	local current = self.animation_current or ""
 	local anims = self.animation
 
@@ -451,6 +454,10 @@ function mob_class:set_animation(anim, force)
 	or not anims[anim .. "_start"] or not anims[anim .. "_end"] then return end
 
 	self.animation_current = anim
+
+	local timer = anims[anim .. "_locked"] -- check animation for timer lock and set
+
+	if timer then self.temp.animation_timer = tonumber(timer) or 1 end
 
 	self.object:set_animation(
 			{x = anims[anim .. "_start"], y = anims[anim .. "_end"]},
@@ -795,9 +802,10 @@ function mob_class:death_anim()
 		return
 	end
 
+	-- calculate animation time from frames if die_locked isnt available
 	local frames = self.animation.die_end - self.animation.die_start
 	local speed = self.animation.die_speed or 15
-	local length = max(frames / speed, 0)
+	local length = self.animation.die_locked or max(frames / speed, 1)
 	local rot = self.animation.die_rotate and 5
 
 	self.object:set_properties({
@@ -2010,7 +2018,7 @@ function mob_class:do_states(dtime)
 			self.following = nil
 			self:set_velocity(self.run_velocity)
 
-			if self.animation and self.animation.run_end then
+			if self.animation and self.animation.run_start and self.animation.run_end then
 				self:set_animation("run")
 			else
 				self:set_animation("walk")
@@ -2208,7 +2216,7 @@ function mob_class:do_states(dtime)
 			self:set_velocity(self.run_velocity)
 		end
 
-		if self.animation and self.animation.run_start then
+		if self.animation and self.animation.run_start and self.animation.run_end then
 			self:set_animation("run")
 		else
 			self:set_animation("walk")
@@ -3054,6 +3062,14 @@ function mob_class:on_step(dtime, moveresult)
 	if use_cmi then cmi.notify_step(self.object, dtime) end
 
 	local pos = self.object:get_pos() ; if not pos then return end
+
+	-- if animation timer active reduce time
+	if self.temp.animation_timer and self.temp.animation_timer > 0 then
+
+		self.temp.animation_timer = self.temp.animation_timer - dtime
+
+		if self.temp.animation_timer <= 0 then self.temp.animation_timer = nil end
+	end
 
 	self.temp.node_timer = (self.temp.node_timer or 0) + dtime
 
