@@ -2106,7 +2106,8 @@ function mob_class:do_states(dtime)
 		self:set_velocity(self.walk_velocity)
 
 		-- figure out which animation to use while in motion
-		if self:flight_check() and self.animation and self.animation.fly_end then
+		if self:flight_check() and self.animation
+		and self.animation.fly_start and self.animation.fly_end then
 
 			local in_water = registered_nodes[self.standing_in].groups.water
 
@@ -2958,8 +2959,7 @@ function mob_class:mob_activate(staticdata, def, dtime)
 			or {fleshy = self.armor, immortal = 1} -- immortal for custom damage
 
 	self.object:set_armor_groups(armor)
-	self.old_y = self.object:get_pos().y -- var defaults
-	self.old_health = self.health
+	self.old_health = self.health -- var defaults
 	self.textures = textures
 	self.standing_in = "air"
 	self.standing_on = "air"
