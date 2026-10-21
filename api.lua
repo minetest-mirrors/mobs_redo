@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261020",
+	mod = "redo", version = "20261021",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -933,7 +933,9 @@ end
 
 function mob_class:is_at_cliff()
 
-	if self.driver or self.fear_height == 0 or self.disable_falling then return end
+	if self.driver or self.fly or self.fear_height == 0 or self.disable_falling then
+		return
+	end
 
 	-- if path already blocked, dont check for cliff
 	if registered_nodes[self.looking_at].walkable or self.facing_fence then return end
