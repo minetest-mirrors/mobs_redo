@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261021",
+	mod = "redo", version = "20261023",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -426,43 +426,83 @@ end
 
 -- set defined animation
 
+local priorities = { -- higher priority animations can override locked ones
+	stand = 0, walk = 1, run = 1, fly = 1, glide = 1, eat = 1, jump = 2, falling = 2,
+	punch = 3, shoot = 3, injured = 3, die = 4}
+
+local function get_priority(anims, name)
+
+	local value = anims[name .. "_priority"]
+
+	if value then return tonumber(value) or 0 end
+
+	return priorities[name] or 0
+end
+
 function mob_class:set_animation(anim, force)
 
 	if not self.animation or not anim then return end
 
-	-- skip new animation until animation timer finished
-	if self.temp.animation_timer and self.temp.animation_timer > 0 then return end
-
-	local current = self.animation_current or ""
 	local anims = self.animation
+	local current = self.animation_current or ""
+	local current_set = self.animation_set or current
+	local requested = anim
 
-	-- only use different animation for attacks when using same set
-	if not force and anim ~= "punch" and anim ~= "shoot" and current == anim then return end
+	-- keep selected variant (e.g. stand2) so we dont quick flip animations
+	if not force and current_set == requested
+	and requested ~= "punch" and requested ~= "shoot" then return end
 
-	local num = 0
-
-	for n = 1, 4 do -- check for more than one animation (max 4)
-		if anims[anim .. n .. "_start"] and anims[anim .. n .. "_end"] then num = n end
+	if self.temp.animation_timer and self.temp.animation_timer > 0 and not force
+	and get_priority(anims, requested) <= (self.animation_priority
+	or get_priority(anims, current_set)) then
+		return
 	end
 
-	if num > 0 then -- choose random animation from set
-		num = random(0, num)
-		anim = anim .. (num ~= 0 and num or "")
+	-- make list of valid animations in set (e.g. walk1, walk2)
+	local valid = {}
+
+	for n = 1, 4 do
+
+		if anims[requested .. n .. "_start"] and anims[requested .. n .. "_end"] then
+			valid[#valid + 1] = requested .. n
+		end
 	end
 
-	if (anim == current and not force)
-	or not anims[anim .. "_start"] or not anims[anim .. "_end"] then return end
+	if #valid > 0 then -- we got a table of animations, select from it
+
+		local has_base = anims[requested .. "_start"] and anims[requested .. "_end"]
+
+		if has_base then -- incase stand is missing and only stand1 stand2 exist
+
+			local sel = random(0, #valid)
+
+			if sel > 0 then anim = valid[sel] end
+		else
+			anim = valid[random(1, #valid)]
+		end
+	end
+
+	-- double check selected animation exists
+	if not anims[anim .. "_start"] or not anims[anim .. "_end"] then return end
+
+	if anim == current and not force then return end
 
 	self.animation_current = anim
+	self.animation_set = requested
+	self.animation_priority = get_priority(anims, requested)
 
-	local timer = anims[anim .. "_locked"] -- check animation for timer lock and set
+	local timer = anims[anim .. "_locked"] -- lock animation if timer exists
 
-	if timer then self.temp.animation_timer = tonumber(timer) or 1 end
+	if timer then
+		self.temp.animation_timer = tonumber(timer) or 1
+	else
+		self.temp.animation_timer = nil
+	end
 
 	self.object:set_animation(
 			{x = anims[anim .. "_start"], y = anims[anim .. "_end"]},
-			anims[anim .. "_speed"] or anims.speed_normal or 15, anims.frame_blend,
-			anims[anim .. "_loop"] ~= false)
+			anims[anim .. "_speed"] or anims.speed_normal or 15,
+			anims.frame_blend, anims[anim .. "_loop"] ~= false)
 end
 
 -- checks if flying mobs anim2 exists, uses anim1 if touching ground or doesnt exist

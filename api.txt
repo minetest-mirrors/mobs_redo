@@ -288,9 +288,12 @@ functions needed for the mob to work properly which contains the following:
       'die_speed'
       'die_loop'     when set to false stops the animation looping.
       'die_rotate'   if true mob spins during death animation.
-      'die_locked'   number of seconds animation is locked for until over, can be used
-                     for any of the above animations also.
 
+      Using '_locked = <n>' will lock the animation until complete for n seconds.
+      Using '_priority = <num>' will allow animations to override above lock if
+                                value is higher e.g. defaults are:
+                                stand = 0, walk,run,fly,glide,eat = 1,
+                                jump,falling = 2, punch,shoot,injured = 3, die = 4
       Using '_loop = false' setting will stop any of the above animations from
       looping.
 
