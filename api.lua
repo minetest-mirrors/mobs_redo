@@ -284,7 +284,7 @@ end
 
 function mobs:scale_mob(self, w, h, perma)
 
-	if not self and self.object then return end
+	if not self or not self.object then return end
 
 	w = w or 1 ; h = h or 1 -- defaults
 
