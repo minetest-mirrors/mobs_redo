@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261023",
+	mod = "redo", version = "20261025",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2548,17 +2548,17 @@ function mob_class:falling(pos)
 			local def = registered_nodes[self.standing_on]
 			local add = def and def.groups.fall_damage_add_percent
 
-			if def and def.sounds and def.sounds.footstep and def.sounds.footstep.name then
-
-				core.sound_play(def.sounds.footstep.name,
-						{pos = pos, gain = 2.0, max_hear_distance = 12}, true)
-			end
-
 			if add and add ~= 0 then
 				damage = damage + damage * (add / 100)
 			end
 
 			if damage < 1 then return end
+
+			if def and def.sounds and def.sounds.footstep and def.sounds.footstep.name then
+
+				core.sound_play(def.sounds.footstep.name,
+						{pos = pos, gain = 2.0, max_hear_distance = 12}, true)
+			end
 
 			self.health = self.health - ceil(damage)
 
