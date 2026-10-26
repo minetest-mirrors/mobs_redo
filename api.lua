@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261025",
+	mod = "redo", version = "20261026",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2470,14 +2470,15 @@ function mob_class:do_states(dtime)
 		self.temp.shoot_timer = 0
 
 		if not core.registered_entities[self.arrow]
-		and random(100) > self.shoot_chance then return end
+		or random(100) > self.shoot_chance then return end
 
 		self:set_animation("shoot")
 		self:mob_sound(self.sounds.shoot_attack)
 
 		-- spawn arrow in front of mob
-		local dir_x = -sin(yaw) * (self.prop.collisionbox[4] + 0.3)
-		local dir_z = cos(yaw) * (self.prop.collisionbox[4] + 0.3)
+		local yaw2 = self.object:get_yaw() + self.rotate
+		local dir_x = -sin(yaw2)
+		local dir_z = cos(yaw2)
 		local arrow_pos = {x = s.x + dir_x, y = s.y, z = s.z + dir_z}
 
 		local obj = core.add_entity(arrow_pos, self.arrow)
