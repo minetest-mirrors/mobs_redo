@@ -982,7 +982,8 @@ function mob_class:is_at_cliff()
 
 	local yaw = self.object:get_yaw() ; if not yaw then return end
 	local cb = self.prop.collisionbox
-	local dir_x, dir_z = -sin(yaw) * (cb[4] + 0.5), cos(yaw) * (cb[4] + 0.5)
+	local yaw2 = yaw + self.rotate
+	local dir_x, dir_z = -sin(yaw2) * (cb[4] + 0.5), cos(yaw2) * (cb[4] + 0.5)
 	local pos = self.object:get_pos()
 	local ypos = pos.y + cb[2] + 0.25-- foot level
 
@@ -1168,11 +1169,12 @@ function mob_class:do_jump()
 		self:set_animation("jump")
 
 		local yaw = self.object:get_yaw() or 0
+		local yaw2 = yaw + self.rotate
 		local boost = self.jump_height * 0.35
 
 		vel.y = self.jump_height
-		vel.x = (vel.x or 0) - sin(yaw) * boost -- forward hop
-		vel.z = (vel.z or 0) + cos(yaw) * boost
+		vel.x = (vel.x or 0) - sin(yaw2) * boost -- forward hop
+		vel.z = (vel.z or 0) + cos(yaw2) * boost
 
 		self.object:set_velocity(vel)
 
@@ -3080,8 +3082,9 @@ function mob_class:get_nodes()
 			{x = pos.x, y = pos.y + y_level - 0.1, z = pos.z}, "air").name
 
 	-- find front position
-	local dir_x = -sin(yaw) * (self.prop.collisionbox[4] + 0.5)
-	local dir_z = cos(yaw) * (self.prop.collisionbox[4] + 0.5)
+	local yaw2 = yaw + self.rotate
+	local dir_x = -sin(yaw2) * (self.prop.collisionbox[4] + 0.5)
+	local dir_z = cos(yaw2) * (self.prop.collisionbox[4] + 0.5)
 
 	-- nodes in front of and front/above mob
 	self.looking_at = node_ok(
