@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261026",
+	mod = "redo", version = "20261027",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2477,8 +2477,8 @@ function mob_class:do_states(dtime)
 
 		-- spawn arrow in front of mob
 		local yaw2 = self.object:get_yaw() + self.rotate
-		local dir_x = -sin(yaw2)
-		local dir_z = cos(yaw2)
+		local dir_x = -sin(yaw2) * (self.prop.collisionbox[4] + 0.3)
+		local dir_z = cos(yaw2) * (self.prop.collisionbox[4] + 0.3)
 		local arrow_pos = {x = s.x + dir_x, y = s.y, z = s.z + dir_z}
 
 		local obj = core.add_entity(arrow_pos, self.arrow)
