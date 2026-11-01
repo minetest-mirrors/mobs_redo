@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261027",
+	mod = "redo", version = "20261101",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3093,8 +3093,9 @@ function mob_class:get_nodes()
 	self.looking_above = node_ok(
 			{x = pos.x + dir_x, y = pos.y + y_level + 1.1, z = pos.z + dir_z}).name
 
-	-- are we facing a fence or wall
-	self.facing_fence = self.looking_at:find("fence", 1, true)
+	-- are we facing something dangerous, or a fence or wall
+	self.facing_fence = is_node_dangerous(self, self.looking_at)
+			or self.looking_at:find("fence", 1, true)
 			or self.looking_at:find("gate", 1, true)
 			or self.looking_at:find("wall", 1, true)
 end
