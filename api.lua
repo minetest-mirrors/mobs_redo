@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261101",
+	mod = "redo", version = "20261107",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -206,6 +206,35 @@ function mob_class:mob_sound(sound)
 	sound.object = self.object -- bind sound to mob
 
 	core.sound_play(sound.name, sound, true)
+end
+
+-- enable/disable mob ai
+
+function mobs:set_ai(self, enabled)
+
+	if not self or not self.object then return end
+
+	self.ai_enabled = enabled
+
+	if not enabled then -- clear current activities and halt
+
+		self.attack = nil
+		self.following = nil
+		self.state = "stand"
+		self.reach_ext = 0
+
+		if self.path then
+			self.path.way = {}
+			self.path.following = false
+			self.path.stuck = false
+			self.path.stuck_timer = 0
+		end
+
+		self:set_velocity(0)
+		self:set_animation("stand", true)
+	end
+
+	return true
 end
 
 -- set attack
@@ -3182,6 +3211,19 @@ function mob_class:on_step(dtime, moveresult)
 	-- run custom function (defined in mob lua file) - when false skip going any further
 	if self.do_custom and self:do_custom(dtime, moveresult) == false then return end
 
+	-- If mob ai disabled, keep physics and environmental, but disable everything else
+	if self.ai_enabled == false then
+
+		self.attack = nil ; self.following = nil
+
+		if self.state ~= "stand" then
+			self.state = "stand"
+			self:set_animation("stand", true)
+		end
+
+		self:set_velocity(0) ; return
+	end
+
 	self.timer = self.timer + dtime -- kept only for backwards compatibility
 
 	if self.timer > 100 then self.timer = 1 end -- never go over 100
@@ -3338,6 +3380,7 @@ function mobs:register_mob(name, def)
 		randomly_turn = def.randomly_turn ~= false,
 		ignore_invisibility = def.ignore_invisibility,
 		messages = def.messages, -- npc message table for idle chat
+		ai_enabled = def.ai_enabled,
 -- health
 		armor = def.armor or 100,
 		damage = max(0, (def.damage or 0) * difficulty),

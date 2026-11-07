@@ -179,6 +179,8 @@ functions needed for the mob to work properly which contains the following:
                          works with dogfight attack and when 'mobs_griefing'
                          in minetest.conf is not false). Adding {unbreakable=1}
                          to node groups stops them being broken by mobs.
+   'ai_enabled'          when set to False only physics and env damage is enabled,
+                         movement and attacks etc. are turned off.
    'immune_to'           is a table that holds specific damage when being hit by
                          certain items e.g.
       {"default:sword_wood",  0} -- causes no damage.
@@ -983,3 +985,4 @@ mobs:line_of_sight(self, pos1, pos2)
 mobs:set_animation(self, animation)
 mobs:yaw(self, yaw, rotation_steps)
 mobs:scale_mob(self, width, height, permanent) -- scale by w,h
+mobs:set_ai(self, enabled) -- can turn on/off mob ai and keep physics/env damage enabled
