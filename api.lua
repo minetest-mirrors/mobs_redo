@@ -2213,10 +2213,15 @@ function mob_class:do_states(dtime)
 
 		self:set_velocity(self.run_velocity)
 
-		if self.animation and self.animation.run_start and self.animation.run_end then
-			self:set_animation("run")
+		if self.touching_ground then
+
+			if self.animation and self.animation.run_start and self.animation.run_end then
+				self:set_animation("run")
+			else
+				self:set_animation("walk")
+			end
 		else
-			self:set_animation("walk")
+			self:set_animation("fly")
 		end
 
 		return
@@ -3232,6 +3237,8 @@ function mob_class:on_step(dtime, moveresult)
 		self:set_velocity(0) ; return
 	end
 
+	self:do_circle_flight(dtime) -- circular flight motion
+
 	self.timer = self.timer + dtime -- kept only for backwards compatibility
 
 	if self.timer > 100 then self.timer = 1 end -- never go over 100
@@ -3303,6 +3310,52 @@ function mob_class:on_blast(damage)
 	return false, false, {} -- return no damage, no knockback, no item drops
 end
 
+-- circular flight for flying mobs
+
+function mob_class:do_circle_flight(dtime)
+
+	if not self.fly or not self.circle_flight or self.touching_ground then return end
+
+	if self.attack or self.following or self.order == "stand"
+	or self.state == "runaway" or self.state == "die" then return end
+
+	local pos = self.object:get_pos() ; if not pos then return end
+	local temp = self.temp
+
+	-- Choose a new orbit centre
+	if not temp.circle_center then
+		temp.circle_center = {x = pos.x, y = pos.y, z = pos.z}
+		temp.circle_angle = random() * pi * 2
+		temp.circle_direction = random(0, 1) == 0 and 1 or -1
+	end
+
+	local radius = self.circle_radius or 6
+	local speed = self.circle_speed or 0.5
+
+	temp.circle_angle = temp.circle_angle + speed * dtime * temp.circle_direction
+
+	-- Calculate position along circular path
+	local angle = temp.circle_angle
+	local center = temp.circle_center
+	local target = {
+		x = center.x + cos(angle) * radius,
+		y = center.y + sin(angle * 0.5) * 1.5,
+		z = center.z + sin(angle) * radius}
+
+	self:yaw_to_pos(target, 0, 2)
+
+	local direction = vector.direction(pos, target) -- move around circle
+
+	self.object:set_velocity({
+		x = direction.x * self.walk_velocity,
+		y = direction.y * self.walk_velocity,
+		z = direction.z * self.walk_velocity})
+
+	self:set_animation("fly")
+
+	return true
+end
+
 -- register mob entity
 
 function mobs:register_mob(name, def)
@@ -3363,6 +3416,9 @@ function mobs:register_mob(name, def)
 		fly = def.fly,
 		fly_in = def.fly_in or "air",
 		keep_flying = def.keep_flying,
+		circle_flight = def.circle_flight,
+		circle_radius = def.circle_radius,
+		circle_speed = def.circle_speed,
 		can_leap = def.can_leap,
 		view_range = def.view_range or 5,
 		view_range_attacking = def.view_range_attacking or def.view_range or 6,
