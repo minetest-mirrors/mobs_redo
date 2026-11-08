@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261107",
+	mod = "redo", version = "20261108",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -2846,7 +2846,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 		self:yaw_to_pos(hitter_pos, 3, 4) -- opposite dir
 
 		self.state = "runaway"
-		self.runaway_timer = 3
+		self.runaway_timer = 5
 		self.following = nil
 	end
 
@@ -3167,6 +3167,14 @@ function mob_class:on_step(dtime, moveresult)
 		if self:mob_expire(pos, node_timer_interval) then return end
 
 		self:do_jump() -- jump if not blocked
+
+		-- when running away turn slightly to evade enemies
+		if self.state == "runaway" and self.touching_ground then
+
+			local yaw = self.object:get_yaw()
+
+			self:set_yaw(yaw + random(-0.1, 0.1), 4)
+		end
 	end
 
 	if self:falling(pos) then return end -- return if dead from fall
