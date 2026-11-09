@@ -3344,6 +3344,13 @@ function mob_class:do_circle_flight(dtime)
 
 	self:yaw_to_pos(target, 0, 2)
 
+	-- for swimming mobs check above node to make sure we can circle upwards
+	local check_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
+
+	if not core.find_node_near(check_pos, 0, self.fly_in, true) then
+		target.y = pos.y
+	end
+
 	local direction = vector.direction(pos, target) -- move around circle
 
 	self.object:set_velocity({
