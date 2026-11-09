@@ -64,7 +64,6 @@ functions needed for the mob to work properly which contains the following:
    'keep_flying'   when true mobs like birds no longer stop and stand.
    'circle_flight' when true will have flying mobs move in circular flight patterns.
    'circle_radius' orbital radius for above (default: 6).
-   'circle_speed'  turning speed for above (default: 0.5).
    'stay_near'     when set allows mobs the chance to stay around certain nodes.
       'nodes'      string or table of nodes to stay nearby e.g. "farming:straw"
       'chance'     chance of searching for above node(s), default is 10.

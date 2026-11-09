@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261108",
+	mod = "redo", version = "20261109",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3314,7 +3314,9 @@ end
 
 function mob_class:do_circle_flight(dtime)
 
-	if not self.fly or not self.circle_flight or self.touching_ground then return end
+	-- gotta be flying in own medium while not touching ground
+	if not self.fly or not self.circle_flight or self.touching_ground or
+	not self:flight_check() then return end
 
 	if self.attack or self.following or self.order == "stand"
 	or self.state == "runaway" or self.state == "die" then return end
@@ -3322,19 +3324,17 @@ function mob_class:do_circle_flight(dtime)
 	local pos = self.object:get_pos() ; if not pos then return end
 	local temp = self.temp
 
-	-- Choose a new orbit centre
-	if not temp.circle_center then
+	if not temp.circle_center then -- choose new orbit centre
 		temp.circle_center = {x = pos.x, y = pos.y, z = pos.z}
 		temp.circle_angle = random() * pi * 2
 		temp.circle_direction = random(0, 1) == 0 and 1 or -1
 	end
 
 	local radius = self.circle_radius or 6
-	local speed = self.circle_speed or 0.5
 
-	temp.circle_angle = temp.circle_angle + speed * dtime * temp.circle_direction
+	temp.circle_angle = temp.circle_angle + (self.walk_velocity / radius)
+			* dtime * temp.circle_direction
 
-	-- Calculate position along circular path
 	local angle = temp.circle_angle
 	local center = temp.circle_center
 	local target = {
@@ -3350,8 +3350,6 @@ function mob_class:do_circle_flight(dtime)
 		x = direction.x * self.walk_velocity,
 		y = direction.y * self.walk_velocity,
 		z = direction.z * self.walk_velocity})
-
-	self:set_animation("fly")
 
 	return true
 end
