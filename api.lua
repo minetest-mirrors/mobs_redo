@@ -2345,31 +2345,25 @@ function mob_class:do_states(dtime)
 		-- make sure flying mobs are inside proper medium
 		if self.fly and dist > self.reach and self:flight_check() then
 
-			local s_y, p_y = floor(s.y), floor(p.y + 1) -- self, attacker
+			local s_y, p_y = floor(s.y), floor(p.y + 1) -- self, target
 			local v = self.object:get_velocity()
 
-			if s_y < p_y then -- fly/swim up towards attacker
+			if s_y < p_y then -- fly/swim towards attacker
 
-				-- if correct medium above then move up
-				if core.find_node_near({x = s.x, y = s.y + 1, z = s.z},
-						0, self.fly_in, true) then
+				if self.medium_above then -- correct medium above then move up
 
-					self.object:set_velocity({
-							x = v.x, y = self.walk_velocity, z = v.z})
+					self.object:set_velocity({x = v.x, y = self.walk_velocity, z = v.z})
 				else
-					self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
+					self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop ascending
 				end
 
-			elseif s_y > p_y then -- fly/swim down towards attacker
+			elseif s_y > p_y then
 
-				-- if correct medium below then move down
-				if core.find_node_near({x = s.x, y = s.y - 1, z = s.z},
-					0, self.fly_in, true) then
+				if self.medium_below then -- correct medium below then move down
 
-					self.object:set_velocity({
-							x = v.x, y = -self.walk_velocity, z = v.z})
+					self.object:set_velocity({x = v.x, y = -self.walk_velocity, z = v.z})
 				else
-					self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop
+					self.object:set_velocity({x = v.x, y = 0, z = v.z}) -- stop descending
 				end
 			end
 		end
@@ -3127,6 +3121,15 @@ function mob_class:get_nodes()
 	self.looking_above = node_ok(
 			{x = pos.x + dir_x, y = pos.y + y_level + 1.1, z = pos.z + dir_z}).name
 
+	if self.fly then
+
+		self.medium_above = core.find_node_near(
+			{x = pos.x, y = pos.y + 1, z = pos.z}, 0, self.fly_in, true)
+
+		self.medium_below = core.find_node_near(
+			{x = pos.x, y = pos.y - 1, z = pos.z}, 0, self.fly_in, true)
+	end
+
 	-- are we facing something dangerous, or a fence or wall
 	self.facing_fence = is_node_dangerous(self, self.looking_at)
 			or self.looking_at:find("fence", 1, true)
@@ -3344,12 +3347,9 @@ function mob_class:do_circle_flight(dtime)
 
 	self:yaw_to_pos(target, 0, 2)
 
-	-- for swimming mobs check above node to make sure we can circle upwards
-	local check_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
-
-	if not core.find_node_near(check_pos, 0, self.fly_in, true) then
-		target.y = pos.y
-	end
+	-- check we can fly inside medium above/below before changing height
+	if (target.y > pos.y and not self.medium_above)
+	or (target.y < pos.y and not self.medium_below) then target.y = pos.y end
 
 	local direction = vector.direction(pos, target) -- move around circle
 
