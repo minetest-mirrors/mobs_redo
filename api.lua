@@ -1025,7 +1025,7 @@ function mob_class:is_at_cliff()
 		if is_node_dangerous(self, bnode.name) then return true end
 
 		-- when mob floating on liquid dont bother with fear height
-		if self.floats and core.get_item_group(bnode.name, "liquid") then return end
+		if self.floats and core.get_item_group(bnode.name, "liquid") ~= 0 then return end
 
 		if def and def.walkable then return end -- can step down onto something
 	end
