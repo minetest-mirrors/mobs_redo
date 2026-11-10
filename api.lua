@@ -20,7 +20,7 @@ end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261109",
+	mod = "redo", version = "20261110",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -1023,6 +1023,9 @@ function mob_class:is_at_cliff()
 		local def = registered_nodes[bnode.name]
 
 		if is_node_dangerous(self, bnode.name) then return true end
+
+		-- when mob floating on liquid dont bother with fear height
+		if self.floats and core.get_item_group(bnode.name, "liquid") then return end
 
 		if def and def.walkable then return end -- can step down onto something
 	end
@@ -3100,7 +3103,6 @@ end
 function mob_class:get_nodes()
 
 	local pos = self.object:get_pos()
-	local yaw = self.object:get_yaw()
 	local y_level = self.prop.collisionbox[2]
 
 	self.standing_in = node_ok(
@@ -3110,9 +3112,9 @@ function mob_class:get_nodes()
 			{x = pos.x, y = pos.y + y_level - 0.1, z = pos.z}, "air").name
 
 	-- find front position
-	local yaw2 = yaw + self.rotate
-	local dir_x = -sin(yaw2) * (self.prop.collisionbox[4] + 0.5)
-	local dir_z = cos(yaw2) * (self.prop.collisionbox[4] + 0.5)
+	local yaw = self.object:get_yaw() + self.rotate
+	local dir_x = -sin(yaw) * (self.prop.collisionbox[4] + 0.5)
+	local dir_z = cos(yaw) * (self.prop.collisionbox[4] + 0.5)
 
 	-- nodes in front of and front/above mob
 	self.looking_at = node_ok(
@@ -3121,7 +3123,7 @@ function mob_class:get_nodes()
 	self.looking_above = node_ok(
 			{x = pos.x + dir_x, y = pos.y + y_level + 1.1, z = pos.z + dir_z}).name
 
-	if self.fly then
+	if self.fly then -- check for flying medium above and below
 
 		self.medium_above = core.find_node_near(
 			{x = pos.x, y = pos.y + 1, z = pos.z}, 0, self.fly_in, true)
