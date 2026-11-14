@@ -13,14 +13,12 @@ local use_invisibility = core.get_modpath("invisibility")
 
 local registered_nodes = core.registered_nodes
 local registered_items = core.registered_items
-local function has(nodename)
-	return registered_nodes[nodename] and nodename
-end
+local function has(nodename) return registered_nodes[nodename] and nodename end
 
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261110",
+	mod = "redo", version = "20261114",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -40,10 +38,9 @@ local sqrt, random, TWO_PI = math.sqrt, math.random, 2 * pi
 local sin, cos, rad, deg = math.sin, math.cos, math.rad, math.deg
 local floor, ceil, vdirection = math.floor, math.ceil, vector.direction
 local settings, atann = core.settings, math.atan
-local function atan(x)
-	if not x or x ~= x then return 0 end return atann(x)
-end
+local function atan(x) if not x or x ~= x then return 0 end return atann(x) end
 local table_copy, table_remove = table.copy, table.remove
+local get_objects_inside_radius = core.get_objects_inside_radius
 
 -- store connected players once every second (saves each mob checking multiple times)
 
@@ -282,7 +279,7 @@ function mob_class:collision()
 	local radius_sq = radius * radius
 	local push_x, push_z = 0, 0
 
-	for _, object in ipairs(core.get_objects_inside_radius(pos, radius)) do
+	for _, object in ipairs(get_objects_inside_radius(pos, radius)) do
 
 		if object:is_player() then
 
@@ -1237,7 +1234,7 @@ local function entity_physics(pos, radius)
 
 	radius = radius * 2
 
-	local objs = core.get_objects_inside_radius(pos, radius) ; if #objs == 0 then return end
+	local objs = get_objects_inside_radius(pos, radius) ; if #objs == 0 then return end
 	local obj_pos, dist
 
 	for n = 1, #objs do
@@ -1336,7 +1333,7 @@ function mob_class:breed()
 	effect({x = pos.x, y = pos.y + self.prop.collisionbox[5], z = pos.z}, 8,
 			"mobs_heart_particle.png", 3, 4, 1, 0.1, 1, true)
 
-	local objs = core.get_objects_inside_radius(pos, 3) ; if #objs == 1 then return end
+	local objs = get_objects_inside_radius(pos, 3) ; if #objs == 1 then return end
 
 	for n = 1, #objs do
 
@@ -1503,7 +1500,7 @@ function mob_class:check_item_pickup(pos)
 
 	if not self.on_pick_up or not self.pick_up or #self.pick_up == 0 then return end
 
-	for _, obj in pairs(core.get_objects_inside_radius(pos, 2)) do
+	for _, obj in pairs(get_objects_inside_radius(pos, 2)) do
 
 		local ent = obj:get_luaentity()
 
@@ -1793,7 +1790,7 @@ function mob_class:general_attack()
 	if random(100) <= self.attack_chance then return end
 
 	local s = self.object:get_pos() ; if not s then return end
-	local objs = core.get_objects_inside_radius(s, self.view_range)
+	local objs = get_objects_inside_radius(s, self.view_range)
 
 	if not objs or #objs <= 1 then return end -- only mob itself
 
@@ -1873,7 +1870,7 @@ function mob_class:do_runaway_from()
 	local min_dist = self.view_range * self.view_range
 	local ey = self.base_colbox[5] * 0.9 -- mob eye level
 	local from = {x = s.x, y = s.y + ey, z = s.z}
-	local objs = core.get_objects_inside_radius(s, self.view_range)
+	local objs = get_objects_inside_radius(s, self.view_range)
 
 	for n = 1, #objs do -- loop through entities surrounding mob
 
@@ -1983,11 +1980,12 @@ function mob_class:follow_flop(dtime)
 	and self.state ~= "attack" and self.state ~= "runaway" then
 
 		local s = self.object:get_pos() ; if not s then return end
+		local range_sq = self.view_range * self.view_range
 
 		for _, player in ipairs(player_list) do
 
 			if player and not is_invisible(self, player:get_player_name())
-			and get_distance(player:get_pos(), s) < self.view_range then
+			and get_distance_sq(player:get_pos(), s) < range_sq then
 
 				self.following = player ; break
 			end
@@ -2108,7 +2106,7 @@ function mob_class:do_states(dtime)
 
 		if self.randomly_turn and random(4) == 1 then
 
-			local objs = core.get_objects_inside_radius(s, 3)
+			local objs = get_objects_inside_radius(s, 3)
 			local obj_pos
 
 			for _, obj in pairs(objs) do
@@ -2861,7 +2859,7 @@ function mob_class:on_punch(hitter, tflp, tool_caps, dir, _damage)
 		self:do_attack(hitter) -- attack whoever punched mob
 
 		-- alert others to the attack
-		local objs = core.get_objects_inside_radius(hitter_pos, self.view_range)
+		local objs = get_objects_inside_radius(hitter_pos, self.view_range)
 
 		for n = 1, #objs do
 
@@ -3083,10 +3081,12 @@ function mob_class:mob_expire(pos, dtime)
 
 	if self.lifetimer > 0 then return end
 
+	local range_sq = 15 * 15 -- square distance
+
 	-- only despawn away from player
 	for _, player in ipairs(player_list) do
 
-		if player and get_distance(player:get_pos(), pos) <= 15 then
+		if player and get_distance_sq(player:get_pos(), pos) <= range_sq then
 			self.lifetimer = 20 ; return
 		end
 	end
@@ -3538,7 +3538,7 @@ end
 local function count_mobs(pos, mob_name)
 
 	local total = 0
-	local objs = core.get_objects_inside_radius(pos, aoc_range * 2)
+	local objs = get_objects_inside_radius(pos, aoc_range * 2)
 	local ent, players_nearby
 
 	for n = 1, #objs do
@@ -3780,9 +3780,11 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
+		local range_sq = mob_nospawn_range * mob_nospawn_range
+
 		for _, player in ipairs(player_list) do
 
-			if player and get_distance(player:get_pos(), pos) <= mob_nospawn_range then
+			if player and get_distance_sq(player:get_pos(), pos) <= range_sq then
 				return
 			end
 		end
@@ -4497,7 +4499,7 @@ core.register_chatcommand("clear_mobs", {
 			if player then
 
 				local pos = player:get_pos()
-				local objs = core.get_objects_inside_radius(pos, 28)
+				local objs = get_objects_inside_radius(pos, 28)
 
 				for _, obj in pairs(objs) do
 
@@ -4578,7 +4580,7 @@ if settings:get_bool("mobs_can_hear") ~= false then
 		def.max_hear_distance = param.max_hear_distance or 32
 
 		-- find mobs within sounds hearing range
-		local objs = core.get_objects_inside_radius(def.pos, def.max_hear_distance)
+		local objs = get_objects_inside_radius(def.pos, def.max_hear_distance)
 		local bit = def.gain / def.max_hear_distance
 
 		for n = 1, #objs do
