@@ -18,7 +18,7 @@ local function has(nodename) return registered_nodes[nodename] and nodename end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261114",
+	mod = "redo", version = "20261117",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -258,6 +258,8 @@ local function get_distance(a, b)
 end
 
 local function get_distance_sq(a, b)
+
+	if not a or not b then return 50 * 50 end -- nil check with default
 
 	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
 

@@ -83,6 +83,7 @@ mobs:register_mob("my_mob_mod:wolf", {
     hp_min = 15,
     armor = 100,
     damage = 3,
+    attack_type = "dogfight",
 
     textures = {
         "wolf.png"
