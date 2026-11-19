@@ -1986,7 +1986,7 @@ function mob_class:follow_flop(dtime)
 
 		for _, player in ipairs(player_list) do
 
-			if player and not is_invisible(self, player:get_player_name())
+			if is_player(player) and not is_invisible(self, player:get_player_name())
 			and get_distance_sq(player:get_pos(), s) < range_sq then
 
 				self.following = player ; break
