@@ -1420,7 +1420,212 @@ Some have public wrappers, but the local functions themselves are not accessible
 
 ---
 
-# 16. Conclusion
+
+# 16. Items, tools and craftables – crafts.lua
+
+The `crafts.lua` file registers the items, tools and nodes supplied by Mobs Redo. It also defines their crafting recipes, cooking behaviour, fuel values and a small number of helper functions.
+
+## 16.1 Registered items
+
+The following craft items are registered by Mobs Redo.
+
+| Item name | Description | Behaviour and properties |
+|---|---|---|
+| `mobs:nametag` | Name Tag | Intended to be used by right-clicking a Mobs Redo mob to apply a name. Has the `nametag` group. |
+| `mobs:leather` | Leather | Craft item with the `leather` group. |
+| `mobs:meat_raw` | Raw Meat | Can be eaten and restores 3 health points. Has the `food_meat_raw` group. |
+| `mobs:meat` | Meat | Cooked meat. Can be eaten and restores 8 health points. Has the `food_meat` group. |
+| `mobs:protector` | Mob Protection Rune | Used to protect a tamed mob. |
+| `mobs:protector2` | Mob Protection Rune (Level 2) | Higher-level protection rune. |
+| `mobs:saddle` | Saddle | Item used by rideable mobs; has the `saddle` group. |
+
+The food items are registered with `mobs.add_eatable()`, which adds the `eatable`, `flammable` and `food` groups to an already registered item when that item exists.
+
+### `mobs.add_eatable(item, hp, ftype)`
+
+Adds Mobs Redo food-related groups to an existing registered item.
+
+**Parameters:**
+
+- `item`: Registered item name to modify.
+- `hp`: Health value assigned to the `eatable` group.
+- `ftype`: Optional food group value. (Defaults to `2` for food, use '3' for drink).
+
+The function copies the item's existing groups before adding or replacing these values, then applies the updated groups with `core.override_item()`.
+
+Example:
+
+```lua
+mobs.add_eatable("mobs:meat", 8)
+```
+
+## 16.2 Registered tools
+
+| Tool name | Description | Behaviour |
+|---|---|---|
+| `mobs:lasso` | Lasso | Right-click an animal to put it into the player's inventory. |
+| `mobs:net` | Net | Right-click an animal to put it into the player's inventory. |
+| `mobs:shears` | Steel Shears | Right-click an animal to shear it. |
+| `mobs:mob_reset_stick` | Mob Reset Stick | Utility tool for resetting a mob entity or changing its texture. |
+
+`mobs:magic_lasso` is registered as an alias of `mobs:lasso` for compatibility.
+
+### Mob Reset Stick
+
+The Mob Reset Stick is registered as:
+
+```lua
+mobs:mob_reset_stick
+```
+
+It has a maximum stack size of one and belongs to the `not_in_creative_inventory` group.
+
+When used on an object:
+
+- **Normal use:** Creates a replacement entity of the same registered mob type at the original mob's position. It copies the mob's protection, owner, nametag, capture state, taming state, health and order, then removes the original entity.
+- **Sneak-use:** Opens a formspec allowing the player to enter a texture filename. The entered value is limited to 64 characters and is applied as the mob's base texture.
+
+The texture form can only update the mob if the mob still exists and the player is still wielding the Mob Reset Stick.
+
+## 16.3 Registered nodes
+
+| Node name | Description | Behaviour |
+|---|---|---|
+| `mobs:mob_repellent` | Mob Repellent | Prevents mobs from spawning within a 16-node radius, as stated in its in-game description. |
+| `mobs:fence_wood` | Mob Fence | Registered only when the `default` mod and its `register_fence` function are available. Uses a taller collision box to help contain mobs. |
+| `mobs:fence_top` | Mob Fence Top | Fence-top component with an enlarged collision and selection box intended to stop mobs getting over the fence. |
+| `mobs:meatblock` | Meat Block | Edible node that restores 20 health points when eaten. |
+| `mobs:meatblock_raw` | Raw Meat Block | Edible raw-meat node that restores 20 health points when eaten. |
+| `mobs:hearing_vines` | Hearing Vines | Non-walkable plant-like node that reacts to sufficiently loud sounds. |
+| `mobs:hearing_vines_active` | Active Hearing Vines | Temporary active state of Hearing Vines. Emits light, damages entities standing in it and changes back after its timer expires. |
+
+### Mob Repellent
+
+The Mob Repellent is crafted from obsidian, red dye and a Mob Protection Rune. Its description states that it stops mobs spawning within a 8-block radius.
+
+If the optional `vizlib` mod is installed, punching the node with an empty hand can display a visual cube showing the repellent area.
+
+### Mob Fence
+
+`mobs:fence_wood` is conditional: it is registered through `default.register_fence()` only when the `default` mod is present and provides that function.
+
+The fence uses a collision box extending to a height of 1.9 nodes.
+
+`mobs:fence_top` is registered separately and has enlarged collision and selection boxes. Its recipe produces 12 fence-top pieces.
+
+### Meat Blocks
+
+Both meat blocks can be eaten directly:
+
+| Node | Food value | Recipe |
+|---|---:|---|
+| `mobs:meatblock` | 20 | 9 cooked meat |
+| `mobs:meatblock_raw` | 20 | 9 raw meat |
+
+The raw meat block can be cooked into `mobs:meatblock` with a cooking time of 30 seconds.
+
+### Hearing Vines
+
+Hearing Vines use the `on_sound` callback. When the received sound has a loudness greater than `0.5`, the normal node changes into `mobs:hearing_vines_active`.
+
+The active node:
+
+- Emits light level 1.
+- Deals 4 damage per second.
+- Starts a one-second node timer when constructed.
+- Changes back into `mobs:hearing_vines` when the timer expires.
+- Sends receptor-on and receptor-off signals when Mesecons is available.
+
+The active node drops the normal Hearing Vines node.
+
+## 16.4 Crafting and cooking recipes
+
+Recipes use a compatibility table named `items` in `crafts.lua`. It selects ingredient names according to whether MineClone's `mcl_core` mod is available or the Minetest `default` environment is being used.
+
+| Recipe ingredient key | MineClone item or group | Default item or group |
+|---|---|---|
+| `paper` | `mcl_core:paper` | `default:paper` |
+| `dye_black` | `mcl_dye:black` | `dye:black` |
+| `dye_red` | `mcl_dye:red` | `dye:red` |
+| `string` | `mcl_mobitems:string` | `farming:string` |
+| `stick` | `mcl_core:stick` | `default:stick` |
+| `diamond` | `mcl_core:diamond` | `default:diamond` |
+| `steel_ingot` | `mcl_core:iron_ingot` | `default:steel_ingot` |
+| `gold_block` | `mcl_core:goldblock` | `default:goldblock` |
+| `diamond_block` | `mcl_core:diamondblock` | `default:diamondblock` |
+| `stone` | `mcl_core:stone` | `default:stone` |
+| `mese_crystal` | `mcl_core:gold_ingot` | `default:mese_crystal` |
+| `wood` | `mcl_core:wood` | `default:wood` |
+| `fence_wood` | `group:fence_wood` | `default:fence_wood` |
+| `meat_raw` | `mcl_mobitems:beef` | `group:food_meat_raw` |
+| `meat_cooked` | `mcl_mobitems:cooked_beef` | `group:food_meat` |
+| `obsidian` | `mcl_core:obsidian` | `default:obsidian` |
+
+The recipes registered in `crafts.lua` are:
+
+| Output | Recipe |
+|---|---|
+| `mobs:nametag` | Paper + black dye + string |
+| `mobs:lasso` | String in all four corners; diamond in the centre |
+| `mobs:net` | Sticks in the two outer columns of the first two rows; string, stick, string in the bottom row |
+| `mobs:shears` | Steel ingot at the top-middle; stick at the bottom-middle; steel ingot at the bottom-right |
+| `mobs:protector` | Stone surrounding a gold block in the centre |
+| `mobs:protector2` | Mob Protection Runes in the corners, mese crystal around a diamond block |
+| `mobs:mob_repellent` | Obsidian around a Mob Protection Rune, with red dye at the top-middle |
+| `mobs:saddle` | Leather in the outer positions, with steel ingots in the middle positions of the bottom two rows |
+| `mobs:fence_top 12` | Three wood-group items across the top row and a fence-wood item in the centre of the middle row |
+| `mobs:meatblock` | 9 cooked meat |
+| `mobs:meatblock_raw` | 9 raw meat |
+
+The cooking recipes are:
+
+| Input | Output | Cooking time |
+|---|---|---:|
+| `mobs:meat_raw` | `mobs:meat` | 5 seconds |
+| `mobs:meatblock_raw` | `mobs:meatblock` | 30 seconds |
+
+Leather, the Mob Reset Stick, Hearing Vines and the normal Mob Fence do not have crafting recipes registered in this file. The normal Mob Fence is registered only through the optional `default` integration.
+
+## 16.5 Fuel values
+
+The following fuel recipes are registered:
+
+| Item | Burn time |
+|---|---:|
+| `mobs:nametag` | 3 seconds |
+| `mobs:lasso` | 7 seconds |
+| `mobs:net` | 8 seconds |
+| `mobs:leather` | 4 seconds |
+| `mobs:saddle` | 7 seconds |
+| `mobs:fence_wood` | 7 seconds |
+| `mobs:fence_top` | 2 seconds |
+
+The fuel recipes are registered directly in `crafts.lua`. The file does not define fuel values for every item or node it registers.
+
+## 16.6 Compatibility and sound helpers
+
+At initialisation, `crafts.lua` selects recipe ingredients based on whether `mcl_core` or `default` is available.
+
+It also assigns the following sound helper functions to the global `mobs` table:
+
+- `mobs.node_sound_defaults()`
+- `mobs.node_sound_stone_defaults()`
+- `mobs.node_sound_dirt_defaults()`
+- `mobs.node_sound_sand_defaults()`
+- `mobs.node_sound_gravel_defaults()`
+- `mobs.node_sound_wood_defaults()`
+- `mobs.node_sound_leaves_defaults()`
+- `mobs.node_sound_ice_defaults()`
+- `mobs.node_sound_metal_defaults()`
+- `mobs.node_sound_water_defaults()`
+- `mobs.node_sound_snow_defaults()`
+- `mobs.node_sound_glass_defaults()`
+
+Each helper uses the corresponding function from `default` when available, otherwise the MineClone `mcl_sounds` implementation when available. If neither is available, it falls back to a function returning an empty table.
+
+---
+
+# 17. Conclusion
 
 Mobs Redo provides a comprehensive framework for developing custom entities without having to implement every system independently.
 
