@@ -18,7 +18,7 @@ local function has(nodename) return registered_nodes[nodename] and nodename end
 -- global table
 
 mobs = {
-	mod = "redo", version = "20261117",
+	mod = "redo", version = "20261120",
 	spawning_mobs = {}, translate = S,
 	node_snow = has(core.registered_aliases["mapgen_snow"])
 			or has("mcl_core:snow") or has("default:snow") or "air",
@@ -3770,8 +3770,8 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 		if not light or light > max_light or light < min_light then return end
 
 		if #core.find_nodes_in_area(
-				{x = pos.x - 8, y = pos.y - 8, z = pos.z - 8},
-				{x = pos.x + 8, y = pos.y + 8, z = pos.z + 8},
+				{x = pos.x - 16, y = pos.y - 16, z = pos.z - 16},
+				{x = pos.x + 16, y = pos.y + 16, z = pos.z + 16},
 				{"mobs:mob_repellent"}) > 0 then return end
 
 		-- check if mob/monster can be spawned inside protected areas
