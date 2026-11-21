@@ -3559,7 +3559,7 @@ end
 local function count_mobs(pos, mob_name)
 
 	local total = 0
-	local objs = get_objects_inside_radius(pos, aoc_range * 2)
+	local objs = get_objects_inside_radius(pos, aoc_range)
 	local ent, players_nearby
 
 	for n = 1, #objs do
@@ -3568,7 +3568,7 @@ local function count_mobs(pos, mob_name)
 		else
 			ent = objs[n]:get_luaentity()
 
-			if ent and ent.name and ent.name == mob_name then total = total + 1 end
+			if ent and ent.name == mob_name then total = total + 1 end
 		end
 	end
 
@@ -3590,8 +3590,8 @@ end
 
 local function can_spawn(pos, name)
 
-	local ent = core.registered_entities[name] ; if not ent then return end
-	local box = ent.base_colbox ; if not box then return end
+	local ent = core.registered_entities[name]
+	local box = ent and ent.base_colbox ; if not box then return end
 
 	local width_x = max(1, ceil(box[4] - box[1]))
 	local width_z = max(1, ceil(box[6] - box[3]))
@@ -3742,12 +3742,12 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			return
 		end
 
+		if at_limit() then return end
+
 		if map_load and (random(max(1, (chance * mob_chance_multiplier))) > 1
 		or not core.find_node_near(pos, 1, neighbors)) then
 			return
 		end
-
-		if at_limit() then return end
 
 		-- custom checks for mob spawning
 		if mobs:spawn_abm_check(pos, node, name) then return end
@@ -3784,9 +3784,12 @@ function mobs:spawn_specific(name, nodes, neighbors, min_light, max_light, inter
 			end
 		end
 
-		local light = core.get_node_light(pos)
+		if min_light > 0 or max_light < 15 then -- do we really need a light check
 
-		if not light or light > max_light or light < min_light then return end
+			local light = core.get_node_light(pos)
+
+			if not light or light > max_light or light < min_light then return end
+		end
 
 		if #core.find_nodes_in_area(
 				{x = pos.x - 16, y = pos.y - 16, z = pos.z - 16},
